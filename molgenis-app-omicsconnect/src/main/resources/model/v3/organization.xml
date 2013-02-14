@@ -236,23 +236,6 @@
 			<field name="TimeCreated" label="Time created" type="datetime" />
 			<field name="Study" type="xref" xref_entity="Study" />
 		</entity>
-		
-		
-		<entity name="SubProtocol" extends="Target">
-			<description>The Protocol class defines parameterizable descriptions
-				of (analysis)methods. Examples of protocols are: Questionaires,
-				SOPs, assay platforms, statistical analyses, etc. Each protocol has
-				a unique identifier. Protocol has an association to OntologyTerm to
-				represent the type of protocol.
-			</description>
-			<field name="Features" type="mref" nillable="true" xref_entity="Feature"
-				description="Methods of observing a feature or describing the role of a target in this protocol." />
-			<field name="ProtocolType" nillable="true" type="xref"
-				xref_entity="AlternativeIdentifier" description="Classification of protocol. TODO: Examples?" />
-			<field name="Subprotocols" type="mref" xref_entity="Protocol"
-				nillable="true" description="Subprotocols of this protocol" />
-
-		</entity>
 
 	</module>
 </molgenis>

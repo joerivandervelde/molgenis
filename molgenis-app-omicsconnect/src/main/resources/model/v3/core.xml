@@ -118,7 +118,7 @@
 			<field name="Value" type="text" nillable="false" />
 		</entity>
 
-		<entity name="AlternativeIdentifier" extends="Identifiable">
+		<entity name="AlternativeIdentifier" implements="Identifiable">
 			<description>
 				An ontology term or other kind of alternative, often external identifier. Usually a link to other kind of database, or just a string denoting another possibility.
 			</description>
@@ -126,7 +126,7 @@
 				xref_entity="AlternativeIdentifierSource" />
 		</entity>
 
-		<entity name="AlternativeIdentifierSource" extends="Identifiable">
+		<entity name="AlternativeIdentifierSource" implements="Identifiable">
 			<description>The location where this AlternativeIdentifier links to
 				or is originating from. The URL possibly needs a little mechanism to
 				insert the alternative identifier into, e.g. URL
