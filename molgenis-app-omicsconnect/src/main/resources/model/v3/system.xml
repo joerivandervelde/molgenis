@@ -6,8 +6,9 @@
 		</description>
 
 		<entity name="RuntimeProperty" implements="Identifiable">
-			<field name="Value" length="127" type="varchar" nillable="false" />
-			<unique fields="Identifier" description="Identifier is unique" />
+			<field name="PropertyName" length="127" type="varchar" nillable="false" />
+			<field name="PropertyValue" length="127" type="varchar" nillable="false" />
+			<unique fields="PropertyName" description="Identifier is unique" />
 		</entity>
 
 	</module>

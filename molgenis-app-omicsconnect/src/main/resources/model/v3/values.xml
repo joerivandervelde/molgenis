@@ -4,7 +4,7 @@
 			Advanced value types for core
 		</description>
 
-		<entity name="PermittedValue" implements="Autoid">
+		<entity name="PermittedValue" implements="AutoId">
 			<description>Specification of what type of value are acceptable when
 				adding an Value for the Method this PermittedValue refers
 				to. This includes more precise constraints such as the allowed range
@@ -16,29 +16,33 @@
 				specifying org.molgenis.omx.Individual allows for XREFs to all
 				Individuals, plus all subclasses of this type.
 
-				TODO!!
+				Multiple PermittedValues can be attached to a Feature. This means you can allow complex permitted values such as ["yes", "no", 1, 0], using two PermittedValues, one for String and one for Integer, each holding two options - or four separate PermittedValues for each option.
+				
+				PermittedValues are by design not 'reusable' via an MREF, because they act both as validators and provenance. Changing the options afterwards is bad practice, but at least will affect at most only a single Feature.
+				
+				
 
 			</description>
 
 
-			<field name="DataType" type="enum" enum_options="[decimal, integer, xref]" />
+			<field name="DataType" type="enum" enum_options="[string, decimal, integer, reference]" />
 			<!-- enum_options="[xref,string,categorical,nominal,ordinal,date,datetime,int,code,image,decimal,bool,file,log,data,exe]" -->
 
 
 			<field name="Feature" type="xref" xref_entity="Feature"
 				description="The method these permitted values are part of." />
 
-			<field name="ValueCode" type="string" nillable="false"
+			<field name="AllowedValue" type="string" nillable="false"
 				description="The constraint rule that is applied when entering a value for a method to which this permittedvalue belong. Eg: 'm' or 'f' for categorical codes, '0..10' for an integer range, 'Individual' for an XREF value class." />
 			<field name="ValueLabel" type="string" nillable="true"
 				description="The label for the contraint. Eg. in case of categorical values: 'Male' for code 'm' or 'Female' for code 'f'. For an integer range code like 0..100 it could be 'Percentage'. For an XREF class code such as 'Individual' it could provide extra information such as 'Participating persons'." />
 
 		</entity>
-
-		<entity name="ListValue" implements="Value">
-			<description>An observation for which the value is a list of strings.
+		
+		<entity name="StringValue" implements="Value">
+			<description>An observation for which the value is a string, with at most 127 characters.
 			</description>
-			<!--field name="Value" type="list[string]" / -->
+			<field name="Value" type="varchar" length="127"/>
 		</entity>
 
 		<entity name="DecimalValue" implements="Value">
@@ -53,7 +57,7 @@
 			<field name="Value" type="int" />
 		</entity>
 
-		<entity name="XrefValue" implements="Value">
+		<entity name="ReferenceValue" implements="Value">
 			<description>An observation for which the value refers to a Concept
 				in the database.
 			</description>

@@ -1,7 +1,8 @@
 <molgenis name="org.molgenis.omx">
 	<module name="organization" label="Organization module">
 		<description>
-			Adds organizational info to core
+			Adds support for experiments, studies, projects, and other organizational structures and 'data containers'.
+			Depends on: core.xml, auth.xml
 		</description>
 
 		<entity name="Individual" extends="Target">
@@ -45,71 +46,6 @@
 				nillable="true" description="The list of individuals in this panel" />
 		</entity>
 
-		<entity name="Contact" implements="Identifiable" abstract="true">
-			<description> A contact is either a person or an organization. Taken
-				from FuGE::Contact.
-			</description>
-			<field name="Address" type="text" nillable="true"
-				description="The address of the Contact." />
-			<field name="Phone" nillable="true"
-				description="The telephone number of the Contact including the suitable area codes." />
-			<field name="Email" nillable="true"
-				description="The email address of the Contact." />
-			<field name="Fax" nillable="true" type="varchar"
-				description="The fax number of the Contact." />
-			<field name="tollFreePhone" nillable="true" type="string"
-				description="A toll free phone number for the Contact, including suitable area codes." />
-			<field name="City" type="string" nillable="true"
-				description="Added from the old definition of MolgenisUser. City of this contact." />
-			/>
-			<field name="Country" type="string" nillable="true"
-				description="Added from the old definition of MolgenisUser. Country of this contact." />
-		</entity>
-		
-		<entity name="MolgenisRole" implements="Identifiable">
-			<description>
-			Here for 'auth' reasons, will explain later
-			</description>
-		</entity>
-
-		<entity name="Person" extends="MolgenisRole" implements="Contact">
-			<description>
-				Person represents one or more people involved with an Investigation.
-				This may include authors on a paper, lab personnel or PIs. Person
-				has last name, firstname, mid initial, address, contact and email. A
-				Person role is included to represent how a Person is involved with
-				an investigation. For submission to repository purposes an allowed
-				value is 'submitter' and the term is present in the MGED Ontology,
-				an alternative use could represent job title. An Example from
-				ArrayExpress is E-MTAB-506
-				<a
-					href="ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/TABM/E-TABM-506/E-TABM-506.idf.txt">
-					ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/TABM/E-TABM-506/E-TABM-506.idf.txt.
-				</a>
-				.
-				<br />
-				The FUGE equivalent to Person is FuGE::Person.
-			</description>
-			<field name="FirstName" label="First Name" nillable="true" />
-			<field name="MidInitials" label="Mid Initials" nillable="true" />
-			<field name="LastName" label="Last Name" nillable="true" />
-			<field name="Title" label="Title" nillable="true"
-				description="An academic title, e.g. Prof.dr, PhD" />
-			<field name="Affiliation" type="xref" xref_entity="Institute"
-				nillable="true" />
-			<field name="Department" type="string" nillable="true"
-				description="Added from the old definition of MolgenisUser. Department of this contact." />
-			<field name="Roles" type="xref" xref_entity="AlternativeIdentifier"
-				nillable="true" description="Indicate role of the contact, e.g. lab worker or PI." />
-			<unique fields="FirstName,MidInitials,LastName" />
-		</entity>
-
-		<entity name="Institute" implements="Contact">
-			<description> A society or organization having a particular object or
-				common factor, esp. a scientific, educational, or social one.
-			</description>
-		</entity>
-
 		<entity name="Study" implements="Identifiable">
 			<description>
 			Todo
@@ -134,7 +70,7 @@
 	
 	</entity>
 	
-	<entity name="StudyDetails" implements="Autoid">
+	<entity name="StudyDetails" implements="AutoId">
 			<field name="Study" type="xref" xref_entity="Study" unique="true" />
 			<!-- Should discuss what in core, and what more to 'StudyDetails' table -->
 

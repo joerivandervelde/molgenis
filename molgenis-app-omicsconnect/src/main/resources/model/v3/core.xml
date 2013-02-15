@@ -8,14 +8,14 @@
 			Golden rule: this XML is completely stand-alone useable!
 		</description>
 
-		<entity name="Autoid" abstract="true">
+		<entity name="AutoId" abstract="true">
 			<description>
 				Database auto-incremented primary key for every record.
 			</description>
 			<field name="Id" type="autoid" description="Auto-incremented primary key." />
 		</entity>
 
-		<entity name="Identifiable" implements="Autoid" abstract="true"
+		<entity name="Identifiable" implements="AutoId" abstract="true"
 			xref_label="Identifier">
 			<description>
 				All data types that needs some form of human recognizability should extend from Identifiable. This adds an 'Identifier' field which is human- and computer readable, and a 'Name' field which acts like a pretty human readable label.
@@ -48,6 +48,7 @@
 			<field name="Role" type="xref" xref_entity="AlternativeIdentifier" nillable="true" description="(Optional) Reference to the role that this feature plays in this context. For example: 'Context', 'Factor', 'Input', 'Output', etc" />
 			<field name="Unit" type="xref" xref_entity="AlternativeIdentifier" nillable="true" description="(Optional) Reference to the well-defined measurement unit used to observe this feature (if feature is that concrete). E.g. mmHg. Does not make any assumptions on the data type, e.g. integer or string." />
 			<field name="MeasuredConcept" type="xref" xref_entity="Concept" description="The concept that is being measured in a specific way." nillable="true" />
+			<field name="HasUniqueValues" type="bool" default="false" nillable="false" description="If set to true, all values of this feature are unique within a dataset. Use this when you want to make sure a 'row identifier' is respected, e.g. a list of microarray probes named 'AGI00001', 'AGI00002' are not duplicated." />
 			<field name="Temporal" type="boolean" nillable="true" description="Whether this feature is time dependent and can have different values when measured on different times (e.g. weight, temporal=true) or generally only measured once (e.g. birth date, temporal=false) It is advisable to move temporal features to become dynamic attributes of Targets (or Concepts)" />
 		</entity>
 
@@ -83,12 +84,11 @@
 				to, like rows in a database are instances of their table definition.
 			</description>
 			<field name="Protocol" type="xref" xref_entity="Protocol" nillable="true" description="The protocol used to create this DataSet. All Features in this Protocol will be measured. Any Features in SubProtocols are already included in the list of the original protocol."/>
-			<field name="UniqueTargets" type="bool" default="true" nillable="false" />
 			<field name="StartTime" type="datetime" nillable="true" description="Time when the dataset was created." />
 			<field name="EndTime" type="datetime" nillable="true" description="Time when the dataset was finished" />
 		</entity>
 
-		<entity name="Observation" implements="Autoid">
+		<entity name="Observation" implements="AutoId">
 			<description>A single row of values in a DataSet. The Methods of the
 				ObservedValues referring to this ObservationSet should correspond to
 				the Methods defined in the Protocol of the DataSet this
@@ -102,7 +102,7 @@
 			<unique fields="PartOfDataSet,Time" description="Only one Observation per timepoint can be made in a single DataSet" />
 		</entity>
 
-		<entity name="Value" implements="Autoid" abstract="true">
+		<entity name="Value" implements="AutoId" abstract="true">
 			<description>The outcome of an observation on a particular concept.
 				Belongs to an ObservationSet, which is in essence a row in a
 				DataSet.
@@ -114,6 +114,7 @@
 
 		<entity name="TextValue" implements="Value">
 			<description>An observation for which the value is a string of text. This is the most basic and broad flavour of Value; it can contain large pieces of 'untyped' data.
+					TBD: Typically has no PermittedValue rules associated.
 			</description>
 			<field name="Value" type="text" nillable="false" />
 		</entity>
