@@ -5,15 +5,6 @@
 	Depends on: core.xml
 	</description>
 	
-		<entity name="MolgenisEntity" system="true" implements="AutoId" xref_label="EntityClassName">
-			<description>Referenceable catalog of entity names, menus, forms and plugins.
-			</description>
-			<field name="EntityName" description="Name of the entity" />
-			<field name="EntityType" description="Type of the entity" />
-			<field name="EntityClassName" unique="true" description="Full name of the entity" />
-			<unique fields="EntityName,EntityType" />
-		</entity>
-	
 		<entity name="MolgenisRole" system="true" implements="Identifiable" xref_label="Name" >
 			<description>Acts as a superclass for users and groups, so users can be put in groups, but also groups can be part of groups.</description>
 		</entity>

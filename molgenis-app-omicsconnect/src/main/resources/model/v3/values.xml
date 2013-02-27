@@ -24,11 +24,6 @@
 
 			</description>
 
-
-			<field name="DataType" type="enum" enum_options="[string, decimal, integer, reference]" />
-			<!-- enum_options="[xref,string,categorical,nominal,ordinal,date,datetime,int,code,image,decimal,bool,file,log,data,exe]" -->
-
-
 			<field name="Feature" type="xref" xref_entity="Feature"
 				description="The method these permitted values are part of." />
 
@@ -37,6 +32,13 @@
 			<field name="ValueLabel" type="string" nillable="true"
 				description="The label for the contraint. Eg. in case of categorical values: 'Male' for code 'm' or 'Female' for code 'f'. For an integer range code like 0..100 it could be 'Percentage'. For an XREF class code such as 'Individual' it could provide extra information such as 'Participating persons'." />
 
+		</entity>
+		
+		<entity name="TextValue" implements="Value">
+			<description>An observation for which the value is a string of text. This is the most basic and broad flavour of Value; it can contain large pieces of 'untyped' data.
+					TBD: Typically has no PermittedValue rules associated.
+			</description>
+			<field name="Value" type="text" nillable="false" />
 		</entity>
 		
 		<entity name="StringValue" implements="Value">

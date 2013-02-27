@@ -61,17 +61,17 @@
 			<field name="qc" type="enum" enum_options="[Not determined,Passed,Failed]" default="Not determined" description="Sequencing quality criteria met?" />
 			<unique fields="flowcell,lane,barcode,sample" description="Lane and barcode is unique per flowcell" />
 		</entity>
-		<entity name="NgsBarcode" implements="Autoid" xref_label="name">
+		<entity name="NgsBarcode" implements="AutoId" xref_label="name">
 			<field name="name" type="string" unique="true" description="The nucleotide sequence which forms the barcode" />
 			<field name="barcodeType" type="enum" default="GAF" enum_options="[GAF,RPI,None]" nillable="true" />
 		</entity>
-		<entity name="NgsCapturingKit" implements="Autoid" xref_label="name">
+		<entity name="NgsCapturingKit" implements="AutoId" xref_label="name">
 			<field name="name" type="string" unique="true" />
 		</entity>
-		<entity name="NgsPrepKit" implements="Autoid" xref_label="name">
+		<entity name="NgsPrepKit" implements="AutoId" xref_label="name">
 			<field name="name" type="string" unique="true" />
 		</entity>
-		<entity name="Machine" implements="Autoid" xref_label="name">
+		<entity name="Machine" implements="AutoId" xref_label="name">
 			<field name="name" type="string" unique="true" />
 		</entity>
 	</module>

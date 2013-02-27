@@ -25,31 +25,92 @@
 			<unique fields="Identifier" description="The identifier is globally unique so it can be used as a secondary key, and 'external identifier'."/>
 			<unique fields="Name,Identifier" description="We add an extra secondary key including 'Name' so labels can be conveniently created."/>
 		</entity>
-
-		<entity name="Concept" implements="Identifiable">
-			<description>
-				Concepts are abstract objects that mediate between thought, language, and referents. In Observ-OMX, concepts can be defined on any abstraction level, including the point where abstraction reaches a minimum and actual physical objects are denoted. Concepts can be specified via subclasses, for example 'Marker' as a direct subclass of Concept, 'Target' to denote physical objects in general, or 'Individual' as a subclass of Target. When not subclassed, Concept usually depicts a characteristic or quality belonging to a concept or target. Because Concept is a superclass of Target, the latter can be used interchangeably via references on the level of Concept. This enables e.g. applying a Concept to a Concept to add 'runtime attributes' or create Target versus Target data in the case of correlation matrices. General examples of Concepts: "Patient", "Height", "Marker pkP1050", "Panel", "Heart rate", "Sample". Examples of concepts on different abstraction levels: "Gene", "Gene expression", "Gene HOXD9", or "Blood pressure", "Systolic blood pressure".
+		
+		<entity name="MolgenisClass" system="true" implements="AutoId" xref_label="EntityClassName">
+			<description>Referenceable catalog of this applications' menus, forms and plugins.
 			</description>
+			<field name="EntityName" description="Name of the entity" />
+			<field name="EntityType" description="Type of the entity" />
+			<field name="EntityClassName" unique="true" description="Unique full class name of the entity, e.g. 'org.molgenis.omx.Marker'." />
+			<unique fields="EntityName,EntityType" description="Name is unique within type, so e.g. there can be an entity 'Marker' and a plugin 'Marker'."/>
+		</entity>
+		
+		<entity name="EntityClass" extends="MolgenisClass">
+			<description>Referenceable catalog of generated database entity class names. Includes predefined concepts, but also user defined concepts. The content of Concept is automatically filled by 'FillMeta' and should not be altered under any condition at runtime.
+			</description>
+		</entity>
+		
+		<entity name="CustomClass" extends="EntityClass">
+			<description>Runtime extentions for the catalog of entity names. Acts as a new class, but with no additional properties relative to the class it is extending.
+			Concepts are abstract objects that mediate between thought, language, and referents. In Observ-OMX, concepts can be defined on any abstraction level, including the point where abstraction reaches a minimum and actual physical objects are denoted. Concepts can be specified via subclasses, for example 'Marker' as a direct subclass of Concept, 'Target' to denote physical objects in general, or 'Individual' as a subclass of Target. When not subclassed, Concept usually depicts a characteristic or quality belonging to a concept or target. Because Concept is a superclass of Target, the latter can be used interchangeably via references on the level of Concept. This enables e.g. applying a Concept to a Concept to add 'runtime attributes' or create Target versus Target data in the case of correlation matrices. General examples of Concepts: "Patient", "Height", "Marker pkP1050", "Panel", "Heart rate", "Sample". Examples of concepts on different abstraction levels: "Gene", "Gene expression", "Gene HOXD9", or "Blood pressure", "Systolic blood pressure".
+			</description>
+			<!-- field name="Extends" type="xref" xref_field="Concept.Id" nillable="true" description="This custom concept is a specialization of an existing concept (or custom concept)" /-->
 			<field name="Description" type="text" nillable="true" description="Rudimentary meta data about this concept. Use of ontology terms references to establish unambigious descriptions is recommended." />
-			<field name="AlternativeIdentifier" type="mref" xref_entity="AlternativeIdentifier" nillable="true" description="Ontological annotation for this concept. Refers to any kind of third-party identifier that helps to establish an unambiguous identification."/>
+			<field name="OntologySource" type="mref" xref_entity="OntologySource" nillable="true" description="Ontological annotation for this concept. Refers to any kind of third-party identifier that helps to establish an unambiguous identification."/>
+		</entity>
+		
+		<entity name="Value" implements="AutoId">
+			<description>The outcome of an observation on a particular concept.
+				Belongs to an ObservationSet, which is in essence a row in a
+				DataSet.
+				SHOULD BEHAVE LIKE ABSTRACT CLASS
+			</description>
+			<!-- field name="Observation" type="xref" xref_entity="Observation" />
+			<field name="Feature" type="xref" xref_entity="Feature" />
+			<unique fields="Observation,Feature" description="There can be only one unique measurement at this timepoint for this particular Feature." /-->
 		</entity>
 
-		<entity name="Target" extends="Concept">
+		<entity name="Target" extends="Value">
 			<description>
 				Targets are concrete objects, typically a physical object or a collection thereof, but can also be an instance of a data type such as 'DataSet' or 'Protocol'. They are typically subjects for observation of particular features. Features that refer to a Target as their MeasuredConcept gain an immediate constraint: the measured value MUST be an XrefValue, and the value MUST be a Target or subclass thereof. Furthermore, a flag can be set on DataSet to check if the referred Targets (or a combination of multiple Targets) are unique.
 				Example: 'Protocol' extends 'Target' because every instance of 'Protocol' can be referred to in a column of data. But to explain that you're measuring 'the concept of a protocol', you should create a Concept named 'Protocol' (with possible ontological references) to explain what you mean, and refer to this Concept via Feature. 
+
+				Add the soft type to instances of genes, individuals etc...
+				By default the soft type is the same as the original type (a new Gene is created as TypeOf 'Gene'), but this can be changed to custom concepts that extend the original type.
+				TODO: decorator that only allows user to select softtypes that extend the original type!!
+				
+				SHOULD BEHAVE LIKE ABSTRACT CLASS
+				
 			</description>
+			<field name="CustomClass" xref_field="CustomClass.Id" />
+		</entity>
+		
+		<entity name="FlexCol" implements="Identifiable">
+			<field name="EntityClass" type="xref" xref_entity="EntityClass" nillable="false" description="" />
+			<field name="Feature" type="xref" xref_entity="Feature" nillable="false" description="" />
+			<unique fields="EntityClass,Feature" description="A feature can only be one flexible column"/>
+		</entity>
+		
+		<entity name="FlexColValue" implements="Identifiable">
+			<field name="FlexCol" type="xref" xref_entity="FlexCol" nillable="false" description="" />
+			<field name="Target" type="xref" xref_entity="Target" nillable="false" description="" />
+			<field name="Value" type="xref" xref_entity="Value" nillable="false" description="" />
+			<unique fields="FlexCol,Target" description="A value can only be measured once per target per flexible column"/>
 		</entity>
 
 		<entity name="Feature" implements="Identifiable">
 			<description>
 				The characterization of the role or the particular procedure of involvement for a Concept in an ObservationSet. The role 'target' replaces the old target XREF in value/ObservationSet and can consist of multiple targets that together form one (possibly unique) target.
 			</description>
-			<field name="Role" type="xref" xref_entity="AlternativeIdentifier" nillable="true" description="(Optional) Reference to the role that this feature plays in this context. For example: 'Context', 'Factor', 'Input', 'Output', etc" />
-			<field name="Unit" type="xref" xref_entity="AlternativeIdentifier" nillable="true" description="(Optional) Reference to the well-defined measurement unit used to observe this feature (if feature is that concrete). E.g. mmHg. Does not make any assumptions on the data type, e.g. integer or string." />
-			<field name="MeasuredConcept" type="xref" xref_entity="Concept" description="The concept that is being measured in a specific way." nillable="true" />
+			
+			wringt: ref naar concept is abstract, bijv 'Patient', met als values XREF naar Individual
+			maar, ref naar target is concreet, bijv 'Pa_34515'.. hoe werkt het dan ?
+			
+			solution:
+			-	MeasuredConcept can ONLY refer to Concept, not subclasses!
+			-	XREF values should be able to refer to Concept (e.g. what was measured 'blood pressure' as a value) and Target (measured on 'Pa_12355')
+			
+			---> OR NOT ?!? should XREF values not only be on Target ?
+				 if they happen on Concept: does that not mean the idea of 'feature measures a concept' is misused?
+			
+			
+			<field name="Role" type="xref" xref_entity="OntologyTerm" nillable="true" description="(Optional) Reference to the role that this feature plays in this context. For example: 'Context', 'Factor', 'Input', 'Output', etc" />
+			<field name="Unit" type="xref" xref_entity="OntologyTerm" nillable="true" description="(Optional) Reference to the well-defined measurement unit used to observe this feature (if feature is that concrete). E.g. mmHg. Does not make any assumptions on the data type, e.g. integer or string." />
+			<field name="Definition" type="xref" xref_entity="OntologyTerm" description="The concept that is being measured in a specific way." nillable="true" />
+			<field name="DataType" type="xref" xref_entity="EntityClass" description="The class that holds the values, e.g. DecimalValue or StringValue, but can also be Individual (for XREF) or a CustomClass thereof, e.g. Patient (extends Individual)" nillable="true" />	
 			<field name="HasUniqueValues" type="bool" default="false" nillable="false" description="If set to true, all values of this feature are unique within a dataset. Use this when you want to make sure a 'row identifier' is respected, e.g. a list of microarray probes named 'AGI00001', 'AGI00002' are not duplicated." />
 			<field name="Temporal" type="boolean" nillable="true" description="Whether this feature is time dependent and can have different values when measured on different times (e.g. weight, temporal=true) or generally only measured once (e.g. birth date, temporal=false) It is advisable to move temporal features to become dynamic attributes of Targets (or Concepts)" />
+			
 		</entity>
 
 
@@ -64,7 +125,7 @@
 			<field name="Features" type="mref" nillable="true" xref_entity="Feature"
 				description="Methods of observing a feature or describing the role of a target in this protocol. This includes all Features in this protocol, and contains all Features in all SubProtocols, if any." />
 			<field name="ProtocolType" nillable="true" type="xref"
-				xref_entity="AlternativeIdentifier" description="Classification of protocol. TODO: Examples?" />
+				xref_entity="OntologyTerm" description="Classification of protocol. TODO: Examples?" />
 			<field name="SubProtocols" type="mref" xref_entity="SubProtocol"
 				nillable="true" description="Subprotocols of this protocol, or subprotocol." />
 		</entity>
@@ -86,6 +147,7 @@
 			<field name="Protocol" type="xref" xref_entity="Protocol" nillable="true" description="The protocol used to create this DataSet. All Features in this Protocol will be measured. Any Features in SubProtocols are already included in the list of the original protocol."/>
 			<field name="StartTime" type="datetime" nillable="true" description="Time when the dataset was created." />
 			<field name="EndTime" type="datetime" nillable="true" description="Time when the dataset was finished" />
+			<field name="CreatedUsing" type="mref" xref_entity="DataSet" nillable="true" description="Other datasets that were involved in creating this one." />
 		</entity>
 
 		<entity name="Observation" implements="AutoId">
@@ -101,44 +163,35 @@
 				nillable="true" />
 			<unique fields="PartOfDataSet,Time" description="Only one Observation per timepoint can be made in a single DataSet" />
 		</entity>
-
-		<entity name="Value" implements="AutoId" abstract="true">
-			<description>The outcome of an observation on a particular concept.
-				Belongs to an ObservationSet, which is in essence a row in a
-				DataSet.
-			</description>
-			<field name="Observation" type="xref" xref_entity="Observation" />
-			<field name="Feature" type="xref" xref_entity="Feature" />
-			<unique fields="Observation,Feature" description="There can be only one unique measurement at this timepoint for this particular Feature." />
+		
+		<entity name="ObservedValue" implements="AutoId">
+			<field name="Feature" type="xref" xref_entity="Feature" nillable="false" />
+			<field name="Observation" type="xref" xref_entity="Observation" nillable="false" />
+			<field name="Value" type="xref" xref_entity="Value" nillable="false" />
+			<unique fields="Feature,Observation" description="A feature can only be measured once per observation"/>
 		</entity>
 
-		<entity name="TextValue" implements="Value">
-			<description>An observation for which the value is a string of text. This is the most basic and broad flavour of Value; it can contain large pieces of 'untyped' data.
-					TBD: Typically has no PermittedValue rules associated.
-			</description>
-			<field name="Value" type="text" nillable="false" />
-		</entity>
-
-		<entity name="AlternativeIdentifier" implements="Identifiable">
+		<entity name="OntologyTerm" implements="Identifiable">
 			<description>
 				An ontology term or other kind of alternative, often external identifier. Usually a link to other kind of database, or just a string denoting another possibility.
 			</description>
-			<field name="AlternativeIdentifierSource" type="xref"
-				xref_entity="AlternativeIdentifierSource" />
+			<field name="OntologySource" type="xref"
+				xref_entity="OntologySource" />
 		</entity>
 
-		<entity name="AlternativeIdentifierSource" implements="Identifiable">
-			<description>The location where this AlternativeIdentifier links to
+		<entity name="OntologySource" implements="Identifiable">
+			<description>The location where this OntologyTerm links to
 				or is originating from. The URL possibly needs a little mechanism to
 				insert the alternative identifier into, e.g. URL
 				"http://vega.sanger.ac.uk/Homo_sapiens/Gene/Summary?g={id};r=13:32889611-32973347"
 				where {id} is replaced with an instance of
-				AlternativeIdentifier.Identifier "OTTHUMG00000017411" to form a
+				OntologySource.Identifier "OTTHUMG00000017411" to form a
 				valid URL.
 			</description>
 			<field name="BaseURL" type="string" />
+			<field name="Version" type="string" />
+			<unique fields="BaseURL,Version" description="The combination of url and version is unique"/>
 		</entity>
-
 
 	</module>
 </molgenis>

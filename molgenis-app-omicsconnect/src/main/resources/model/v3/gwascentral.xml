@@ -2,7 +2,7 @@
 <molgenis name="org.molgenis.omx">
 	<module name="gwascentral" label="GWAS Central module">
 		
-		<entity name="PanelSource" implements="Autoid">
+		<entity name="PanelSource" implements="AutoId">
 			<!-- todo: this should probably be a subclass of protocolApplication? -->
 			<!-- experimental -->
 			<description>PanelSources is partOf Panel to define how panels are
@@ -182,7 +182,7 @@
 		</entity> -->
 		
 		
-		<entity name="Significance" extends="DataSet"  implements="Autoid">
+		<entity name="Significance" extends="DataSet"  implements="AutoId">
 			<!--<field name="DatasetID" label="Data set identifier" type="xref" nillable="true" xref_entity="DataSet"  /> -->
 			<field name="UsedmarkersetID" label="Used marker set ID" type="xref" xref_entity="UsedMarkerSet"/>
 			<field name="NegLogPValue" label="Negative log p-value" type="decimal" nillable="true" />
@@ -199,7 +199,7 @@
 			<field name="StdError" type="decimal" />
 		</entity>
 		
-		<entity name="SelectionCriteria" implements="Autoid">
+		<entity name="SelectionCriteria" implements="AutoId">
 			<!-- todo: this should probably be a subclass of protocolApplication? -->
 
 			<description>Create relationships between panels, founder panels,
