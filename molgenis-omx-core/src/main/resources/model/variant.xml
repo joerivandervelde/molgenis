@@ -55,18 +55,18 @@
 			<field name="aa_end" type="int" nillable="true"
 				description="End position on amino acid sequence." />
 		</entity>
-		<entity name="Genome" extends="Concept" implements="BioSequence">
-			<field name="species" type="xref" xref_entity="AlternativeIdentifier"
+		<entity name="Genome" extends="Target" implements="BioSequence">
+			<field name="species" type="xref" xref_entity="OntologyTerm"
 				nillable="true" description="species this genome belongs to." />
 		</entity>
-		<entity name="VariantChromosome" extends="Concept" implements="BioSequence">
+		<entity name="VariantChromosome" extends="Target" implements="BioSequence">
 			<description>Example: b37:chr1.</description>
 			<field name="genome" type="xref" xref_entity="Genome" />
 			<field name="orderNr" type="int" />
 			<field name="isAutosomal" type="bool"
 				description="Is 'yes' when number of chromosomes is equal in male and female individuals, i.e., if not a sex chromosome." />
 		</entity>
-		<entity name="VariantGene" extends="Concept" implements="GdnaPosition,BioSequence">
+		<entity name="VariantGene" extends="Target" implements="GdnaPosition,BioSequence">
 			<description>Serves as a view on SequenceCharacteristics that are
 				genes / cdna
 			</description>
@@ -74,25 +74,25 @@
 				nillable="false"
 				description="The orientation/directionality of the location. Should be 0, -1 or +1." />
 		</entity>
-		<entity name="VariantProtein" extends="Concept" implements="CdnaPosition,BioSequence">
+		<entity name="VariantProtein" extends="Target" implements="CdnaPosition,BioSequence">
 			<description>Serves as a view on SequencesCharacteristics that are
 				proteins / aa.
 			</description>
 		</entity>
-		<entity name="ProteinDomain" extends="Concept"
+		<entity name="ProteinDomain" extends="Target"
 			implements="CdnaPosition,GdnaPosition">
 			<description>Serves as a view on SequenceCharacteristics that are
 				protein domains.
 			</description>
 		</entity>
-		<entity name="Exon" extends="Concept" implements="CdnaPosition,GdnaPosition">
+		<entity name="Exon" extends="Target" implements="CdnaPosition,GdnaPosition">
 			<description>Serves as a view on SequenceCharacteristics that are
 				exons or introns.
 			</description>
 			<field name="isIntron" type="bool" nillable="false" index="true"
 				description="Is this exon actually an intron?" />
 		</entity>
-		<entity name="Variant" extends="Concept"
+		<entity name="Variant" extends="Target"
 			implements="GdnaPosition,CdnaPosition,AaPosition">
 			<description>Convenient entity to define in one place variants on
 				gdna, cdna and aa level.
@@ -103,7 +103,7 @@
 				description="cDNA notation of the variant, e.g. c.123C>T" />
 			<field name="aa_notation" nillable="true" index="true"
 				description="Aa notation of the variant, e.g. p.Ser123ArgfsX12" />
-			<field name="variantType" type="xref" xref_entity="AlternativeIdentifier"
+			<field name="variantType" type="xref" xref_entity="OntologyTerm"
 				nillable="true" description="Type of the variant." />
 		</entity>
 	</module>

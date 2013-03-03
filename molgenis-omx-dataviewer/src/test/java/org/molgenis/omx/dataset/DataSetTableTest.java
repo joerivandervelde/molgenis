@@ -14,9 +14,9 @@ import org.molgenis.framework.db.QueryRule;
 import org.molgenis.framework.db.QueryRule.Operator;
 import org.molgenis.framework.tupletable.TableException;
 import org.molgenis.model.elements.Field;
-import org.molgenis.omx.observ.DataSet;
-import org.molgenis.omx.observ.ObservableFeature;
-import org.molgenis.omx.observ.Protocol;
+import org.molgenis.omx.core.DataSet;
+import org.molgenis.omx.core.Feature;
+import org.molgenis.omx.core.Protocol;
 import org.testng.annotations.Test;
 
 public class DataSetTableTest
@@ -24,23 +24,23 @@ public class DataSetTableTest
 	@Test
 	public void getAllColumns() throws TableException, DatabaseException
 	{
-		DataSet dataSet = when(mock(DataSet.class).getProtocolUsed_Id()).thenReturn(1).getMock();
+		DataSet dataSet = when(mock(DataSet.class).getProtocol_Id()).thenReturn(1).getMock();
 
 		Protocol p0 = mock(Protocol.class);
 		when(p0.getFeatures_Id()).thenReturn(Arrays.asList(10));
-		when(p0.getSubprotocols_Id()).thenReturn(Arrays.asList(1, 2));
+		when(p0.getSubProtocols_Id()).thenReturn(Arrays.asList(1, 2));
 		Protocol p1 = mock(Protocol.class);
 		when(p1.getFeatures_Id()).thenReturn(Arrays.asList(11));
 		Protocol p2 = mock(Protocol.class);
 		when(p2.getFeatures_Id()).thenReturn(Arrays.asList(12));
 
-		ObservableFeature f10 = mock(ObservableFeature.class);
+		Feature f10 = mock(Feature.class);
 		when(f10.getIdentifier()).thenReturn("10");
 		when(f10.getName()).thenReturn("name10");
-		ObservableFeature f11 = mock(ObservableFeature.class);
+		Feature f11 = mock(Feature.class);
 		when(f11.getIdentifier()).thenReturn("11");
 		when(f11.getName()).thenReturn("name11");
-		ObservableFeature f12 = mock(ObservableFeature.class);
+		Feature f12 = mock(Feature.class);
 		when(f12.getIdentifier()).thenReturn("12");
 		when(f12.getName()).thenReturn("name12");
 
@@ -50,8 +50,8 @@ public class DataSetTableTest
 		when(db.find(Protocol.class, new QueryRule(Protocol.ID, Operator.IN, Arrays.asList(1, 2)))).thenReturn(
 				Arrays.asList(p1, p2));
 		when(
-				db.find(ObservableFeature.class,
-						new QueryRule(ObservableFeature.ID, Operator.IN, Arrays.asList(10, 11, 12)))).thenReturn(
+				db.find(Feature.class,
+						new QueryRule(Feature.ID, Operator.IN, Arrays.asList(10, 11, 12)))).thenReturn(
 				Arrays.asList(f10, f11, f12));
 
 		List<Field> cols = new DataSetTable(dataSet, db).getAllColumns();

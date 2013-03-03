@@ -59,8 +59,13 @@ public class SimpleTree<T extends Tree> implements Tree<T>, Serializable
 		}
 		if (parent != null) try
 		{
-			if (parent.get(name) != null) throw new IllegalArgumentException("elements already exists with name = '"
-					+ name + "'");
+			
+			if (parent.get(name) != null){
+			//	System.out.println("name " + name);
+			//	System.out.println("parent.get(name) " + parent.get(name));
+				
+				throw new IllegalArgumentException("elements already exists with name = '" + name + "'");
+		}
 		}
 		catch (NullPointerException e)
 		{

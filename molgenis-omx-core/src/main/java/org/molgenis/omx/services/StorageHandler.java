@@ -13,7 +13,7 @@ import org.molgenis.framework.db.Database;
 import org.molgenis.framework.db.DatabaseException;
 import org.molgenis.framework.db.QueryRule;
 import org.molgenis.framework.db.QueryRule.Operator;
-import org.molgenis.omx.core.RuntimeProperty;
+import org.molgenis.omx.system.RuntimeProperty;
 import org.molgenis.util.DetectOS;
 
 public class StorageHandler
@@ -66,7 +66,7 @@ public class StorageHandler
 				report.setFolderExists(storageDir.exists());
 				report.setFolderHasContent(folderHasContent(storageDir));
 				// check if the path has already been validated
-				if (validRp.getValue().equals("true"))
+				if (validRp.getPropertyValue().equals("true"))
 				{
 					report.setVerified(true);
 				}
@@ -191,13 +191,13 @@ public class StorageHandler
 			filesource = filesource.replace("\\", "\\\\"); // escape slashes for
 															// windows? FIXME
 															// needed??
-			rp1.setValue(filesource);
+			rp1.setPropertyValue(filesource);
 			db.add(rp1);
 
 			RuntimeProperty rp2 = new RuntimeProperty();
 			rp2.setIdentifier(RuntimeProperty.class.getSimpleName() + '-' + RUNTIME_FILE_STORAGE_VALIDATED);
 			rp2.setName(RUNTIME_FILE_STORAGE_VALIDATED);
-			rp2.setValue("false");
+			rp2.setPropertyValue("false");
 			db.add(rp2);
 		}
 		else
@@ -231,7 +231,7 @@ public class StorageHandler
 			throw new Exception("Please set file storage before validating");
 		}
 
-		File f = new File(pathRp.getValue());
+		File f = new File(pathRp.getPropertyValue());
 
 		if (!f.exists())
 		{
@@ -272,7 +272,7 @@ public class StorageHandler
 
 		RuntimeProperty rp = getRuntimeProperty(RUNTIME_FILE_STORAGE_VALIDATED, db);
 
-		rp.setValue("true");
+		rp.setPropertyValue("true");
 		db.update(rp);
 		report.setVerified(true);
 
@@ -317,12 +317,12 @@ public class StorageHandler
 			return null;
 		}
 
-		if (mustBeValid && !valid.getValue().equals("true"))
+		if (mustBeValid && !valid.getPropertyValue().equals("true"))
 		{
 			return null;
 		}
 
-		String dir = path.getValue();
+		String dir = path.getPropertyValue();
 		if (!DetectOS.getOS().startsWith("windows"))
 		{
 			// if there is no starting seperator (ie. /data)

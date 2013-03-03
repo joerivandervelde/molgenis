@@ -3,7 +3,7 @@ package org.molgenis.omx.view;
 import java.util.List;
 
 import org.molgenis.framework.ui.html.HtmlWidget;
-import org.molgenis.omx.observ.DataSet;
+import org.molgenis.omx.core.DataSet;
 
 public class DataSetChooser extends HtmlWidget
 {

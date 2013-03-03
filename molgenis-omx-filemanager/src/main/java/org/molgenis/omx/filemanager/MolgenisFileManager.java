@@ -15,8 +15,8 @@ import org.molgenis.framework.ui.FormModel;
 import org.molgenis.framework.ui.PluginModel;
 import org.molgenis.framework.ui.ScreenController;
 import org.molgenis.framework.ui.ScreenMessage;
-import org.molgenis.omx.core.MolgenisFile;
 import org.molgenis.omx.decorators.MolgenisFileHandler;
+import org.molgenis.omx.file.MolgenisFile;
 import org.molgenis.omx.services.FileUploadUtils;
 import org.molgenis.util.Entity;
 

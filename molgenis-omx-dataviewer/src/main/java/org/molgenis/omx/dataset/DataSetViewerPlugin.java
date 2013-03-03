@@ -25,8 +25,8 @@ import org.molgenis.framework.ui.ScreenController;
 import org.molgenis.framework.ui.ScreenView;
 import org.molgenis.framework.ui.html.MolgenisForm;
 import org.molgenis.model.elements.Field;
-import org.molgenis.omx.observ.DataSet;
-import org.molgenis.omx.observ.ObservableFeature;
+import org.molgenis.omx.core.DataSet;
+import org.molgenis.omx.core.Feature;
 import org.molgenis.omx.view.DataSetChooser;
 import org.molgenis.omx.view.DataSetDownloader;
 import org.molgenis.util.HandleRequestDelegationException;
@@ -114,7 +114,7 @@ public class DataSetViewerPlugin extends EasyPluginController<DataSetViewerPlugi
 		if (selectedDataSetId != null)
 		{
 			@SuppressWarnings("unchecked")
-			List<ObservableFeature> selectedObservableFeatures = (List<ObservableFeature>) session
+			List<Feature> selectedObservableFeatures = (List<Feature>) session
 					.getAttribute("selectedObservableFeatures");
 
 			createViews(db, selectedDataSetId, selectedObservableFeatures);
@@ -124,7 +124,7 @@ public class DataSetViewerPlugin extends EasyPluginController<DataSetViewerPlugi
 
 	}
 
-	private void createViews(Database db, Integer selectedDataSetId, List<ObservableFeature> selectedObservableFeatures)
+	private void createViews(Database db, Integer selectedDataSetId, List<Feature> selectedObservableFeatures)
 	{
 		try
 		{
@@ -150,11 +150,11 @@ public class DataSetViewerPlugin extends EasyPluginController<DataSetViewerPlugi
 				{
 					for (final Field field : table.getAllColumns())
 					{
-						ObservableFeature observableFeature = Iterables.find(selectedObservableFeatures,
-								new Predicate<ObservableFeature>()
+						Feature observableFeature = Iterables.find(selectedObservableFeatures,
+								new Predicate<Feature>()
 								{
 									@Override
-									public boolean apply(ObservableFeature of)
+									public boolean apply(Feature of)
 									{
 										return of.getIdentifier().equals(field.getName());
 									}

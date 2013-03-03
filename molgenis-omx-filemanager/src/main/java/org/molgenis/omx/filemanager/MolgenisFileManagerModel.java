@@ -1,6 +1,6 @@
 package org.molgenis.omx.filemanager;
 
-import org.molgenis.omx.core.MolgenisFile;
+import org.molgenis.omx.file.MolgenisFile;
 
 public class MolgenisFileManagerModel
 {

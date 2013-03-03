@@ -23,7 +23,7 @@ import org.molgenis.io.TableReader;
 import org.molgenis.io.TableReaderFactory;
 import org.molgenis.io.TupleReader;
 import org.molgenis.io.processor.LowerCaseProcessor;
-import org.molgenis.omx.observ.DataSet;
+import org.molgenis.omx.core.DataSet;
 import org.molgenis.util.tuple.Tuple;
 
 public class UploadWizardPage extends WizardPage

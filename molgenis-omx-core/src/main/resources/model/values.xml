@@ -34,36 +34,36 @@
 
 		</entity>
 		
-		<entity name="TextValue" implements="Value">
+		<entity name="TextValue" extends="Value">
 			<description>An observation for which the value is a string of text. This is the most basic and broad flavour of Value; it can contain large pieces of 'untyped' data.
 					TBD: Typically has no PermittedValue rules associated.
 			</description>
 			<field name="Value" type="text" nillable="false" />
 		</entity>
 		
-		<entity name="StringValue" implements="Value">
+		<entity name="StringValue" extends="Value">
 			<description>An observation for which the value is a string, with at most 127 characters.
 			</description>
 			<field name="Value" type="varchar" length="127"/>
 		</entity>
 
-		<entity name="DecimalValue" implements="Value">
+		<entity name="DecimalValue" extends="Value">
 			<description>An observation for which the value is a decimal number.
 			</description>
 			<field name="Value" type="decimal" />
 		</entity>
 
-		<entity name="IntegerValue" implements="Value">
+		<entity name="IntegerValue" extends="Value">
 			<description>An observation for which the value is an integer number.
 			</description>
 			<field name="Value" type="int" />
 		</entity>
 
-		<entity name="ReferenceValue" implements="Value">
+		<entity name="ReferenceValue" extends="Value">
 			<description>An observation for which the value refers to a Concept
 				in the database.
 			</description>
-			<field name="Value" type="xref" xref_entity="Concept" />
+			<field name="Value" type="xref" xref_entity="Target" />
 		</entity>
 
 

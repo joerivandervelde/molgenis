@@ -60,8 +60,8 @@ public class MolgenisUserDecorator<E extends MolgenisUser> extends MapperDecorat
 				}
 
 				MolgenisRoleGroupLink mugl = new MolgenisRoleGroupLink();
-				mugl.setIdentifier(e.getIdentifier());
-				mugl.setName(e.getName());
+//				mugl.setIdentifier(e.getIdentifier());
+//				mugl.setName(e.getName());
 				mugl.setRole_Id(e.getId());
 
 				mugl.setGroup_Id(mg.getId());

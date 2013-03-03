@@ -24,7 +24,7 @@
 			<field name="orderNr" type="int" />
 			<field name="isAutosomal" type="bool" description="Is 'yes' when number of chromosomes is equal in male and female individuals, i.e., if not a sex chromosome."/>
 			<field name="bpLength" type="int" nillable="true" description="Lenght of the chromsome in base pairs."/>
-			<field name="Species" label="Species" type="xref" xref_entity="AlternativeIdentifier"
+			<field name="Species" label="Species" type="xref" xref_entity="OntologyTerm"
 				nillable="true"
 				description="Reference to the species this
 				chromosome belongs to." />
@@ -170,7 +170,7 @@
 			<field name="Individual" type="xref" xref_entity="Individual"
 				nillable="true"
 				description="The individual from which this sample was taken." />
-			<field name="Tissue" type="xref" xref_entity="AlternativeIdentifier"
+			<field name="Tissue" type="xref" xref_entity="OntologyTerm"
 				nillable="true"
 				description="The tissue from which this sample was taken." />
 		</entity>
@@ -184,12 +184,12 @@
 				experiment.</description>
 			<field name="Subject1" type="xref" xref_entity="Individual"
 				description="The first subject" />
-			<field name="Label1" type="xref" xref_entity="AlternativeIdentifier"
+			<field name="Label1" type="xref" xref_entity="OntologyTerm"
 				nillable="true"
 				description="Which channel or Fluorescent labeling is associated with the first subject" />
 			<field name="Subject2" type="xref" xref_entity="Individual"
 				description="The second sample" />
-			<field name="Label2" type="xref" xref_entity="AlternativeIdentifier"
+			<field name="Label2" type="xref" xref_entity="OntologyTerm"
 				nillable="true"
 				description="Which channel or Fluorescent labeling is associated with the second subject" />
 		</entity>

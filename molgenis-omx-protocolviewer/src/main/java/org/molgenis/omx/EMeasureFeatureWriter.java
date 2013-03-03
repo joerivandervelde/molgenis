@@ -19,7 +19,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import org.molgenis.omx.observ.ObservableFeature;
+import org.molgenis.omx.core.Feature;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -34,7 +34,7 @@ public class EMeasureFeatureWriter implements Closeable
 		this.writer = new OutputStreamWriter(os, Charset.forName("UTF-8"));
 	}
 
-	public void writeFeatures(List<ObservableFeature> features) throws IOException
+	public void writeFeatures(List<Feature> features) throws IOException
 	{
 		StringBuilder strBuilder = new StringBuilder();
 
@@ -43,7 +43,7 @@ public class EMeasureFeatureWriter implements Closeable
 
 		if (features != null)
 		{
-			for (ObservableFeature feature : features)
+			for (Feature feature : features)
 			{
 				appendFeature(feature, strBuilder);
 			}
@@ -54,7 +54,7 @@ public class EMeasureFeatureWriter implements Closeable
 		writer.write(xmlFormatted);
 	}
 
-	private StringBuilder appendFeature(ObservableFeature m, StringBuilder strBuilder)
+	private StringBuilder appendFeature(Feature m, StringBuilder strBuilder)
 	{
 		strBuilder.append("\t<subjectOf>\n" + "\t\t<measureAttribute>");
 		String code = m.getName();

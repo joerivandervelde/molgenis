@@ -1,6 +1,5 @@
 package org.molgenis.omx.auth.service.tokenmanager;
 
-import java.util.List;
 import java.util.Map;
 
 import org.molgenis.framework.server.Token;

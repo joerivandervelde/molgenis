@@ -270,18 +270,18 @@ public class DatabaseLogin implements Login, Serializable
 		{
 			// System.out.println(">>> permission==" + permission + ", role==" +
 			// role);
-			if ("read".equals(permission.getPermission())) this.readMap.put(permission.getEntity_ClassName(),
+			if ("read".equals(permission.getPermission())) this.readMap.put(permission.getEntity_EntityClassName(),
 					Permission.read);
 			else if ("write".equals(permission.getPermission()))
 			{
-				this.readMap.put(permission.getEntity_ClassName(), Permission.read);
-				this.writeMap.put(permission.getEntity_ClassName(), Permission.write);
+				this.readMap.put(permission.getEntity_EntityClassName(), Permission.read);
+				this.writeMap.put(permission.getEntity_EntityClassName(), Permission.write);
 			}
 			else if ("own".equals(permission.getPermission()))
 			{
-				this.readMap.put(permission.getEntity_ClassName(), Permission.read);
-				this.writeMap.put(permission.getEntity_ClassName(), Permission.write);
-				this.ownMap.put(permission.getEntity_ClassName(), Permission.own);
+				this.readMap.put(permission.getEntity_EntityClassName(), Permission.read);
+				this.writeMap.put(permission.getEntity_EntityClassName(), Permission.write);
+				this.ownMap.put(permission.getEntity_EntityClassName(), Permission.own);
 			}
 		}
 	}

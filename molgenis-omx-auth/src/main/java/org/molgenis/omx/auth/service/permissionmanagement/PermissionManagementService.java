@@ -21,7 +21,7 @@ import org.molgenis.framework.db.QueryRule.Operator;
 import org.molgenis.omx.auth.MolgenisPermission;
 import org.molgenis.omx.auth.MolgenisRole;
 import org.molgenis.omx.auth.MolgenisUser;
-import org.molgenis.omx.core.MolgenisEntity;
+import org.molgenis.omx.core.SystemClass;
 
 public class PermissionManagementService
 {
@@ -354,10 +354,10 @@ public class PermissionManagementService
 	 * @throws DatabaseException
 	 * @throws ParseException
 	 */
-	public MolgenisEntity findEntity(Integer id) throws DatabaseException, ParseException
+	public SystemClass findEntity(Integer id) throws DatabaseException, ParseException
 	{
-		Query<MolgenisEntity> q = db.query(MolgenisEntity.class);
-		q.addRules(new QueryRule(MolgenisEntity.ID, Operator.EQUALS, id));
+		Query<SystemClass> q = db.query(SystemClass.class);
+		q.addRules(new QueryRule(SystemClass.ID, Operator.EQUALS, id));
 		if (!q.find().isEmpty())
 		{
 			return q.find().get(0);
@@ -393,9 +393,9 @@ public class PermissionManagementService
 	 * @throws DatabaseException
 	 * @throws ParseException
 	 */
-	public List<MolgenisEntity> findEntities() throws DatabaseException, ParseException
+	public List<SystemClass> findEntities() throws DatabaseException, ParseException
 	{
-		return db.find(MolgenisEntity.class);
+		return db.find(SystemClass.class);
 
 	}
 

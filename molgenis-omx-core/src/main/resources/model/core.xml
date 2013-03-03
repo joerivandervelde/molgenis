@@ -26,7 +26,7 @@
 			<unique fields="Name,Identifier" description="We add an extra secondary key including 'Name' so labels can be conveniently created."/>
 		</entity>
 		
-		<entity name="MolgenisClass" system="true" implements="AutoId" xref_label="EntityClassName">
+		<entity name="SystemClass" system="true" implements="AutoId" xref_label="EntityClassName">
 			<description>Referenceable catalog of this applications' menus, forms and plugins.
 			</description>
 			<field name="EntityName" description="Name of the entity" />
@@ -35,7 +35,7 @@
 			<unique fields="EntityName,EntityType" description="Name is unique within type, so e.g. there can be an entity 'Marker' and a plugin 'Marker'."/>
 		</entity>
 		
-		<entity name="EntityClass" extends="MolgenisClass">
+		<entity name="EntityClass" extends="SystemClass">
 			<description>Referenceable catalog of generated database entity class names. Includes predefined concepts, but also user defined concepts. The content of Concept is automatically filled by 'FillMeta' and should not be altered under any condition at runtime.
 			</description>
 		</entity>
@@ -60,7 +60,7 @@
 			<unique fields="Observation,Feature" description="There can be only one unique measurement at this timepoint for this particular Feature." /-->
 		</entity>
 
-		<entity name="Target" extends="Value">
+		<entity name="Target" extends="Value" implements="Identifiable">
 			<description>
 				Targets are concrete objects, typically a physical object or a collection thereof, but can also be an instance of a data type such as 'DataSet' or 'Protocol'. They are typically subjects for observation of particular features. Features that refer to a Target as their MeasuredConcept gain an immediate constraint: the measured value MUST be an XrefValue, and the value MUST be a Target or subclass thereof. Furthermore, a flag can be set on DataSet to check if the referred Targets (or a combination of multiple Targets) are unique.
 				Example: 'Protocol' extends 'Target' because every instance of 'Protocol' can be referred to in a column of data. But to explain that you're measuring 'the concept of a protocol', you should create a Concept named 'Protocol' (with possible ontological references) to explain what you mean, and refer to this Concept via Feature. 

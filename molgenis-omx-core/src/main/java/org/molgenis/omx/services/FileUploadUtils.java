@@ -7,9 +7,9 @@ import java.util.HashMap;
 
 import org.apache.commons.io.FileUtils;
 import org.molgenis.framework.db.Database;
-import org.molgenis.omx.core.MolgenisFile;
 import org.molgenis.omx.decorators.MolgenisFileHandler;
 import org.molgenis.omx.decorators.NameConvention;
+import org.molgenis.omx.file.MolgenisFile;
 import org.molgenis.util.ValueLabel;
 
 public class FileUploadUtils
@@ -32,7 +32,7 @@ public class FileUploadUtils
 		File storageForFileType = new MolgenisFileHandler(db).getStorageDirFor(mf.get__Type(), db);
 
 		// copy the file in the right place
-		String storageFileName = NameConvention.escapeFileName(mf.getName());
+		String storageFileName = NameConvention.escapeFileName(mf.getFileName());
 		File dest = new File(storageForFileType.getAbsolutePath() + File.separator + storageFileName + "."
 				+ mf.getExtension());
 		copyHelper(content, dest, skipWhenDestExists);
@@ -103,7 +103,7 @@ public class FileUploadUtils
 		MolgenisFile mfAdd = (MolgenisFile) db.getClassForName(type).newInstance();
 
 		// set name and extension
-		mfAdd.setName(split[0]);
+		mfAdd.setFileName(split[0]);
 		mfAdd.setExtension(split[1]);
 
 		// copy extra fields for this type of MolgenisFile
@@ -131,7 +131,7 @@ public class FileUploadUtils
 			File storageForFileType = new MolgenisFileHandler(db).getStorageDirFor(type, db);
 
 			// copy the file in the right place
-			String storageFileName = NameConvention.escapeFileName(mfAdd.getName());
+			String storageFileName = NameConvention.escapeFileName(mfAdd.getFileName());
 			File dest = new File(storageForFileType.getAbsolutePath() + File.separator + storageFileName + "."
 					+ mfAdd.getExtension());
 			copyHelper(content, dest, skipWhenDestExists);

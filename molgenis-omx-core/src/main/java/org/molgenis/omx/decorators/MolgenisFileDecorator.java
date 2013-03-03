@@ -5,12 +5,12 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.molgenis.omx.core.MolgenisFile;
 import org.molgenis.framework.db.DatabaseException;
 import org.molgenis.framework.db.Mapper;
 import org.molgenis.framework.db.MapperDecorator;
 import org.molgenis.framework.db.QueryRule;
 import org.molgenis.framework.db.QueryRule.Operator;
+import org.molgenis.omx.file.MolgenisFile;
 
 /**
  * Generic decorator for MOLGENIS files. These files are coupled to entities and
@@ -47,11 +47,13 @@ public class MolgenisFileDecorator<E extends MolgenisFile> extends MapperDecorat
 		// are simple on the filesystem
 		if (strict)
 		{
-			NameConvention.validateEntityNamesStrict(entities);
+			//TODO: validate file name!
+//			NameConvention.validateEntityNamesStrict(entities);
 		}
 		else
 		{
-			NameConvention.validateEntityNames(entities);
+			//TODO: validate file name!
+//			NameConvention.validateEntityNames(entities);
 		}
 
 		// Check file extensions according to regular filename rules
@@ -81,10 +83,10 @@ public class MolgenisFileDecorator<E extends MolgenisFile> extends MapperDecorat
 		List<String> newEscapedNames = new ArrayList<String>();
 		for (MolgenisFile mf : entities)
 		{
-			String escapedName = NameConvention.escapeFileName(mf.getName());
+			String escapedName = NameConvention.escapeFileName(mf.getFileName());
 			if (newEscapedNames.contains(escapedName))
 			{
-				throw new DatabaseException("File name '" + mf.getName()
+				throw new DatabaseException("File name '" + mf.getFileName()
 						+ "' within list of adds exists twice when escaped to filesafe format. ('" + escapedName + "')");
 			}
 			newEscapedNames.add(escapedName);
@@ -103,14 +105,14 @@ public class MolgenisFileDecorator<E extends MolgenisFile> extends MapperDecorat
 		List<String> existingEscapedNames = new ArrayList<String>();
 		for (MolgenisFile mf : existingMFList)
 		{
-			existingEscapedNames.add(NameConvention.escapeFileName(mf.getName()));
+			existingEscapedNames.add(NameConvention.escapeFileName(mf.getFileName()));
 		}
 		for (MolgenisFile mf : entities)
 		{
-			String newEscapedName = NameConvention.escapeFileName(mf.getName());
+			String newEscapedName = NameConvention.escapeFileName(mf.getFileName());
 			if (existingEscapedNames.contains(newEscapedName))
 			{
-				throw new DatabaseException("File name '" + mf.getName()
+				throw new DatabaseException("File name '" + mf.getFileName()
 						+ "' already exists in database when escaped to filesafe format. ('" + newEscapedName + "')");
 			}
 		}
@@ -157,15 +159,15 @@ public class MolgenisFileDecorator<E extends MolgenisFile> extends MapperDecorat
 		List<String> existingEscapedNames = new ArrayList<String>();
 		for (MolgenisFile existingMF : existingMFListMinusUpdates)
 		{
-			existingEscapedNames.add(NameConvention.escapeFileName(existingMF.getName()));
+			existingEscapedNames.add(NameConvention.escapeFileName(existingMF.getFileName()));
 		}
 		// compare this list vs. each to be updated entity
 		for (MolgenisFile mf : entities)
 		{
-			String newEscapedName = NameConvention.escapeFileName(mf.getName());
+			String newEscapedName = NameConvention.escapeFileName(mf.getFileName());
 			if (existingEscapedNames.contains(newEscapedName))
 			{
-				throw new DatabaseException("File name '" + mf.getName()
+				throw new DatabaseException("File name '" + mf.getFileName()
 						+ "' already exists or exists when escaped to filesafe format. ('" + newEscapedName + "')");
 			}
 		}
@@ -177,8 +179,8 @@ public class MolgenisFileDecorator<E extends MolgenisFile> extends MapperDecorat
 			MolgenisFile oldMF = this.getDatabase()
 					.find(MolgenisFile.class, new QueryRule("id", Operator.EQUALS, mf.getId())).get(0);
 
-			String oldFileName = NameConvention.escapeFileName(oldMF.getName());
-			String newFileName = NameConvention.escapeFileName(mf.getName());
+			String oldFileName = NameConvention.escapeFileName(oldMF.getFileName());
+			String newFileName = NameConvention.escapeFileName(mf.getFileName());
 
 			String oldExtension = oldMF.getExtension();
 			String newExtension = mf.getExtension();

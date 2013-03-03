@@ -20,8 +20,8 @@ import org.molgenis.framework.server.MolgenisContext;
 import org.molgenis.framework.server.MolgenisRequest;
 import org.molgenis.framework.server.MolgenisResponse;
 import org.molgenis.framework.server.MolgenisService;
-import org.molgenis.omx.core.MolgenisFile;
 import org.molgenis.omx.decorators.MolgenisFileHandler;
+import org.molgenis.omx.file.MolgenisFile;
 
 public class FileViewService implements MolgenisService
 {

@@ -32,7 +32,7 @@ import org.molgenis.omx.auth.ui.form.DatabaseAuthenticationForm;
 import org.molgenis.omx.auth.ui.form.ForgotForm;
 import org.molgenis.omx.auth.ui.form.UserAreaForm;
 import org.molgenis.omx.auth.vo.MolgenisUserSearchCriteriaVO;
-import org.molgenis.omx.observ.target.OntologyTerm;
+import org.molgenis.omx.core.OntologyTerm;
 import org.molgenis.util.tuple.HttpServletRequestTuple;
 
 /**

@@ -9,7 +9,7 @@ import org.molgenis.framework.db.Database;
 import org.molgenis.framework.db.DatabaseException;
 import org.molgenis.framework.db.QueryRule;
 import org.molgenis.framework.db.QueryRule.Operator;
-import org.molgenis.omx.core.MolgenisFile;
+import org.molgenis.omx.file.MolgenisFile;
 import org.molgenis.omx.services.StorageHandler;
 import org.molgenis.util.ValueLabel;
 
@@ -76,7 +76,7 @@ public class MolgenisFileHandler extends StorageHandler
 		File theFile = getFile(mf, db);
 		if (!theFile.exists())
 		{
-			throw new FileNotFoundException("No file found for name '" + mf.getName() + "'");
+			throw new FileNotFoundException("No file found for name '" + mf.getFileName() + "'");
 		}
 		// try to delete
 		System.gc(); // HACK FOR MS WINDOWS
@@ -107,10 +107,10 @@ public class MolgenisFileHandler extends StorageHandler
 	{
 		File typeStorage = getStorageDirFor(mf.get__Type(), db);
 		File dataSource = new File(typeStorage.getAbsolutePath() + File.separator
-				+ NameConvention.escapeFileName(mf.getName()) + "." + mf.getExtension());
+				+ NameConvention.escapeFileName(mf.getFileName()) + "." + mf.getExtension());
 		if (!dataSource.exists())
 		{
-			throw new FileNotFoundException("No file found for name '" + mf.getName() + "'");
+			throw new FileNotFoundException("No file found for name '" + mf.getFileName() + "'");
 		}
 		return dataSource;
 
@@ -179,14 +179,14 @@ public class MolgenisFileHandler extends StorageHandler
 			File typeStorage = getStorageDirFor(fileType, db);
 			// make file pointer
 			File theFile = new File(typeStorage.getAbsolutePath() + File.separator
-					+ NameConvention.escapeFileName(mf.getName()));
+					+ NameConvention.escapeFileName(mf.getFileName()));
 			if (theFile.exists())
 			{
 				// return if file pointer denotes a real file
 				return fileType;
 			}
 		}
-		throw new FileNotFoundException("No file found for name '" + mf.getName() + "'");
+		throw new FileNotFoundException("No file found for name '" + mf.getFileName() + "'");
 	}
 
 	public class TypeUnknownException extends Exception

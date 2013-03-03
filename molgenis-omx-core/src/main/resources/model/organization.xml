@@ -35,12 +35,12 @@
 				classes. In METABASE this is
 				assumed there is one panel per study.
 			</description>
-			<field name="PanelType" type="xref" xref_entity="AlternativeIdentifier"
+			<field name="PanelType" type="xref" xref_entity="OntologyTerm"
 				nillable="true"
 				description="Indicate the type of Panel (example: Sample panel, AssayedPanel, Natural=wild type, Parental=parents of a cross, F1=First generation of cross, RCC=Recombinant congenic, CSS=chromosome substitution)" />
 			<field name="NumberOfIndividuals" type="int" nillable="true" />
 			<field name="Species" type="xref" nillable="true"
-				xref_entity="AlternativeIdentifier"
+				xref_entity="OntologyTerm"
 				description="The species this panel is an instance of, part of or extracted from." />
 			<field name="Individuals" type="mref" xref_entity="Individual"
 				nillable="true" description="The list of individuals in this panel" />
@@ -136,14 +136,14 @@
 				nillable="true" />
 			<field name="DOI" label="Publication DOI" unique="true"
 				nillable="true" />
-			<field name="ontologyTerms" type="mref" xref_entity="AlternativeIdentifier"
+			<field name="ontologyTerms" type="mref" xref_entity="OntologyTerm"
 				nillable="true" description="ontology terms such as MeSH" />
 			<field name="authorList" type="text"
 				description="The names of the authors of the publication" nillable="true" />
 			<field name="Title" label="Publication Title" description="The title of the Publication" />
 			<field name="Description" type="text" />
 			<field name="Status" label="Publication Status" description="The status of the Publication"
-				type="xref" xref_entity="AlternativeIdentifier" nillable="true" />
+				type="xref" xref_entity="OntologyTerm" nillable="true" />
 
 			<!-- what should be xref_label??? -->
 

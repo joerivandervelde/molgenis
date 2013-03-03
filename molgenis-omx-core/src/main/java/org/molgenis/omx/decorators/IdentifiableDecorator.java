@@ -2,10 +2,10 @@ package org.molgenis.omx.decorators;
 
 import java.util.List;
 
-import org.molgenis.omx.core.Identifiable;
 import org.molgenis.framework.db.DatabaseException;
 import org.molgenis.framework.db.Mapper;
 import org.molgenis.framework.db.MapperDecorator;
+import org.molgenis.omx.core.Identifiable;
 
 public class IdentifiableDecorator<E extends Identifiable> extends MapperDecorator<E>
 {
