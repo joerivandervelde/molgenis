@@ -34,9 +34,9 @@ import com.google.gson.Gson;
 /**
  * Convert a transformed LifeLines data dictionary to Observ-OMX format
  */
-public class LifeLinesDataDictionaryToOmxConvertor
+public class LifeLinesDataDictionarytoOMXConvertor
 {
-	private static final Logger logger = Logger.getLogger(LifeLinesDataDictionaryToOmxConvertor.class);
+	private static final Logger logger = Logger.getLogger(LifeLinesDataDictionarytoOMXConvertor.class);
 
 	private static final String COL_INCLUDE = "ja/nee";
 	private static final String COL_GROUP = "Group";
@@ -106,7 +106,7 @@ public class LifeLinesDataDictionaryToOmxConvertor
 
 	private final Gson gson;
 
-	public LifeLinesDataDictionaryToOmxConvertor()
+	public LifeLinesDataDictionarytoOMXConvertor()
 	{
 		gson = new Gson();
 	}
@@ -539,7 +539,7 @@ public class LifeLinesDataDictionaryToOmxConvertor
 
 		if (args.length < 2 || args.length > 3)
 		{
-			System.err.println("usage: java " + LifeLinesDataDictionaryToOmxConvertor.class.getSimpleName()
+			System.err.println("usage: java " + LifeLinesDataDictionarytoOMXConvertor.class.getSimpleName()
 					+ " inputfile outputfile <checklistfile>");
 			return;
 		}
@@ -552,7 +552,7 @@ public class LifeLinesDataDictionaryToOmxConvertor
 		FileOutputStream fos = new FileOutputStream(outFile);
 		FileInputStream checklistFis = args.length == 3 ? new FileInputStream(new File(args[2])) : null;
 
-		new LifeLinesDataDictionaryToOmxConvertor().convert(fis, fos, checklistFis);
+		new LifeLinesDataDictionarytoOMXConvertor().convert(fis, fos, checklistFis);
 	}
 
 }

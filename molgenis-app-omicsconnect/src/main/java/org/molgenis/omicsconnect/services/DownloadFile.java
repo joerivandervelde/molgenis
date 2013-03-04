@@ -12,7 +12,6 @@ import java.text.ParseException;
 import java.util.List;
 
 import org.apache.log4j.Logger;
-import org.molgenis.omx.core.MolgenisFile;
 import org.molgenis.framework.db.Database;
 import org.molgenis.framework.db.DatabaseException;
 import org.molgenis.framework.db.QueryRule;
@@ -22,6 +21,7 @@ import org.molgenis.framework.server.MolgenisRequest;
 import org.molgenis.framework.server.MolgenisResponse;
 import org.molgenis.framework.server.MolgenisService;
 import org.molgenis.omx.decorators.MolgenisFileHandler;
+import org.molgenis.omx.file.MolgenisFile;
 
 public class DownloadFile implements MolgenisService
 {
@@ -157,7 +157,7 @@ public class DownloadFile implements MolgenisService
 				response.getResponse().setContentType(mc.getServletContext().getMimeType(mf.getExtension()));
 				response.getResponse().setContentLength((int) file.length());
 				response.getResponse().setHeader("Content-disposition",
-						"attachment; filename=\"" + mf.getName() + "." + mf.getExtension() + "\"");
+						"attachment; filename=\"" + mf.getFileName() + "." + mf.getExtension() + "\"");
 				// response.setStatus(arg0)
 				byte[] buffer = new byte[(int) file.length()];
 				while (in.available() != 0)

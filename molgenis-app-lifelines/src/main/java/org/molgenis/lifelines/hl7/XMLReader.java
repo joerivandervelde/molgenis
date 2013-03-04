@@ -12,8 +12,8 @@ import org.molgenis.framework.db.Database.DatabaseAction;
 import org.molgenis.framework.db.DatabaseException;
 import org.molgenis.framework.db.QueryRule;
 import org.molgenis.framework.db.QueryRule.Operator;
-import org.molgenis.omx.observ.ObservableFeature;
-import org.molgenis.omx.observ.Protocol;
+import org.molgenis.omx.core.Feature;
+import org.molgenis.omx.core.Protocol;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -128,7 +128,7 @@ public class XMLReader
 
 		// p.setInvestigation(inv); // TODO can we delete this?
 
-		List<ObservableFeature> listOfObservableFeatures = new ArrayList<ObservableFeature>();
+		List<Feature> listOfObservableFeatures = new ArrayList<Feature>();
 
 		for (Node eachNode : measurementNode)
 		{
@@ -139,11 +139,11 @@ public class XMLReader
 
 			List<String> dataType = getAttributeFromEntity(eachNode, "value", "xsi:type", 1);
 
-			ObservableFeature m = new ObservableFeature();
+			Feature m = new Feature();
 
-			m.setName(nameOfObservableFeature.get(0));
+			m.setIdentifier(nameOfObservableFeature.get(0));
 
-			m.setDescription(description.get(0));
+			m.setName(description.get(0));
 
 			if (dataType.get(0).equals("INT"))
 			{
@@ -168,14 +168,14 @@ public class XMLReader
 
 		}
 
-		db.update(listOfObservableFeatures, DatabaseAction.ADD_IGNORE_EXISTING, ObservableFeature.NAME);
+		db.update(listOfObservableFeatures, DatabaseAction.ADD_IGNORE_EXISTING, Feature.NAME);
 
-		listOfObservableFeatures = db.find(ObservableFeature.class, new QueryRule(ObservableFeature.NAME, Operator.IN,
+		listOfObservableFeatures = db.find(Feature.class, new QueryRule(Feature.NAME, Operator.IN,
 				listOfObservableFeatureName));
 
 		List<Integer> listOfObservableFeatureId = new ArrayList<Integer>();
 
-		for (ObservableFeature m : listOfObservableFeatures)
+		for (Feature m : listOfObservableFeatures)
 		{
 			listOfObservableFeatureId.add(m.getId());
 		}

@@ -1,11 +1,13 @@
 package org.molgenis.lifelines.hl7;
 
-import org.molgenis.omx.observ.ObservableFeature;
-import org.molgenis.omx.observ.ObservationSet;
-import org.molgenis.omx.observ.ObservedValue;
 import org.molgenis.hl7.COCTMT050000UV01Patient;
 import org.molgenis.hl7.II;
 import org.molgenis.hl7.REPCMT000100UV01RecordTarget;
+import org.molgenis.omx.core.Feature;
+import org.molgenis.omx.core.Observation;
+import org.molgenis.omx.core.ObservedValue;
+import org.molgenis.omx.core.Value;
+import org.molgenis.omx.values.TextValue;
 
 public class HL7RecordTargetConvertor
 {
@@ -15,12 +17,12 @@ public class HL7RecordTargetConvertor
 	{
 	}
 
-	public static ObservableFeature toObservableFeature(REPCMT000100UV01RecordTarget recordTarget)
+	public static Feature toObservableFeature(REPCMT000100UV01RecordTarget recordTarget)
 	{
 		COCTMT050000UV01Patient patient = recordTarget.getPatient().getValue();
 		II id = patient.getId().iterator().next();
 
-		ObservableFeature feature = new ObservableFeature();
+		Feature feature = new Feature();
 		feature.setIdentifier(id.getRoot());
 		feature.setName(FEATURE_NAME);
 		return feature;
@@ -33,16 +35,20 @@ public class HL7RecordTargetConvertor
 		return id.getRoot();
 	}
 
-	public static ObservedValue toObservedValue(REPCMT000100UV01RecordTarget recordTarget, ObservableFeature feature,
-			ObservationSet observationSet)
+	public static ObservedValue toObservedValue(REPCMT000100UV01RecordTarget recordTarget, Feature feature,
+			Observation observationSet)
 	{
 		COCTMT050000UV01Patient patient = recordTarget.getPatient().getValue();
 		II id = patient.getId().iterator().next();
 
 		ObservedValue value = new ObservedValue();
 		value.setFeature(feature);
-		value.setObservationSet(observationSet);
-		value.setValue(id.getExtension());
+		value.setObservation(observationSet);
+		//FIXME: support other types than string!
+		TextValue sv = new TextValue();
+		sv.setValue(id.getExtension());
+		//FIXME: add refenced value to database here?!?
+		value.setValue(sv);
 		return value;
 	}
 }

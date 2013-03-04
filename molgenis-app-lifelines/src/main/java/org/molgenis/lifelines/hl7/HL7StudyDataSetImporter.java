@@ -20,12 +20,12 @@ import org.molgenis.hl7.REPCMT000100UV01Organizer;
 import org.molgenis.hl7.REPCMT000100UV01RecordTarget;
 import org.molgenis.hl7.REPCMT000400UV01ActCategory;
 import org.molgenis.hl7.REPCMT000400UV01Component4;
-import org.molgenis.omx.observ.DataSet;
-import org.molgenis.omx.observ.ObservableFeature;
-import org.molgenis.omx.observ.ObservationSet;
-import org.molgenis.omx.observ.ObservedValue;
-import org.molgenis.omx.observ.Protocol;
-import org.molgenis.omx.observ.target.OntologyTerm;
+import org.molgenis.omx.core.DataSet;
+import org.molgenis.omx.core.Feature;
+import org.molgenis.omx.core.Observation;
+import org.molgenis.omx.core.ObservedValue;
+import org.molgenis.omx.core.OntologyTerm;
+import org.molgenis.omx.core.Protocol;
 
 import app.JpaDatabase;
 
@@ -51,9 +51,9 @@ public class HL7StudyDataSetImporter
 		REPCMT000400UV01ActCategory actCategory = JAXB.unmarshal(xmlStream, REPCMT000400UV01ActCategory.class);
 
 		Map<String, OntologyTerm> ontologyTerms = new HashMap<String, OntologyTerm>();
-		Map<String, ObservableFeature> features = new LinkedHashMap<String, ObservableFeature>();
+		Map<String, Feature> features = new LinkedHashMap<String,Feature>();
 		List<ObservedValue> values = new ArrayList<ObservedValue>();
-		List<ObservationSet> observationSets = new ArrayList<ObservationSet>();
+		List<Observation> observationSets = new ArrayList<Observation>();
 
 		DataSet dataSet = new DataSet();
 		dataSet.setIdentifier(DataSet.class.getSimpleName());

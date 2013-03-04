@@ -9,16 +9,15 @@ import org.molgenis.framework.db.DatabaseException;
 import org.molgenis.framework.db.Query;
 import org.molgenis.framework.db.QueryRule;
 import org.molgenis.framework.db.QueryRule.Operator;
-import org.molgenis.omx.observ.Category;
-import org.molgenis.omx.observ.DataSet;
-import org.molgenis.omx.observ.ObservableFeature;
-import org.molgenis.omx.observ.Protocol;
-import org.molgenis.omx.observ.target.Ontology;
-import org.molgenis.omx.observ.target.OntologyTerm;
 import org.molgenis.lifelines.hl7.lra.HL7ObservationLRA;
 import org.molgenis.lifelines.hl7.lra.HL7OrganizerLRA;
 import org.molgenis.lifelines.hl7.lra.HL7ValueSetAnswerLRA;
 import org.molgenis.lifelines.hl7.lra.HL7ValueSetLRA;
+import org.molgenis.omx.core.DataSet;
+import org.molgenis.omx.core.Feature;
+import org.molgenis.omx.core.OntologyTerm;
+import org.molgenis.omx.core.Protocol;
+import org.molgenis.omx.values.PermittedValue;
 
 public class HL7OmicsConnectImporter
 {
@@ -113,10 +112,10 @@ public class HL7OmicsConnectImporter
 
 	}
 
-	private void makeCategory(Database db, ObservableFeature obsFeature, String categoryName, String codeValue,
+	private void makeCategory(Database db, Feature obsFeature, String categoryName, String codeValue,
 			int teller) throws DatabaseException
 	{
-		Category c = new Category();
+		PermittedValue c = new PermittedValue();
 		c.setName(categoryName);
 		c.setIdentifier(obsFeature.getName() + "_" + categoryName + "_" + teller);
 		c.setValueCode(codeValue);
@@ -220,7 +219,7 @@ public class HL7OmicsConnectImporter
 				for (HL7ObservationLRA meas : organizer.measurements)
 				{
 
-					ObservableFeature feat = checkFeatures(db, dataset, meas, subProtocol);
+					Feature feat = checkFeatures(db, dataset, meas, subProtocol);
 
 					listProtocolFeatures.add(feat.getIdentifier());
 					listProtocolFeaturesId.add(feat.getId());
@@ -263,7 +262,7 @@ public class HL7OmicsConnectImporter
 
 			db.add(uniqueProtocol);
 
-			protocol.setSubprotocols_Identifier(uniqueListOfProtocolName);
+			protocol.setSubProtocols_Identifier(uniqueListOfProtocolName);
 
 			db.update(protocol);
 

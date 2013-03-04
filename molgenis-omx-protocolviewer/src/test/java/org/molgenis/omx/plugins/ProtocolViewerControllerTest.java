@@ -14,10 +14,10 @@ import org.molgenis.framework.db.QueryRule;
 import org.molgenis.framework.db.QueryRule.Operator;
 import org.molgenis.framework.server.MolgenisRequest;
 import org.molgenis.framework.ui.ScreenController;
-import org.molgenis.omx.observ.Category;
-import org.molgenis.omx.observ.DataSet;
-import org.molgenis.omx.observ.ObservableFeature;
-import org.molgenis.omx.observ.Protocol;
+import org.molgenis.omx.core.DataSet;
+import org.molgenis.omx.core.Feature;
+import org.molgenis.omx.core.Protocol;
+import org.molgenis.omx.values.PermittedValue;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.testng.annotations.Test;
@@ -34,18 +34,18 @@ public class ProtocolViewerControllerTest
 		DataSet dataSet = new DataSet();
 		dataSet.setId(1);
 		dataSet.setName("dataset");
-		dataSet.setProtocolUsed(2);
+		dataSet.setProtocol(2);
 
 		Protocol protocol = new Protocol();
 		protocol.setId(2);
 		protocol.setName("protocol");
 		protocol.setFeatures_Id(Arrays.asList(3, 4));
 
-		ObservableFeature feature1 = new ObservableFeature();
+		Feature feature1 = new Feature();
 		feature1.setId(3);
 		feature1.setName("feature1");
 
-		ObservableFeature feature2 = new ObservableFeature();
+		Feature feature2 = new Feature();
 		feature2.setId(4);
 		feature2.setName("feature2");
 
@@ -53,7 +53,7 @@ public class ProtocolViewerControllerTest
 				Collections.singletonList(dataSet));
 		when(db.find(Protocol.class, new QueryRule(Protocol.ID, Operator.EQUALS, 2))).thenReturn(
 				Collections.singletonList(protocol));
-		when(db.find(ObservableFeature.class, new QueryRule(ObservableFeature.ID, Operator.IN, Arrays.asList(3, 4))))
+		when(db.find(Feature.class, new QueryRule(Feature.ID, Operator.IN, Arrays.asList(3, 4))))
 				.thenReturn(Arrays.asList(feature1, feature2));
 
 		ProtocolViewerController controller = new ProtocolViewerController("test", mock(ScreenController.class));
@@ -119,27 +119,27 @@ public class ProtocolViewerControllerTest
 		// mock db
 		Database db = mock(Database.class);
 
-		ObservableFeature feature = new ObservableFeature();
+		Feature feature = new Feature();
 		feature.setId(1);
 		feature.setName("feature");
 		feature.setIdentifier("featureid1");
 
-		Category category1 = new Category();
+		PermittedValue category1 = new PermittedValue();
 		category1.setId(2);
-		category1.setValueCode("code1");
-		category1.setName("label1");
+		category1.setAllowedValue("code1");
+		category1.setValueLabel("label1");
 		category1.setDescription("description1");
 
-		Category category2 = new Category();
+		PermittedValue category2 = new PermittedValue();
 		category2.setId(2);
-		category2.setValueCode("code2");
-		category2.setName("label2");
+		category2.setAllowedValue("code2");
+		category2.setValueLabel("label2");
 		category2.setDescription("description2");
 
-		when(db.find(ObservableFeature.class, new QueryRule(ObservableFeature.ID, Operator.EQUALS, 1))).thenReturn(
+		when(db.find(Feature.class, new QueryRule(Feature.ID, Operator.EQUALS, 1))).thenReturn(
 				Collections.singletonList(feature));
 		when(
-				db.find(Category.class, new QueryRule(Category.OBSERVABLEFEATURE_IDENTIFIER, Operator.EQUALS,
+				db.find(PermittedValue.class, new QueryRule(PermittedValue.FEATURE_IDENTIFIER, Operator.EQUALS,
 						"featureid1"))).thenReturn(Arrays.asList(category1, category2));
 
 		ProtocolViewerController controller = new ProtocolViewerController("test", mock(ScreenController.class));
@@ -170,11 +170,11 @@ public class ProtocolViewerControllerTest
 		// mock db
 		Database db = mock(Database.class);
 
-		ObservableFeature feature = new ObservableFeature();
+		Feature feature = new Feature();
 		feature.setId(1);
 		feature.setName("feature");
 
-		when(db.find(ObservableFeature.class, new QueryRule(ObservableFeature.ID, Operator.EQUALS, 1))).thenReturn(
+		when(db.find(Feature.class, new QueryRule(Feature.ID, Operator.EQUALS, 1))).thenReturn(
 				Collections.singletonList(feature));
 
 		ProtocolViewerController controller = new ProtocolViewerController("test", mock(ScreenController.class));
@@ -208,29 +208,29 @@ public class ProtocolViewerControllerTest
 		DataSet dataSet = new DataSet();
 		dataSet.setId(1);
 		dataSet.setName("dataset");
-		dataSet.setProtocolUsed_Identifier("protocol1");
+		dataSet.setProtocol_Identifier("protocol1");
 
-		ObservableFeature feature1 = new ObservableFeature();
+		Feature feature1 = new Feature();
 		feature1.setId(1);
 		feature1.setName("feature1");
 		feature1.setIdentifier("featureid1");
-		feature1.setDescription("this is feature1");
+		feature1.setName("this is feature1");
 
-		ObservableFeature feature2 = new ObservableFeature();
+		Feature feature2 = new Feature();
 		feature2.setId(2);
 		feature2.setName("feature2");
 		feature2.setIdentifier("featureid2");
-		feature2.setDescription("this is feature2");
+		feature2.setName("this is feature2");
 
-		ObservableFeature feature3 = new ObservableFeature();
+		Feature feature3 = new Feature();
 		feature3.setId(3);
 		feature3.setName("feature3");
 		feature3.setIdentifier("featureid3");
-		feature3.setDescription("this is feature3");
+		feature3.setName("this is feature3");
 
 		when(db.find(DataSet.class, new QueryRule(DataSet.ID, Operator.EQUALS, 1))).thenReturn(
 				Collections.singletonList(dataSet));
-		when(db.find(ObservableFeature.class, new QueryRule(ObservableFeature.ID, Operator.IN, Arrays.asList(1, 2, 3))))
+		when(db.find(Feature.class, new QueryRule(Feature.ID, Operator.IN, Arrays.asList(1, 2, 3))))
 				.thenReturn(Arrays.asList(feature1, feature2, feature3));
 
 		ProtocolViewerController controller = new ProtocolViewerController("test", mock(ScreenController.class));
@@ -261,27 +261,27 @@ public class ProtocolViewerControllerTest
 		dataSet.setId(1);
 		dataSet.setName("dataset");
 
-		ObservableFeature feature1 = new ObservableFeature();
+		Feature feature1 = new Feature();
 		feature1.setId(1);
-		feature1.setName("feature1");
+	//	feature1.setName("feature1");
 		feature1.setIdentifier("featureid1");
-		feature1.setDescription("this is feature1");
+		feature1.setName("this is feature1");
 
-		ObservableFeature feature2 = new ObservableFeature();
+		Feature feature2 = new Feature();
 		feature2.setId(2);
-		feature2.setName("feature2");
+	//	feature2.setName("feature2");
 		feature2.setIdentifier("featureid2");
-		feature2.setDescription("this is feature2");
+		feature2.setName("this is feature2");
 
-		ObservableFeature feature3 = new ObservableFeature();
+		Feature feature3 = new Feature();
 		feature3.setId(3);
-		feature3.setName("feature3");
+	// 	feature3.setName("feature3");
 		feature3.setIdentifier("featureid3");
-		feature3.setDescription("this is feature3");
+		feature3.setName("this is feature3");
 
 		when(db.find(DataSet.class, new QueryRule(DataSet.ID, Operator.EQUALS, 1))).thenReturn(
 				Collections.singletonList(dataSet));
-		when(db.find(ObservableFeature.class, new QueryRule(ObservableFeature.ID, Operator.IN, Arrays.asList(1, 2, 3))))
+		when(db.find(Feature.class, new QueryRule(Feature.ID, Operator.IN, Arrays.asList(1, 2, 3))))
 				.thenReturn(Arrays.asList(feature1, feature2, feature3));
 
 		ProtocolViewerController controller = new ProtocolViewerController("test", mock(ScreenController.class));

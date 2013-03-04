@@ -11,7 +11,8 @@ import org.molgenis.omx.auth.MolgenisGroup;
 import org.molgenis.omx.auth.MolgenisPermission;
 import org.molgenis.omx.auth.MolgenisRoleGroupLink;
 import org.molgenis.omx.auth.MolgenisUser;
-import org.molgenis.omx.core.MolgenisEntity;
+import org.molgenis.omx.core.EntityClass;
+import org.molgenis.omx.core.SystemClass;
 </#if>
 
 import org.molgenis.framework.db.Database;
@@ -124,26 +125,26 @@ public class FillMetadata {
 
 		MolgenisRoleGroupLink mrgl1 = new MolgenisRoleGroupLink();
 		mrgl1.setGroup_Id(group1.getId());
-		mrgl1.setIdentifier(group1.getIdentifier());
-		mrgl1.setName(group1.getName());
+//		mrgl1.setIdentifier(group1.getIdentifier());
+//		mrgl1.setName(group1.getName());
 		mrgl1.setRole(user1.getId());
 
 		MolgenisRoleGroupLink mrgl2 = new MolgenisRoleGroupLink();
 		mrgl2.setGroup_Id(group2.getId());
-		mrgl2.setIdentifier(group2.getIdentifier());
-		mrgl2.setName(group2.getName());
+//		mrgl2.setIdentifier(group2.getIdentifier());
+//		mrgl2.setName(group2.getName());
 		mrgl2.setRole(user1.getId());		
 
 		MolgenisRoleGroupLink mrgl3 = new MolgenisRoleGroupLink();
 		mrgl3.setGroup_Id(group1.getId());
-		mrgl3.setIdentifier("mrgl3");
-		mrgl3.setName(group1.getName());
+//		mrgl3.setIdentifier("mrgl3");
+//		mrgl3.setName(group1.getName());
 		mrgl3.setRole(user2.getId());
 
 		MolgenisRoleGroupLink mrgl4 = new MolgenisRoleGroupLink();
 		mrgl4.setGroup_Id(group2.getId());
-		mrgl4.setIdentifier("mrgl4");
-		mrgl4.setName(group2.getName());
+//		mrgl4.setIdentifier("mrgl4");
+//		mrgl4.setName(group2.getName());
 		mrgl4.setRole(user2.getId());		
 		
 		db.add(mrgl1);
@@ -152,11 +153,11 @@ public class FillMetadata {
 		db.add(mrgl4);
 		
 		{
-			List<MolgenisEntity> entites = createEntities(ENTITY_VALUES);
+			List<EntityClass> entites = createEntities(ENTITY_VALUES);
 			db.add(entites);
 		}
 		{
-			List<MolgenisEntity> entites = createEntities(UI_VALUES);
+			List<SystemClass> entites = createUIEntities(UI_VALUES);
 			db.add(entites);
 		}
 
@@ -166,7 +167,7 @@ public class FillMetadata {
 		<#if screen.getType() == "FORM">
 		{
 			MolgenisGroup role = MolgenisGroup.findByName(db, "<#if screen.getGroup()?exists>${screen.getGroup()}<#else>${screen.getGroupRead()}</#if>");	
-			MolgenisEntity entity = db.find(MolgenisEntity.class, new QueryRule("name", Operator.EQUALS, "${screen.getName()}${screen.getType()?lower_case?cap_first}Controller")).get(0);
+			SystemClass entity = db.find(SystemClass.class, new QueryRule(SystemClass.ENTITYNAME, Operator.EQUALS, "${screen.getName()}${screen.getType()?lower_case?cap_first}Controller")).get(0);
 			
 			MolgenisPermission mp = new MolgenisPermission();
 			mp.setRole(role.getId());
@@ -177,9 +178,9 @@ public class FillMetadata {
 			db.add(mp);
 		}		
 		{
-			MolgenisEntity id = db.find(MolgenisEntity.class, new QueryRule("className", Operator.EQUALS, "${screen.getEntity().namespace}.${screen.getEntity().name}")).get(0);
+			SystemClass id = db.find(SystemClass.class, new QueryRule(SystemClass.ENTITYCLASSNAME, Operator.EQUALS, "${screen.getEntity().namespace}.${screen.getEntity().name}")).get(0);
 			MolgenisGroup role = MolgenisGroup.findByName(db, "<#if screen.getGroup()?exists>${screen.getGroup()}<#else>${screen.getGroupRead()}</#if>");
-			MolgenisEntity entity = db.find(MolgenisEntity.class, new QueryRule("id", Operator.EQUALS, id.getId())).get(0);
+			SystemClass entity = db.find(SystemClass.class, new QueryRule(SystemClass.ID, Operator.EQUALS, id.getId())).get(0);
 			
 			MolgenisPermission mp = new MolgenisPermission();
 			mp.setRole(role.getId());
@@ -192,7 +193,7 @@ public class FillMetadata {
 		<#else>
 		{
 			MolgenisGroup role = MolgenisGroup.findByName(db,"<#if screen.getGroup()?exists>${screen.getGroup()}<#else>${screen.getGroupRead()}</#if>");		
-			MolgenisEntity entity = db.find(MolgenisEntity.class, new QueryRule("name", Operator.EQUALS, "${screen.getName()}${screen.getType()?lower_case?cap_first}")).get(0);
+			SystemClass entity = db.find(SystemClass.class, new QueryRule(SystemClass.ENTITYNAME, Operator.EQUALS, "${screen.getName()}${screen.getType()?lower_case?cap_first}")).get(0);
 			
 			MolgenisPermission mp = new MolgenisPermission();
 			mp.setRole(role.getId());
@@ -207,7 +208,7 @@ public class FillMetadata {
 </#list>
 		{
 			//INSERT INTO MolgenisPermission (role_, entity, permission) SELECT 3, id, 'read' FROM MolgenisEntity WHERE MolgenisEntity.name = 'UserLoginPlugin';
-			MolgenisEntity insertEntities = db.find(MolgenisEntity.class, new QueryRule("name", Operator.EQUALS, loginPluginName)).get(0);		
+			SystemClass insertEntities = db.find(SystemClass.class, new QueryRule(SystemClass.ENTITYNAME, Operator.EQUALS, loginPluginName)).get(0);		
 			MolgenisPermission mp = new MolgenisPermission();
 			mp.setRole(user2.getId());
 			mp.setName(user2.getName());
@@ -224,13 +225,25 @@ public class FillMetadata {
 		logger.info("fillMetadata end");
 	}
 	
-	public static List<MolgenisEntity> createEntities(String[][] entityValues) {
-		List<MolgenisEntity> result = new ArrayList<MolgenisEntity>(entityValues.length);
+	public static List<EntityClass> createEntities(String[][] entityValues) {
+		List<EntityClass> result = new ArrayList<EntityClass>(entityValues.length);
 		for(String[] values : entityValues) {
-			MolgenisEntity entity = new MolgenisEntity();
-			entity.setName(values[0]);
-			entity.setType(values[1]);
-			entity.setClassName(values[2]);
+			EntityClass entity = new EntityClass();
+			entity.setEntityName(values[0]);
+			entity.setEntityType(values[1]);
+			entity.setEntityClassName(values[2]);
+			result.add(entity);      
+		}		
+		return result;		
+	}
+	
+	public static List<SystemClass> createUIEntities(String[][] entityValues) {
+		List<SystemClass> result = new ArrayList<SystemClass>(entityValues.length);
+		for(String[] values : entityValues) {
+			SystemClass entity = new SystemClass();
+			entity.setEntityName(values[0]);
+			entity.setEntityType(values[1]);
+			entity.setEntityClassName(values[2]);
 			result.add(entity);      
 		}		
 		return result;		

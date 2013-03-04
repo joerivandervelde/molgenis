@@ -1,8 +1,8 @@
 package org.molgenis.lifelines.hl7;
 
-import org.molgenis.omx.observ.Protocol;
 import org.molgenis.hl7.CD;
 import org.molgenis.hl7.REPCMT000100UV01Organizer;
+import org.molgenis.omx.core.Protocol;
 
 public class HL7OrganizerConvertor
 {

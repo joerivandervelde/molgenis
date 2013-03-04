@@ -60,7 +60,7 @@
 			<unique fields="Observation,Feature" description="There can be only one unique measurement at this timepoint for this particular Feature." /-->
 		</entity>
 
-		<entity name="Target" extends="Value" implements="Identifiable">
+		<entity name="Target" extends="Value" implements="Identifiable" xref_label="Identifier">
 			<description>
 				Targets are concrete objects, typically a physical object or a collection thereof, but can also be an instance of a data type such as 'DataSet' or 'Protocol'. They are typically subjects for observation of particular features. Features that refer to a Target as their MeasuredConcept gain an immediate constraint: the measured value MUST be an XrefValue, and the value MUST be a Target or subclass thereof. Furthermore, a flag can be set on DataSet to check if the referred Targets (or a combination of multiple Targets) are unique.
 				Example: 'Protocol' extends 'Target' because every instance of 'Protocol' can be referred to in a column of data. But to explain that you're measuring 'the concept of a protocol', you should create a Concept named 'Protocol' (with possible ontological references) to explain what you mean, and refer to this Concept via Feature. 

@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.molgenis.omx.observ.ObservableFeature;
+import org.molgenis.omx.core.Feature;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -27,19 +27,19 @@ public class EMeasureFeatureWriterTest
 		EMeasureFeatureWriter featureWriter = new EMeasureFeatureWriter(bos);
 		try
 		{
-			List<ObservableFeature> observableFeatures = new ArrayList<ObservableFeature>();
-			ObservableFeature observableFeature1 = new ObservableFeature();
-			observableFeature1.setName("feature1");
-			observableFeature1.setDescription("this is feature1");
-			observableFeature1.setDataType("boolean");
-			ObservableFeature observableFeature2 = new ObservableFeature();
-			observableFeature2.setName("feature2");
-			observableFeature2.setDescription("this is feature2");
-			observableFeature2.setDataType("string");
-			observableFeatures.add(observableFeature1);
-			observableFeatures.add(observableFeature2);
+			List<Feature> Features = new ArrayList<Feature>();
+			Feature Feature1 = new Feature();
+			Feature1.setIdentifier("feature1");
+			Feature1.setName("this is feature1");
+			Feature1.setDataType_EntityClassName("boolean");
+			Feature Feature2 = new Feature();
+			Feature2.setIdentifier("feature2");
+			Feature2.setName("this is feature2");
+			Feature2.setDataType_EntityClassName("string");
+			Features.add(Feature1);
+			Features.add(Feature2);
 
-			featureWriter.writeFeatures(observableFeatures);
+			featureWriter.writeFeatures(Features);
 		}
 		finally
 		{

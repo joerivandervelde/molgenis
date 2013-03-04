@@ -59,8 +59,8 @@ public class EMeasureFeatureWriter implements Closeable
 		strBuilder.append("\t<subjectOf>\n" + "\t\t<measureAttribute>");
 		String code = m.getName();
 		String codeSystem = "TBD"; // FIXME hardcoded reference
-		String displayName = m.getDescription();
-		String datatype = m.getDataType();
+		String displayName = m.getName();
+		String datatype = m.getDataType_EntityClassName();
 		String codeDatatype = "dunno"; // FIXME hardcoded reference
 		String codeSystemDatatype = "TBD"; // FIXME hardcoded reference
 		String displayNameDatatype = "This should be the mappingsname"; // FIXME

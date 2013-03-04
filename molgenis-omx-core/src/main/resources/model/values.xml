@@ -23,6 +23,8 @@
 				
 
 			</description>
+			
+			<field name="Description" description="Clarification of this option." />
 
 			<field name="Feature" type="xref" xref_entity="Feature"
 				description="The method these permitted values are part of." />

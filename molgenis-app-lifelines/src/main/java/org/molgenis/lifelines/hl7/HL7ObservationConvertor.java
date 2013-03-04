@@ -1,9 +1,5 @@
 package org.molgenis.lifelines.hl7;
 
-import org.molgenis.omx.observ.ObservableFeature;
-import org.molgenis.omx.observ.ObservationSet;
-import org.molgenis.omx.observ.ObservedValue;
-import org.molgenis.omx.observ.target.OntologyTerm;
 import org.molgenis.hl7.ANY;
 import org.molgenis.hl7.BL;
 import org.molgenis.hl7.CD;
@@ -13,6 +9,10 @@ import org.molgenis.hl7.REAL;
 import org.molgenis.hl7.REPCMT000100UV01Observation;
 import org.molgenis.hl7.ST;
 import org.molgenis.hl7.TS;
+import org.molgenis.omx.core.Feature;
+import org.molgenis.omx.core.Observation;
+import org.molgenis.omx.core.ObservedValue;
+import org.molgenis.omx.core.OntologyTerm;
 
 public class HL7ObservationConvertor
 {
@@ -26,9 +26,9 @@ public class HL7ObservationConvertor
 		return code.getCodeSystem() + '.' + code.getCode();
 	}
 
-	public static ObservableFeature toObservableFeature(REPCMT000100UV01Observation observation)
+	public static Feature toObservableFeature(REPCMT000100UV01Observation observation)
 	{
-		ObservableFeature feature = new ObservableFeature();
+		Feature feature = new Feature();
 		feature.setIdentifier(toObservableFeatureIdentifier(observation));
 		feature.setName(observation.getCode().getDisplayName());
 
@@ -37,7 +37,7 @@ public class HL7ObservationConvertor
 		String dataType = HL7DataTypeMapper.get(anyValue);
 		if (dataType == null) throw new RuntimeException("HL7 data type not supported: "
 				+ anyValue.getClass().getSimpleName());
-		feature.setDataType(dataType);
+		feature.setDataType_EntityClassName(dataType);
 
 		// determine unit
 		if (anyValue instanceof PQ)
@@ -81,12 +81,12 @@ public class HL7ObservationConvertor
 		return ontologyTerm;
 	}
 
-	public static ObservedValue toObservedValue(REPCMT000100UV01Observation observation, ObservableFeature feature,
-			ObservationSet observationSet)
+	public static ObservedValue toObservedValue(REPCMT000100UV01Observation observation, Feature feature,
+			Observation observationSet)
 	{
 		ObservedValue observedValue = new ObservedValue();
 		observedValue.setFeature(feature);
-		observedValue.setObservationSet(observationSet);
+		observedValue.setObservation(observationSet);
 
 		ANY anyValue = observation.getValue();
 		if (anyValue instanceof INT)

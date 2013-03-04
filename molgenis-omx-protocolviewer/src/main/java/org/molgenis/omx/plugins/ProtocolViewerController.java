@@ -26,12 +26,13 @@ import org.molgenis.framework.ui.PluginModel;
 import org.molgenis.framework.ui.ScreenController;
 import org.molgenis.io.TupleWriter;
 import org.molgenis.io.excel.ExcelWriter;
+import org.molgenis.omx.core.DataSet;
+import org.molgenis.omx.core.Feature;
+import org.molgenis.omx.core.OntologyTerm;
+import org.molgenis.omx.core.Protocol;
+import org.molgenis.omx.core.SubProtocol;
 import org.molgenis.omx.dataset.DataSetViewerPlugin;
-import org.molgenis.omx.observ.Category;
-import org.molgenis.omx.observ.DataSet;
-import org.molgenis.omx.observ.ObservableFeature;
-import org.molgenis.omx.observ.Protocol;
-import org.molgenis.omx.observ.target.OntologyTerm;
+import org.molgenis.omx.values.PermittedValue;
 import org.molgenis.util.Entity;
 import org.molgenis.util.tuple.KeyValueTuple;
 
@@ -100,7 +101,7 @@ public class ProtocolViewerController extends PluginModel<Entity>
 		else if (request.getAction().equals("download_json_getfeature"))
 		{
 			Integer featureId = request.getInt("featureid");
-			List<ObservableFeature> features = db.find(ObservableFeature.class, new QueryRule(ObservableFeature.ID,
+			List<Feature> features = db.find(Feature.class, new QueryRule(Feature.ID,
 					Operator.EQUALS, featureId));
 			if (features != null && !features.isEmpty()) src = toJSFeature(db, features.get(0));
 		}
@@ -121,14 +122,14 @@ public class ProtocolViewerController extends PluginModel<Entity>
 			List<Protocol> topProtocol = null;
 			List<DataSet> dataSets = db.find(DataSet.class, new QueryRule(DataSet.ID, Operator.EQUALS, datasetID));
 			if (dataSets != null && !dataSets.isEmpty()) topProtocol = db.find(Protocol.class, new QueryRule(
-					Protocol.ID, Operator.EQUALS, dataSets.get(0).getProtocolUsed_Id()));
+					Protocol.ID, Operator.EQUALS, dataSets.get(0).getProtocol_Id()));
 			List<Protocol> listOfProtocols = db
 					.find(Protocol.class, new QueryRule(Protocol.NAME, Operator.LIKE, query));
-			List<ObservableFeature> listOfFeaturesByName = db.find(ObservableFeature.class, new QueryRule(
-					ObservableFeature.NAME, Operator.LIKE, query));
-			List<ObservableFeature> listOfFeaturesByDescription = db.find(ObservableFeature.class, new QueryRule(
-					ObservableFeature.DESCRIPTION, Operator.LIKE, query));
-			List<Category> listOfCategories = db.find(Category.class, new QueryRule(Category.DESCRIPTION,
+			List<Feature> listOfFeaturesByName = db.find(Feature.class, new QueryRule(
+					Feature.NAME, Operator.LIKE, query));
+			List<Feature> listOfFeaturesByDescription = db.find(Feature.class, new QueryRule(
+					Feature.NAME, Operator.LIKE, query));
+			List<PermittedValue> listOfCategories = db.find(PermittedValue.class, new QueryRule(PermittedValue.VALUELABEL,
 					Operator.LIKE, query));
 			if (listOfCategories.isEmpty() && listOfFeaturesByName.isEmpty() && listOfFeaturesByDescription.isEmpty()
 					&& listOfProtocols.isEmpty())
@@ -179,7 +180,7 @@ public class ProtocolViewerController extends PluginModel<Entity>
 	{
 		query = query.toLowerCase();
 		JSProtocol jsProtocol = null;
-		List<Protocol> subProtocols = topProtocol.getSubprotocols();
+		List<SubProtocol> subProtocols = topProtocol.getSubProtocols();
 		List<JSProtocol> jsSubProtocols = new ArrayList<JSProtocol>();
 		List<JSFeature> jsFeatures = new ArrayList<JSFeature>();
 
@@ -200,7 +201,7 @@ public class ProtocolViewerController extends PluginModel<Entity>
 		}
 		else
 		{
-			for (ObservableFeature feature : topProtocol.getFeatures())
+			for (Feature feature : topProtocol.getFeatures())
 			{
 
 				if (feature.getName().toLowerCase().contains(query))
@@ -209,7 +210,7 @@ public class ProtocolViewerController extends PluginModel<Entity>
 				}
 				else
 				{
-					Map<String, String> i18nDescription = new Gson().fromJson(feature.getDescription(),
+					Map<String, String> i18nDescription = new Gson().fromJson(feature.getName(),
 							new TypeToken<Map<String, String>>()
 							{
 							}.getType());
@@ -229,10 +230,10 @@ public class ProtocolViewerController extends PluginModel<Entity>
 					if (descriptionMatch) jsFeatures.add(toJSFeature(db, feature));
 					else
 					{
-						List<Category> categories = findCategories(db, feature);
+						List<PermittedValue> categories = findCategories(db, feature);
 						if (categories != null && !categories.isEmpty())
 						{
-							for (Category c : findCategories(db, feature))
+							for (PermittedValue c : findCategories(db, feature))
 							{
 								if (c.getDescription() != null && c.getDescription().toLowerCase().contains(query))
 								{
@@ -262,7 +263,7 @@ public class ProtocolViewerController extends PluginModel<Entity>
 
 		// get features
 		String featuresStr = request.getString("features");
-		List<ObservableFeature> features = null;
+		List<Feature> features = null;
 		if (featuresStr != null && !featuresStr.isEmpty())
 		{
 			String[] featuresStrArr = request.getString("features").split(",");
@@ -289,12 +290,15 @@ public class ProtocolViewerController extends PluginModel<Entity>
 				TupleWriter sheetWriter = excelWriter.createTupleWriter("Variables");
 				sheetWriter.writeColNames(header);
 
-				for (ObservableFeature feature : features)
+				for (Feature feature : features)
 				{
 					KeyValueTuple tuple = new KeyValueTuple();
 					tuple.set(header.get(0), feature.getIdentifier());
 					tuple.set(header.get(1), feature.getName());
-					tuple.set(header.get(2), feature.getDescription());
+					
+					//FIXME: description?
+					//tuple.set(header.get(2), feature.getDescription());
+					
 					sheetWriter.write(tuple);
 				}
 			}
@@ -305,7 +309,7 @@ public class ProtocolViewerController extends PluginModel<Entity>
 		}
 		else if (request.getAction().equals("download_viewer"))
 		{
-			req.getRequest().getSession().setAttribute("selectedObservableFeatures", features);
+			req.getRequest().getSession().setAttribute("selectedFeatures", features);
 
 			String dataSetViewerName = this.getDataSetViewerName();
 			if (dataSetViewerName != null)
@@ -372,32 +376,32 @@ public class ProtocolViewerController extends PluginModel<Entity>
 		this.protocolViewer.setDataSets(jsDataSets);
 	}
 
-	private List<Category> findCategories(Database db, ObservableFeature feature) throws DatabaseException
+	private List<PermittedValue> findCategories(Database db, Feature feature) throws DatabaseException
 	{
 		// TODO can we get by (internal) id instead of identifier?
-		List<Category> categories = db.find(Category.class, new QueryRule(Category.OBSERVABLEFEATURE_IDENTIFIER,
+		List<PermittedValue> categories = db.find(PermittedValue.class, new QueryRule(PermittedValue.FEATURE_IDENTIFIER,
 				Operator.EQUALS, feature.getIdentifier()));
 		return categories;
 	}
 
 	private List<Protocol> findSubProtocols(Database db, Protocol protocol) throws DatabaseException
 	{
-		List<Integer> subProtocolIds = protocol.getSubprotocols_Id();
+		List<Integer> subProtocolIds = protocol.getSubProtocols_Id();
 		if (subProtocolIds == null || subProtocolIds.isEmpty()) return Collections.emptyList();
 
 		List<Protocol> protocols = db.find(Protocol.class, new QueryRule(Protocol.ID, Operator.IN, subProtocolIds));
 		return protocols;
 	}
 
-	private List<ObservableFeature> findFeatures(Database db, List<Integer> featureIds) throws DatabaseException
+	private List<Feature> findFeatures(Database db, List<Integer> featureIds) throws DatabaseException
 	{
 		if (featureIds == null || featureIds.isEmpty()) return null;
-		List<ObservableFeature> features = db.find(ObservableFeature.class, new QueryRule(ObservableFeature.ID,
+		List<Feature> features = db.find(Feature.class, new QueryRule(Feature.ID,
 				Operator.IN, featureIds));
 		return features;
 	}
 
-	private OntologyTerm findOntologyTerm(Database db, ObservableFeature feature) throws DatabaseException
+	private OntologyTerm findOntologyTerm(Database db, Feature feature) throws DatabaseException
 	{
 		Integer unitId = feature.getUnit_Id();
 		if (unitId == null) return null;
@@ -409,7 +413,7 @@ public class ProtocolViewerController extends PluginModel<Entity>
 
 	private JSDataSet toJSDataSet(Database db, DataSet dataSet) throws DatabaseException
 	{
-		Integer protocolId = dataSet.getProtocolUsed_Id();
+		Integer protocolId = dataSet.getProtocol_Id();
 		List<Protocol> protocols = db.find(Protocol.class, new QueryRule(Protocol.ID, Operator.EQUALS, protocolId));
 		JSProtocol jsProtocol = null;
 		if (protocols != null && !protocols.isEmpty()) jsProtocol = toJSProtocol(db, protocols.get(0), false);
@@ -420,11 +424,11 @@ public class ProtocolViewerController extends PluginModel<Entity>
 	{
 		// get features
 		List<JSFeature> jsFeatures = null;
-		List<ObservableFeature> features = findFeatures(db, protocol.getFeatures_Id());
+		List<Feature> features = findFeatures(db, protocol.getFeatures_Id());
 		if (features != null && !features.isEmpty())
 		{
 			jsFeatures = new ArrayList<JSFeature>(features.size());
-			for (ObservableFeature feature : features)
+			for (Feature feature : features)
 				jsFeatures.add(toJSFeature(db, feature));
 
 			// sort alphabetically by name
@@ -472,15 +476,15 @@ public class ProtocolViewerController extends PluginModel<Entity>
 		return new JSProtocol(protocol, jsFeatures, jsSubProtocols);
 	}
 
-	private JSFeature toJSFeature(Database db, ObservableFeature feature) throws DatabaseException
+	private JSFeature toJSFeature(Database db, Feature feature) throws DatabaseException
 	{
 		List<JSCategory> jsCategories = null;
 
-		List<Category> categories = findCategories(db, feature);
+		List<PermittedValue> categories = findCategories(db, feature);
 		if (categories != null && !categories.isEmpty())
 		{
 			jsCategories = new ArrayList<JSCategory>(categories.size());
-			for (Category category : categories)
+			for (PermittedValue category : categories)
 				jsCategories.add(new JSCategory(category));
 
 			// sort alphabetically by name
@@ -576,14 +580,14 @@ public class ProtocolViewerController extends PluginModel<Entity>
 		private final JSOntologyTerm unit;
 		private final List<JSCategory> categories;
 
-		public JSFeature(ObservableFeature feature, List<JSCategory> categories, JSOntologyTerm unit)
+		public JSFeature(Feature feature, List<JSCategory> categories, JSOntologyTerm unit)
 		{
 			this.id = feature.getId();
 			this.name = feature.getName();
-			this.i18nDescription = new Gson().fromJson(feature.getDescription(), new TypeToken<Map<String, String>>()
+			this.i18nDescription = new Gson().fromJson(feature.getName(), new TypeToken<Map<String, String>>()
 			{
 			}.getType());
-			this.dataType = feature.getDataType();
+			this.dataType = feature.getDataType_EntityClassName();
 			this.unit = unit;
 			this.categories = categories;
 		}
@@ -619,11 +623,11 @@ public class ProtocolViewerController extends PluginModel<Entity>
 		private final String code;
 		private final String description;
 
-		public JSCategory(Category category)
+		public JSCategory(PermittedValue category)
 		{
 			this.id = category.getId();
-			this.name = category.getName();
-			this.code = category.getValueCode();
+			this.name = category.getValueLabel();
+			this.code = category.getAllowedValue();
 			this.description = category.getDescription();
 		}
 

@@ -13,7 +13,7 @@ import org.molgenis.framework.server.MolgenisRequest;
 import org.molgenis.framework.ui.PluginModel;
 import org.molgenis.framework.ui.ScreenController;
 import org.molgenis.framework.ui.ScreenMessage;
-import org.molgenis.omx.observ.target.Panel;
+import org.molgenis.omx.organization.Panel;
 import org.molgenis.omx.organization.Study;
 import org.molgenis.util.Entity;
 

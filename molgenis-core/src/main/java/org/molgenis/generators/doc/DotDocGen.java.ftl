@@ -164,7 +164,12 @@ digraph G {
 			<#if f.type=="mref" && (!f.xrefEntity.system || rendersystem)>	
 		"${JavaName(entity)}" -> "${JavaName(f.xrefEntity)}"[
 			]
-					<#assign mref_names = mref_names + [f.getMrefName()]>
+					<#if f.getMrefName()??>
+						<#assign mrefname = f.getMrefName()>
+					<#else>
+						<#assign mrefname = '[no mref name]'>
+					</#if>
+					<#assign mref_names = mref_names + [mrefname]>
 				</#if>	
 		</#list>
 	</#if>

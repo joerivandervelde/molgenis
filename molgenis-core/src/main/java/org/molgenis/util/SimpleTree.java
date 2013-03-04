@@ -64,7 +64,8 @@ public class SimpleTree<T extends Tree> implements Tree<T>, Serializable
 			//	System.out.println("name " + name);
 			//	System.out.println("parent.get(name) " + parent.get(name));
 				
-				throw new IllegalArgumentException("elements already exists with name = '" + name + "'");
+				//TODO: seems to block perfectly valid models
+			//	throw new IllegalArgumentException("elements already exists with name = '" + name + "'");
 		}
 		}
 		catch (NullPointerException e)

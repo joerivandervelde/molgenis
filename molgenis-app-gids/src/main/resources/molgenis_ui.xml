@@ -10,8 +10,8 @@
 		<menu name="Admin">
 			
 			<menu name ="Features">
-				<form name="Feature" entity="ObservableFeature">
-					<form name="Categories" entity="Category" />
+				<form name="Feature" entity="Feature">
+					<form name="Categories" entity="PermittedValue" />
 				</form>
 			</menu>
 			<menu name ="Protocols">
@@ -21,8 +21,8 @@
 			</menu>
 			<menu name="DataSets">
 				<form name="DataSet" entity="DataSet">
-					<form name="ObservationSets" entity="ObservationSet">
-						<form name="ObservedValues" entity="ObservedValue" />
+					<form name="ObservationSets" entity="Observation">
+						<form name="Values" entity="Value" />
 					</form>
 				</form>		
 			</menu>	
@@ -31,7 +31,7 @@
 					<form name="MolgenisUser" entity="MolgenisUser" />
 					<form name="MolgenisGroup" entity="MolgenisGroup" />
 					<form name="MolgenisRoleGroupLink" entity="MolgenisRoleGroupLink" />
-					<form name="MolgenisEntity" entity="MolgenisEntity" view="list"
+					<form name="MolgenisEntity" entity="SystemClass" view="list"
 						label="Entities" />
 					<form name="MolgenisPermission" entity="MolgenisPermission" />
 				</menu>

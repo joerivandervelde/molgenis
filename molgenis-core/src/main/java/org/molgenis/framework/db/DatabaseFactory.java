@@ -28,7 +28,7 @@ public class DatabaseFactory
 	{
 		try
 		{
-			get().close();
+			if(get() != null) get().close();
 		}
 		catch (IOException e)
 		{

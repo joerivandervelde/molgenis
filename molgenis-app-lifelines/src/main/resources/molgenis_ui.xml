@@ -9,7 +9,7 @@
 		<menu name ="Entities">
             <form name="DataSet" entity="DataSet" />
             <form name="Protocol" entity="Protocol" />
-            <form name="Feature" entity="ObservableFeature" />
+            <form name="Feature" entity="Feature" />
         </menu>
 	</menu>
 </molgenis>

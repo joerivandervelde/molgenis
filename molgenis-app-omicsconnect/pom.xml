@@ -125,6 +125,12 @@
 		</dependency>
 		<dependency>
 			<groupId>org.molgenis</groupId>
+			<artifactId>molgenis-omx-auth</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+			<type>war</type>
+		</dependency>
+		<dependency>
+			<groupId>org.molgenis</groupId>
 			<artifactId>molgenis-omx-dataviewer</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 			<type>jar</type>
@@ -150,6 +156,14 @@
 		<dependency>
 			<groupId>org.molgenis</groupId>
 			<artifactId>molgenis-omx-protocolviewer</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+			<type>jar</type>
+			<classifier>classes</classifier>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.molgenis</groupId>
+			<artifactId>molgenis-omx-auth</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 			<type>jar</type>
 			<classifier>classes</classifier>
