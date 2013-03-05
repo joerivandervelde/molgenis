@@ -20,7 +20,7 @@
 			<field name="Symbol" type="varchar" nillable="true"
 				description="todo" />
 		</entity>
-		<entity name="Chromosome" extends="Feature">
+		<entity name="Chromosome" extends="Target">
 			<field name="orderNr" type="int" />
 			<field name="isAutosomal" type="bool" description="Is 'yes' when number of chromosomes is equal in male and female individuals, i.e., if not a sex chromosome."/>
 			<field name="bpLength" type="int" nillable="true" description="Lenght of the chromsome in base pairs."/>
@@ -29,14 +29,14 @@
 				description="Reference to the species this
 				chromosome belongs to." />
 		</entity>
-		<entity name="NMRBin" extends="Feature">
+		<entity name="NMRBin" extends="Target">
 			<description> Shift of the NMR frequency due to the chemical
 				environment.</description>
 		</entity>
-		<entity name="Clone" extends="Feature" implements="Locus">
+		<entity name="Clone" extends="Target" implements="Locus">
 			<description> BAC clone fragment.</description>
 		</entity>
-		<entity name="DerivedTrait" extends="Feature">
+		<entity name="DerivedTrait" extends="Target">
 			<description> Any meta trait, eg. false discovery rates, P-values,
 				thresholds.</description>
 		</entity>
@@ -55,11 +55,11 @@
 		a special phenotype (ObservableFeature) because the value of the factor
 		itself is also 'measured'.
 		-->
-		<entity name="EnvironmentalFactor" extends="Feature">
+		<entity name="EnvironmentalFactor" extends="Target">
 			<description>Experimental conditions,
 			such as temperature differences, batch effects etc.</description>
 		</entity>
-		<entity name="Gene" extends="Feature" implements="Locus">
+		<entity name="Gene" extends="Target" implements="Locus">
 			<description> Trait annotations specific for genes.</description>
 			<field name="Symbol" nillable="true"
 				description="Main symbol this gene is known by (not necessarily unique, in constrast to 'name')" />
@@ -69,7 +69,7 @@
 			<field name="Control" type="bool" nillable="true"
 				description="Indicating whether this is a 'housekeeping' gene that can be used as control." />
 		</entity>
-		<entity name="Transcript" extends="Feature">
+		<entity name="Transcript" extends="Target">
 			<description> Trait annotations specific for transcripts.
 			</description>
 			<!-- Question: Is there a specific notation involved that we can create 
@@ -78,7 +78,7 @@
 				nillable="true"
 				description="The gene that produces this protein" />
 		</entity>
-		<entity name="Protein" extends="Feature">
+		<entity name="Protein" extends="Target">
 			<description> Trait annotations specific for proteins.</description>
 			<!--
 				Question: Is there a specific notation involved that we can create
@@ -95,7 +95,7 @@
 			<field name="Mass" label="Mass" type="decimal" nillable="true"
 				description="The mass of this metabolite" />
 		</entity>
-		<entity name="Metabolite" extends="Feature">
+		<entity name="Metabolite" extends="Target">
 			<description> Trait annotations specific for metabolites.
 			</description>
 			<field name="Formula" label="Formula" type="varchar" length="128"
@@ -105,7 +105,7 @@
 			<field name="Structure" label="Structure" type="text" nillable="true"
 				description="The chemical structure of a metabolite (in SMILES representation)." />
 		</entity>
-		<entity name="Marker" extends="Feature" implements="Locus">
+		<entity name="Marker" extends="Target" implements="Locus">
 			<description> Trait annotations specific for markers.</description>
 			<field name="ReportsFor" nillable="true" type="mref"
 				xref_entity="Marker" description="The marker (or a subclass like 'SNP') this marker (or a subclass like 'SNP') reports for." />
@@ -116,12 +116,12 @@
 			<field name="Polymorphism" nillable="true" type="mref"
 				xref_entity="Polymorphism" description="The polymorphism that belongs to this SNP." />
 		</entity>
-		<entity name="Polymorphism" extends="Feature">
+		<entity name="Polymorphism" extends="Target">
 			<description>The difference of a single base discovered between two sequenced individuals.</description>
 			<field name="Base" type="enum" enum_options="[Reference,A,T,C,G]" nillable="false" description="The affected DNA base. Note that you can select the reference base here." />
 			<field name="Value" nillable="true" description="The strain/genotype for which this polymorphism was discovered. E.g. 'N2' or 'CB4856'." />
 		</entity>
-		<entity name="Probe" extends="Feature" implements="Locus">
+		<entity name="Probe" extends="Target" implements="Locus">
 			<description> A piece of sequence that reports for the expression of
 				a gene, typically spotted onto a microarray.</description>
 			<field name="Mismatch" type="bool"
@@ -146,14 +146,14 @@
 				nillable="true" />
 			<unique fields="X,Y,GridX,GridY" />
 		</entity>
-		<entity name="ProbeSet" extends="Feature" implements="Locus">
+		<entity name="ProbeSet" extends="Target" implements="Locus">
 			<description> A set of Probes. E.g. an Affymetrix probeset has multiple
 				probes. It implements locus because sometimes you want to give the complete set of probes a range,
 				for example: indicating that this set of probes spans basepair 0 through 10.000.000 on chromosome 3.
 				The same information could arguably also be queried from the probes themselves, but if you have 40k probes,
 				retrieving the same information from only ProbeSet (if annotated so) would be much faster.</description>
 		</entity>
-		<entity name="MassPeak" extends="Feature">
+		<entity name="MassPeak" extends="Target">
 			<description> A peak that has been selected within a mass
 				spectrometry experiment.</description>
 			<field name="MZ" type="decimal" nillable="true"

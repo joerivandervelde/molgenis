@@ -44,7 +44,7 @@
 			<description>Runtime extentions for the catalog of entity names. Acts as a new class, but with no additional properties relative to the class it is extending.
 			Concepts are abstract objects that mediate between thought, language, and referents. In Observ-OMX, concepts can be defined on any abstraction level, including the point where abstraction reaches a minimum and actual physical objects are denoted. Concepts can be specified via subclasses, for example 'Marker' as a direct subclass of Concept, 'Target' to denote physical objects in general, or 'Individual' as a subclass of Target. When not subclassed, Concept usually depicts a characteristic or quality belonging to a concept or target. Because Concept is a superclass of Target, the latter can be used interchangeably via references on the level of Concept. This enables e.g. applying a Concept to a Concept to add 'runtime attributes' or create Target versus Target data in the case of correlation matrices. General examples of Concepts: "Patient", "Height", "Marker pkP1050", "Panel", "Heart rate", "Sample". Examples of concepts on different abstraction levels: "Gene", "Gene expression", "Gene HOXD9", or "Blood pressure", "Systolic blood pressure".
 			</description>
-			<!-- field name="Extends" type="xref" xref_field="Concept.Id" nillable="true" description="This custom concept is a specialization of an existing concept (or custom concept)" /-->
+			<field name="ExtendsClass" type="xref" xref_field="EntityClass.Id" nillable="true" description="This custom concept is a specialization of an existing concept (or custom concept)" />
 			<field name="Description" type="text" nillable="true" description="Rudimentary meta data about this concept. Use of ontology terms references to establish unambigious descriptions is recommended." />
 			<field name="OntologySource" type="mref" xref_entity="OntologySource" nillable="true" description="Ontological annotation for this concept. Refers to any kind of third-party identifier that helps to establish an unambiguous identification."/>
 		</entity>
@@ -72,7 +72,7 @@
 				SHOULD BEHAVE LIKE ABSTRACT CLASS
 				
 			</description>
-			<field name="CustomClass" xref_field="CustomClass.Id" />
+			<field name="CustomClass" type="xref" xref_field="CustomClass.Id" nillable="true" description="(Optional) Specialization of this data type, e.g. 'Gene' subtyped into 'HumanGene'.)"  />
 		</entity>
 		
 		<entity name="FlexCol" implements="Identifiable">

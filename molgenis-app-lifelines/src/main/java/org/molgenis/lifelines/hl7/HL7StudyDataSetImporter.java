@@ -64,7 +64,7 @@ public class HL7StudyDataSetImporter
 		for (REPCMT000400UV01Component4 rootComponent : actCategory.getComponent())
 		{
 			// create observation set
-			ObservationSet observationSet = new ObservationSet();
+			Observation observationSet = new Observation();
 			observationSet.setPartOfDataSet(dataSet);
 			observationSets.add(observationSet);
 
@@ -75,7 +75,7 @@ public class HL7StudyDataSetImporter
 			// create feature for record target
 			REPCMT000100UV01RecordTarget target = organizer.getRecordTarget().getValue();
 			String recordTargetIdentifier = HL7RecordTargetConvertor.toObservableFeatureIdentifier(target);
-			ObservableFeature targetFeature = features.get(recordTargetIdentifier);
+			Feature targetFeature = features.get(recordTargetIdentifier);
 			if (targetFeature == null)
 			{
 				targetFeature = HL7RecordTargetConvertor.toObservableFeature(target);

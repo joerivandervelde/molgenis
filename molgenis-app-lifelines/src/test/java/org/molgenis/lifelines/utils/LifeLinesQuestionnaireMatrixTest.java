@@ -32,6 +32,7 @@ public class LifeLinesQuestionnaireMatrixTest
 
 		Set<CohortTimePair> info1 = questionnaireMatrix.get("group1", "code1");
 		assertEquals(info1.size(), 1);
+		System.out.println();
 		assertTrue(info1.contains(new CohortTimePair("Cohort1", "Baseline")));
 
 		Set<CohortTimePair> info2 = questionnaireMatrix.get("group1", "code2");

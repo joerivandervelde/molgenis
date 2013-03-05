@@ -61,7 +61,7 @@
 			<field name="Value" type="int" />
 		</entity>
 
-		<entity name="ReferenceValue" extends="Value">
+		<entity name="XrefValue" extends="Value">
 			<description>An observation for which the value refers to a Concept
 				in the database.
 			</description>
