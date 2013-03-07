@@ -107,7 +107,7 @@
 			<field name="Role" type="xref" xref_entity="OntologyTerm" nillable="true" description="(Optional) Reference to the role that this feature plays in this context. For example: 'Context', 'Factor', 'Input', 'Output', etc" />
 			<field name="Unit" type="xref" xref_entity="OntologyTerm" nillable="true" description="(Optional) Reference to the well-defined measurement unit used to observe this feature (if feature is that concrete). E.g. mmHg. Does not make any assumptions on the data type, e.g. integer or string." />
 			<field name="Definition" type="xref" xref_entity="OntologyTerm" description="The concept that is being measured in a specific way." nillable="true" />
-			<field name="DataType" type="xref" xref_entity="EntityClass" description="The class that holds the values, e.g. DecimalValue or StringValue, but can also be Individual (for XREF) or a CustomClass thereof, e.g. Patient (extends Individual)" nillable="true" />	
+			<field name="DataType" type="xref" xref_entity="EntityClass" nillable="false" description="The class that holds the values, e.g. DecimalValue or StringValue, but can also be Individual (for XREF) or a CustomClass thereof, e.g. Patient (extends Individual)" />	
 			<field name="HasUniqueValues" type="bool" default="false" nillable="false" description="If set to true, all values of this feature are unique within a dataset. Use this when you want to make sure a 'row identifier' is respected, e.g. a list of microarray probes named 'AGI00001', 'AGI00002' are not duplicated." />
 			<field name="Temporal" type="boolean" nillable="true" description="Whether this feature is time dependent and can have different values when measured on different times (e.g. weight, temporal=true) or generally only measured once (e.g. birth date, temporal=false) It is advisable to move temporal features to become dynamic attributes of Targets (or Concepts)" />
 			
@@ -168,7 +168,8 @@
 			<field name="Feature" type="xref" xref_entity="Feature" nillable="false" />
 			<field name="Observation" type="xref" xref_entity="Observation" nillable="false" />
 			<field name="Value" type="xref" xref_entity="Value" nillable="false" />
-			<unique fields="Feature,Observation" description="A feature can only be measured once per observation"/>
+			<field name="Context" type="xref" xref_entity="Target" nillable="true" />
+			<unique fields="Feature,Observation,Context" description="A feature can only be measured once per observation without context, or measured multiple times with a unique context"/>
 		</entity>
 
 		<entity name="OntologyTerm" implements="Identifiable">
