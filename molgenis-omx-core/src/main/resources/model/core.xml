@@ -164,12 +164,21 @@
 			<unique fields="PartOfDataSet,Time" description="Only one Observation per timepoint can be made in a single DataSet" />
 		</entity>
 		
-		<entity name="ObservedValue" implements="AutoId">
+		<entity name="Column" implements="AutoId">
 			<field name="Feature" type="xref" xref_entity="Feature" nillable="false" />
-			<field name="Observation" type="xref" xref_entity="Observation" nillable="false" />
+			<field name="Target" type="xref" xref_entity="Target" nillable="true" />
+			<unique fields="Feature,Target" description="Either Feature is unique when there is no target, or the combination of Feature and Target is unique"/>
+		</entity>
+		
+		<entity name="ObservedValue" implements="AutoId">
 			<field name="Value" type="xref" xref_entity="Value" nillable="false" />
+			<field name="Observation" type="xref" xref_entity="Observation" nillable="false" />
+			<field name="Column" type="xref" xref_entity="Column" nillable="false" />
+			<unique fields="Observation,Column" description="There can be only one value per observation/column" />
+			
+			<!-- field name="Feature" type="xref" xref_entity="Feature" nillable="false" />
 			<field name="Context" type="xref" xref_entity="Target" nillable="true" />
-			<unique fields="Feature,Observation,Context" description="A feature can only be measured once per observation without context, or measured multiple times with a unique context"/>
+			<unique fields="Feature,Observation,Context" description="A feature can only be measured once per observation without context, or measured multiple times with a unique context"/-->
 		</entity>
 
 		<entity name="OntologyTerm" implements="Identifiable">
