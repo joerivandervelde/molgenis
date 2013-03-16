@@ -16,11 +16,11 @@ import org.molgenis.framework.db.QueryRule.Operator;
 import org.molgenis.io.TableReader;
 import org.molgenis.io.TableReaderFactory;
 import org.molgenis.io.TupleReader;
+import org.molgenis.omx.core.DataItem;
 import org.molgenis.omx.core.DataSet;
 import org.molgenis.omx.core.Feature;
 import org.molgenis.omx.core.Observation;
 import org.molgenis.omx.core.ObservedValue;
-import org.molgenis.omx.core.Value;
 import org.molgenis.omx.values.TextValue;
 import org.molgenis.util.tuple.Tuple;
 
@@ -78,11 +78,11 @@ public class DataSetImporter
 		if (!colIt.hasNext()) throw new IOException("sheet '" + sheetName + "' contains no columns");
 
 		// create observation feature map
-		Map<String, Feature> featureMap = new LinkedHashMap<String, Feature>();
+		Map<String, DataItem> featureMap = new LinkedHashMap<String, DataItem>();
 		while (colIt.hasNext())
 		{
 			String observableFeatureIdentifier = colIt.next();
-			Feature observableFeature = findObservableFeature(observableFeatureIdentifier);
+			DataItem observableFeature = findObservableFeature(observableFeatureIdentifier);
 			featureMap.put(observableFeatureIdentifier, observableFeature);
 		}
 
@@ -100,12 +100,12 @@ public class DataSetImporter
 				observationSet.setPartOfDataSet(dataSet);
 				db.add(observationSet);
 
-				for (Map.Entry<String, Feature> entry : featureMap.entrySet())
+				for (Map.Entry<String, DataItem> entry : featureMap.entrySet())
 				{
 					// create observed value
 					String value = row.getString(entry.getKey());
 					ObservedValue observedValue = new ObservedValue();
-					observedValue.setFeature(entry.getValue());
+					observedValue.setDataItem(entry.getValue());
 					
 					//FIXME: SUPPORT VALUE TYPES OTHER THAN STRING!!!
 					//observedValue.setValue(value);
@@ -137,14 +137,14 @@ public class DataSetImporter
 		}
 	}
 
-	private Feature findObservableFeature(String observableFeatureIdentifier) throws DatabaseException,
+	private DataItem findObservableFeature(String observableFeatureIdentifier) throws DatabaseException,
 			IOException
 	{
-		List<Feature> observableFeatures = db.find(Feature.class, new QueryRule(
+		List<DataItem> observableFeatures = db.find(DataItem.class, new QueryRule(
 				Feature.IDENTIFIER, Operator.EQUALS, observableFeatureIdentifier));
-		if (observableFeatures == null || observableFeatures.isEmpty()) throw new IOException("ObservableFeature "
+		if (observableFeatures == null || observableFeatures.isEmpty()) throw new IOException("DataItem "
 				+ observableFeatureIdentifier + " does not exist in db");
-		Feature observableFeature = observableFeatures.get(0);
+		DataItem observableFeature = observableFeatures.get(0);
 		return observableFeature;
 	}
 }

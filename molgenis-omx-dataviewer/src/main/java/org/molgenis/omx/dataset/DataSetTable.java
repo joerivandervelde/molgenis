@@ -208,9 +208,9 @@ public class DataSetTable extends AbstractFilterableTupleTable implements Databa
 				});
 
 				for (ObservedValue v : queryObservedValue.eq(ObservedValue.OBSERVATION, os.getId())
-						.in(ObservedValue.FEATURE_IDENTIFIER, new ArrayList<String>(fieldNames)).find())
+						.in(ObservedValue.DATAITEM_NAME, new ArrayList<String>(fieldNames)).find())
 				{
-					tuple.set(v.getFeature_Identifier(), v.getValue());
+					tuple.set(v.getDataItem_Name(), v.getValue());
 				}
 
 				result.add(tuple);
@@ -284,7 +284,7 @@ public class DataSetTable extends AbstractFilterableTupleTable implements Databa
 				{
 					ObservedValue v = new ObservedValue();
 					v.setObservation(es.getId());
-					v.setFeature(featureMap.get(name));
+					v.setDataItem(featureMap.get(name));
 					
 					
 					//FIXME: SUPPORT VALUE TYPES OTHER THAN STRING!!!
@@ -352,7 +352,7 @@ public class DataSetTable extends AbstractFilterableTupleTable implements Databa
 					filter.setValue(null);
 				}
 
-				queryRules.add(new QueryRule(ObservedValue.FEATURE_IDENTIFIER, Operator.EQUALS, filter.getField()));
+				queryRules.add(new QueryRule(ObservedValue.DATAITEM_NAME, Operator.EQUALS, filter.getField()));
 				queryRules.add(new QueryRule(ObservedValue.VALUE, filter.getOperator(), filter.getValue()));
 			}
 

@@ -4,7 +4,7 @@
 		<description>
 			Absolute minimal v3 model without decorators, labels,
 			hidden, or other (model-technically unneeded) modifiers for now.
-
+			
 			Golden rule: this XML is completely stand-alone useable!
 		</description>
 
@@ -15,8 +15,9 @@
 			<field name="Id" type="autoid" description="Auto-incremented primary key." />
 		</entity>
 
-		<entity name="Identifiable" implements="AutoId" abstract="true"
-			xref_label="Identifier">
+		<entity name="Identifiable" implements="AutoId" abstract="true" xref_label="Identifier,Name"
+			 >
+			 <!-- xref_label_todo="${Identifier}[#if Name?exists] (${Name})[/#if]" -->
 			<description>
 				All data types that needs some form of human recognizability should extend from Identifiable. This adds an 'Identifier' field which is human- and computer readable, and a 'Name' field which acts like a pretty human readable label.
 			</description>
@@ -104,8 +105,8 @@
 				 if they happen on Concept: does that not mean the idea of 'feature measures a concept' is misused?
 			
 			
-			<field name="Role" type="xref" xref_entity="OntologyTerm" nillable="true" description="(Optional) Reference to the role that this feature plays in this context. For example: 'Context', 'Factor', 'Input', 'Output', etc" />
-			<field name="Unit" type="xref" xref_entity="OntologyTerm" nillable="true" description="(Optional) Reference to the well-defined measurement unit used to observe this feature (if feature is that concrete). E.g. mmHg. Does not make any assumptions on the data type, e.g. integer or string." />
+<!-- 			<field name="Role" type="xref" xref_entity="OntologyTerm" nillable="true" description="(Optional) Reference to the role that this feature plays in this context. For example: 'Context', 'Factor', 'Input', 'Output', etc" />
+ -->			<field name="Unit" type="xref" xref_entity="OntologyTerm" nillable="true" description="(Optional) Reference to the well-defined measurement unit used to observe this feature (if feature is that concrete). E.g. mmHg. Does not make any assumptions on the data type, e.g. integer or string." />
 			<field name="Definition" type="xref" xref_entity="OntologyTerm" description="The concept that is being measured in a specific way." nillable="true" />
 			<field name="DataType" type="xref" xref_entity="EntityClass" nillable="false" description="The class that holds the values, e.g. DecimalValue or StringValue, but can also be Individual (for XREF) or a CustomClass thereof, e.g. Patient (extends Individual)" />	
 			<field name="HasUniqueValues" type="bool" default="false" nillable="false" description="If set to true, all values of this feature are unique within a dataset. Use this when you want to make sure a 'row identifier' is respected, e.g. a list of microarray probes named 'AGI00001', 'AGI00002' are not duplicated." />
@@ -131,7 +132,7 @@
 		</entity>
 		
 		<entity name="SubProtocol" extends="Protocol">
-			<description>Subunit or component of a larger protocol. Can be part of multiple protocols, and can contain even smaller parts (subprotocols) itself. All Features that are part of SubProtocols are added to the Features of the 'source' Protocol.</description>
+			<description>A subprotocol will not be shown if asking for 'main' protocols (e.g. in the protocol browser). Subunit or component of a larger protocol. Can be part of multiple protocols, and can contain even smaller parts (subprotocols) itself. All Features that are part of SubProtocols are added to the Features of the 'source' Protocol.</description>
 		</entity>
 
 		<entity name="DataSet" extends="Target">
@@ -149,7 +150,16 @@
 			<field name="EndTime" type="datetime" nillable="true" description="Time when the dataset was finished" />
 			<field name="CreatedUsing" type="mref" xref_entity="DataSet" nillable="true" description="Other datasets that were involved in creating this one." />
 		</entity>
-
+		
+		<entity name="DataItem" implements="AutoId" xref_label="Name">
+			<field name="Name" nillable="false " />
+			<field name="DataSet" type="xref" xref_entity="DataSet" nillable="false" />
+			<field name="Feature" type="xref" xref_entity="Feature" nillable="false" />
+			<field name="Target" type="xref" xref_entity="Target" nillable="true" />
+			<unique fields="DataSet,Name" description="Must have a unique name within a DataSet" />
+			<unique fields="DataSet,Feature,Target" description="Either Feature is unique within a DataSet when there is no target, or the combination of Feature and Target is unique (within a DataSet)"/>
+		</entity>
+		
 		<entity name="Observation" implements="AutoId">
 			<description>A single row of values in a DataSet. The Methods of the
 				ObservedValues referring to this ObservationSet should correspond to
@@ -164,17 +174,14 @@
 			<unique fields="PartOfDataSet,Time" description="Only one Observation per timepoint can be made in a single DataSet" />
 		</entity>
 		
-		<entity name="Column" implements="AutoId">
-			<field name="Feature" type="xref" xref_entity="Feature" nillable="false" />
-			<field name="Target" type="xref" xref_entity="Target" nillable="true" />
-			<unique fields="Feature,Target" description="Either Feature is unique when there is no target, or the combination of Feature and Target is unique"/>
-		</entity>
-		
 		<entity name="ObservedValue" implements="AutoId">
+		<description>
+			Needs a validator: Observation.DataSet == DataItem.DataSet
+		</description>
 			<field name="Value" type="xref" xref_entity="Value" nillable="false" />
 			<field name="Observation" type="xref" xref_entity="Observation" nillable="false" />
-			<field name="Column" type="xref" xref_entity="Column" nillable="false" />
-			<unique fields="Observation,Column" description="There can be only one value per observation/column" />
+			<field name="DataItem" type="xref" xref_entity="DataItem" nillable="false" />
+			<unique fields="Observation,DataItem" description="There can be only one value per observation/column" />
 			
 			<!-- field name="Feature" type="xref" xref_entity="Feature" nillable="false" />
 			<field name="Context" type="xref" xref_entity="Target" nillable="true" />
@@ -198,9 +205,9 @@
 				OntologySource.Identifier "OTTHUMG00000017411" to form a
 				valid URL.
 			</description>
-			<field name="BaseURL" type="string" />
 			<field name="Version" type="string" />
-			<unique fields="BaseURL,Version" description="The combination of url and version is unique"/>
+			<field name="urlPattern" type="string" description="Template for the url. E.g. 'http://www.pubmed.org/${Identifier}'"/>
+			<unique fields="urlPattern,Version" description="The combination of url and version is unique"/>
 		</entity>
 
 	</module>
