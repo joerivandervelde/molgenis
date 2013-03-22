@@ -166,7 +166,7 @@
 				the Methods defined in the Protocol of the DataSet this
 				ObservationSet belongs to.
 			</description>
-			<field name="PartOfDataSet" type="xref" xref_entity="DataSet"
+			<field name="DataSet" type="xref" xref_entity="DataSet"
 				description="The DataSet this Observation is part of." />
 			<field name="Time" type="datetime"
 				description="The date and time this Observation was measured"

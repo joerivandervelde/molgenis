@@ -7,12 +7,17 @@ import org.molgenis.framework.db.DatabaseFactory;
 import org.molgenis.framework.db.QueryRule;
 import org.molgenis.framework.db.QueryRule.Operator;
 import org.molgenis.omx.core.CustomClass;
+import org.molgenis.omx.core.DataItem;
+import org.molgenis.omx.core.DataSet;
 import org.molgenis.omx.core.EntityClass;
 import org.molgenis.omx.core.Feature;
 import org.molgenis.omx.core.FlexCol;
 import org.molgenis.omx.core.FlexColValue;
-import org.molgenis.omx.values.TextValue;
+import org.molgenis.omx.core.Observation;
+import org.molgenis.omx.core.ObservedValue;
+import org.molgenis.omx.core.Protocol;
 import org.molgenis.omx.values.StringValue;
+import org.molgenis.omx.values.TextValue;
 import org.molgenis.omx.values.XrefValue;
 import org.molgenis.omx.xgap.Gene;
 
@@ -82,6 +87,28 @@ public class DataModelV3Demo
 		// ---> a decorator gets the valueType of the Feature (HumanGene) and only suggests/allows references to HumanGene! e.g.
 		XrefValue xval2 = new XrefValue();
 		xval2.setValue(myHumanGene);
+		
+		/**
+		 *  case 5: create dataset
+		 */
+		Protocol p = new Protocol();
+		p.setFeatures(geneRef);
+		DataSet ds = new DataSet();
+		Observation o = new Observation();
+		o.setPartOfDataSet(ds);
+		DataItem di = new DataItem();
+		di.setDataSet(ds);
+		ObservedValue ov = new ObservedValue();
+		ov.setDataItem(di);
+		ov.setObservation(o);
+		XrefValue xval3 = new XrefValue();
+		xval3.setValue(myOtherGene);
+		ov.setValue(xval3);
+		
+		/**
+		 * 
+		 */
+		
 		
 	}
 	
