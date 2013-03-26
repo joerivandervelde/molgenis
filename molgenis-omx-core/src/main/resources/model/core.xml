@@ -92,30 +92,24 @@
 		<entity name="Feature" implements="Identifiable">
 			<description>
 				The characterization of the role or the particular procedure of involvement for a Concept in an ObservationSet. The role 'target' replaces the old target XREF in value/ObservationSet and can consist of multiple targets that together form one (possibly unique) target.
+				Move HasUniqueValues / AllowMultipleValuesInCell to DataItem ?
 			</description>
 			
-			wringt: ref naar concept is abstract, bijv 'Patient', met als values XREF naar Individual
-			maar, ref naar target is concreet, bijv 'Pa_34515'.. hoe werkt het dan ?
-			
-			solution:
-			-	MeasuredConcept can ONLY refer to Concept, not subclasses!
-			-	XREF values should be able to refer to Concept (e.g. what was measured 'blood pressure' as a value) and Target (measured on 'Pa_12355')
-			
-			---> OR NOT ?!? should XREF values not only be on Target ?
-				 if they happen on Concept: does that not mean the idea of 'feature measures a concept' is misused?
-			
-			
-<!-- 			<field name="Role" type="xref" xref_entity="OntologyTerm" nillable="true" description="(Optional) Reference to the role that this feature plays in this context. For example: 'Context', 'Factor', 'Input', 'Output', etc" />
- -->			<field name="Unit" type="xref" xref_entity="OntologyTerm" nillable="true" description="(Optional) Reference to the well-defined measurement unit used to observe this feature (if feature is that concrete). E.g. mmHg. Does not make any assumptions on the data type, e.g. integer or string." />
+			<field name="Unit" type="xref" xref_entity="OntologyTerm" nillable="true" description="(Optional) Reference to the well-defined measurement unit used to observe this feature (if feature is that concrete). E.g. mmHg. Does not make any assumptions on the data type, e.g. integer or string." />
 			<field name="Definition" type="xref" xref_entity="OntologyTerm" description="The concept that is being measured in a specific way." nillable="true" />
-			<field name="DataType" type="xref" xref_entity="EntityClass" nillable="false" description="The class that holds the values, e.g. DecimalValue or StringValue, but can also be Individual (for XREF) or a CustomClass thereof, e.g. Patient (extends Individual)" />	
-			<field name="HasUniqueValues" type="bool" default="false" nillable="false" description="If set to true, all values of this feature are unique within a dataset. Use this when you want to make sure a 'row identifier' is respected, e.g. a list of microarray probes named 'AGI00001', 'AGI00002' are not duplicated." />
+			<field name="ValueType" type="xref" xref_entity="EntityClass" nillable="false" description="The class that holds the values, e.g. DecimalValue or StringValue, but can also be Individual (for XREF) or a CustomClass thereof, e.g. Patient (extends Individual)" />	
+			<field name="ScopeClass" type="xref" xref_entity="Target" nillable="true" description="Used to constrain DataItem scope within a Feature"/>
+			<field name="PermittedValues" type="mref" xref_entity="Value" nillable="true" description="Refer to specific value instances or filters (that include 0..N values implicitly) as allowed values for this Feature"/>
+			<field name="AllowMultipleValuesInCell" type="bool" default="false" nillable="false" description="Multiple values in a single cell" />
+			<field name="HasUniqueValues" type="bool" default="false" nillable="false" description="If set to true, all values are unique within this this DataItem. Use this when you want to make sure a 'row identifier' is respected, e.g. a list of microarray probes named 'AGI00001', 'AGI00002' are not duplicated." />
 			<field name="Temporal" type="boolean" nillable="true" description="Whether this feature is time dependent and can have different values when measured on different times (e.g. weight, temporal=true) or generally only measured once (e.g. birth date, temporal=false) It is advisable to move temporal features to become dynamic attributes of Targets (or Concepts)" />
-			
 		</entity>
 
-
-
+		<entity name="Filter" extends="Value" implements="AutoId" xref_label="Expression">
+			<field name="Expression" unique="true" description="Some constraint expression like '30..300', '>15', 'heart*', 'a-zA-Z0-9', 'q(id_EQUALS_23)' or 'q(label_LIKE_yes)'"/>
+			<field name="AppliedTo" type="xref" xref_entity="EntityClass" nillable="false"/>
+		</entity>
+		
 		<entity name="Protocol" extends="Target">
 			<description>The Protocol class defines parameterizable descriptions
 				of (analysis)methods. Examples of protocols are: Questionaires,
@@ -134,6 +128,13 @@
 		<entity name="SubProtocol" extends="Protocol">
 			<description>A subprotocol will not be shown if asking for 'main' protocols (e.g. in the protocol browser). Subunit or component of a larger protocol. Can be part of multiple protocols, and can contain even smaller parts (subprotocols) itself. All Features that are part of SubProtocols are added to the Features of the 'source' Protocol.</description>
 		</entity>
+		
+		<entity name="DataSource" implements="Identifiable">
+		<description>
+			Should be filled with some defaults, e.g. "Database"
+		</description>
+			<field name="todo"/>
+		</entity>
 
 		<entity name="DataSet" extends="Target">
 			<description>A data set is a collection of data, usually presented in
@@ -145,6 +146,7 @@
 				therefore be thought of as an instance of the protocol it belongs
 				to, like rows in a database are instances of their table definition.
 			</description>
+			<field name="DataSource" type="xref" xref_entity="DataSource" nillable="false"/>
 			<field name="Protocol" type="xref" xref_entity="Protocol" nillable="true" description="The protocol used to create this DataSet. All Features in this Protocol will be measured. Any Features in SubProtocols are already included in the list of the original protocol."/>
 			<field name="StartTime" type="datetime" nillable="true" description="Time when the dataset was created." />
 			<field name="EndTime" type="datetime" nillable="true" description="Time when the dataset was finished" />
@@ -155,9 +157,9 @@
 			<field name="Name" nillable="false " />
 			<field name="DataSet" type="xref" xref_entity="DataSet" nillable="false" />
 			<field name="Feature" type="xref" xref_entity="Feature" nillable="false" />
-			<field name="Target" type="xref" xref_entity="Target" nillable="true" />
+			<field name="Scope" type="xref" xref_entity="Target" nillable="true" />
 			<unique fields="DataSet,Name" description="Must have a unique name within a DataSet" />
-			<unique fields="DataSet,Feature,Target" description="Either Feature is unique within a DataSet when there is no target, or the combination of Feature and Target is unique (within a DataSet)"/>
+			<unique fields="DataSet,Feature,Scope" description="Either Feature is unique within a DataSet when there is no target, or the combination of Feature and Target is unique (within a DataSet)"/>
 		</entity>
 		
 		<entity name="Observation" implements="AutoId">
@@ -171,7 +173,7 @@
 			<field name="Time" type="datetime"
 				description="The date and time this Observation was measured"
 				nillable="true" />
-			<unique fields="PartOfDataSet,Time" description="Only one Observation per timepoint can be made in a single DataSet" />
+			<unique fields="DataSet,Time" description="Only one Observation per timepoint can be made in a single DataSet" />
 		</entity>
 		
 		<entity name="ObservedValue" implements="AutoId">
@@ -182,10 +184,6 @@
 			<field name="Observation" type="xref" xref_entity="Observation" nillable="false" />
 			<field name="DataItem" type="xref" xref_entity="DataItem" nillable="false" />
 			<unique fields="Observation,DataItem" description="There can be only one value per observation/column" />
-			
-			<!-- field name="Feature" type="xref" xref_entity="Feature" nillable="false" />
-			<field name="Context" type="xref" xref_entity="Target" nillable="true" />
-			<unique fields="Feature,Observation,Context" description="A feature can only be measured once per observation without context, or measured multiple times with a unique context"/-->
 		</entity>
 
 		<entity name="OntologyTerm" implements="Identifiable">

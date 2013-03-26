@@ -19,7 +19,7 @@ public class ObservedValueDecorator<E extends ObservedValue> extends MapperDecor
 	{
 		for(ObservedValue o : entities)
 		{
-			if(o.getDataItem().getDataSet_Id().equals(o.getObservation().getPartOfDataSet_Id()))
+			if(o.getDataItem().getDataSet_Id().equals(o.getObservation().getDataSet_Id()))
 			{
 				throw new DatabaseException("DataItem refers to a different DataSet than Observation!");
 			}

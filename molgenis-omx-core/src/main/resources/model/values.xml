@@ -3,9 +3,20 @@
 		<description>
 			Advanced value types for core
 		</description>
+		
+		<entity name="Category" extends="Target">
+			<description>
+			Use Name as the label (e.g. 'male', 'female') and ValueCode as the corresponding code (e.g. '1', '2')
+			</description>
+			<field name="ValueCode" type="string" description="The value used to store this category in ObservedValue. For example '1', '2'." />			
+		</entity>
 
 		<entity name="PermittedValue" implements="AutoId">
-			<description>Specification of what type of value are acceptable when
+			<description>
+			
+				TODO: REMOVE ??
+			
+				Specification of what type of value are acceptable when
 				adding an Value for the Method this PermittedValue refers
 				to. This includes more precise constraints such as the allowed range
 				of numerical data, choosable options for categorical data, or
@@ -20,7 +31,7 @@
 				
 				PermittedValues are by design not 'reusable' via an MREF, because they act both as validators and provenance. Changing the options afterwards is bad practice, but at least will affect at most only a single Feature.
 				
-				
+				TODO: REMOVE ??
 
 			</description>
 			
@@ -59,13 +70,6 @@
 			<description>An observation for which the value is an integer number.
 			</description>
 			<field name="Value" type="int" />
-		</entity>
-
-		<entity name="XrefValue" extends="Value">
-			<description>An observation for which the value refers to a Concept
-				in the database.
-			</description>
-			<field name="Value" type="xref" xref_entity="Target" />
 		</entity>
 
 
