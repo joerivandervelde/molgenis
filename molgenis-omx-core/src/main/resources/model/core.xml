@@ -2,16 +2,13 @@
 <molgenis name="org.molgenis.omx">
 	<module name="core" label="Core module">
 		<description>
-			Absolute minimal v3 model without decorators, labels,
+			Absolute minimal OMX v3 model without decorators, labels,
 			hidden, or other (model-technically unneeded) modifiers for now.
-			
 			Golden rule: this XML is completely stand-alone useable!
 		</description>
 
 		<entity name="AutoId" abstract="true">
-			<description>
-				Database auto-incremented primary key for every record.
-			</description>
+			<description>Database auto-incremented primary key for every record.</description>
 			<field name="Id" type="autoid" description="Auto-incremented primary key." />
 		</entity>
 
@@ -28,41 +25,50 @@
 		</entity>
 		
 		<entity name="SystemClass" system="true" implements="AutoId" xref_label="EntityClassName">
-			<description>Referenceable catalog of this applications' menus, forms and plugins.
+			<description>Referenceable catalog of this applications' menus, forms and plugins. The contents of this table is generated using and GUI items, and should under no circumstance be modified at runtime by anyone.
 			</description>
-			<field name="EntityName" description="Name of the entity" />
-			<field name="EntityType" description="Type of the entity" />
-			<field name="EntityClassName" unique="true" description="Unique full class name of the entity, e.g. 'org.molgenis.omx.Marker'." />
-			<unique fields="EntityName,EntityType" description="Name is unique within type, so e.g. there can be an entity 'Marker' and a plugin 'Marker'."/>
+			<field name="EntityName" nillable="false" description="Name of the entity, e.g. 'AdminMenu' or 'ProtocolViewerPlugin'." />
+			<field name="EntityType" nillable="false" description="Type of the entity: 'FORM', 'PLUGIN' or 'MENU'." />
+			<field name="EntityClassName" nillable="false" unique="true" description="Unique full class name of the entity, e.g. 'app.ui.ProtocolViewerPlugin'." />
+			<unique fields="EntityName,EntityType" description="Name is unique within type, so e.g. there can be both a form 'ProtocolViewer' and a plugin 'ProtocolViewer'."/>
 		</entity>
 		
 		<entity name="EntityClass" extends="SystemClass">
-			<description>Referenceable catalog of generated database entity class names. Includes predefined concepts, but also user defined concepts. The content of Concept is automatically filled by 'FillMeta' and should not be altered under any condition at runtime.
+			<description>Referenceable catalog of generated database entity class names. The content of EntityClass is automatically filled by 'FillMeta', and should under no circumstance be modified at runtime by anyone.
 			</description>
 		</entity>
 		
 		<entity name="CustomClass" extends="EntityClass">
-			<description>Runtime extentions for the catalog of entity names. Acts as a new class, but with no additional properties relative to the class it is extending.
-			Concepts are abstract objects that mediate between thought, language, and referents. In Observ-OMX, concepts can be defined on any abstraction level, including the point where abstraction reaches a minimum and actual physical objects are denoted. Concepts can be specified via subclasses, for example 'Marker' as a direct subclass of Concept, 'Target' to denote physical objects in general, or 'Individual' as a subclass of Target. When not subclassed, Concept usually depicts a characteristic or quality belonging to a concept or target. Because Concept is a superclass of Target, the latter can be used interchangeably via references on the level of Concept. This enables e.g. applying a Concept to a Concept to add 'runtime attributes' or create Target versus Target data in the case of correlation matrices. General examples of Concepts: "Patient", "Height", "Marker pkP1050", "Panel", "Heart rate", "Sample". Examples of concepts on different abstraction levels: "Gene", "Gene expression", "Gene HOXD9", or "Blood pressure", "Systolic blood pressure".
+			<description>User defined runtime extentions for the catalog of generated (predefined) entity names. Acts as a new class, but with no additional properties relative to the class it is extending.
+		<!-- 
+			Concepts are abstract objects that mediate between thought, language, and referents.
+			In Observ-OMX, concepts can be defined on any abstraction level, including the point where abstraction reaches a minimum and actual physical objects are denoted.
+			Concepts can be specified via subclasses, for example 'Marker' as a direct subclass of Concept, 'Target' to denote physical objects in general, or 'Individual' as a subclass of Target.
+			When not subclassed, Concept usually depicts a characteristic or quality belonging to a concept or target.
+			Because Concept is a superclass of Target, the latter can be used interchangeably via references on the level of Concept.
+			This enables e.g. applying a Concept to a Concept to add 'runtime attributes' or create Target versus Target data in the case of correlation matrices.
+			General examples of Concepts: "Patient", "Height", "Marker pkP1050", "Panel", "Heart rate", "Sample".
+			Examples of concepts on different abstraction levels: "Gene", "Gene expression", "Gene HOXD9", or "Blood pressure", "Systolic blood pressure".
+			 -->
 			</description>
-			<field name="ExtendsClass" type="xref" xref_field="EntityClass.Id" nillable="true" description="This custom concept is a specialization of an existing concept (or custom concept)" />
-			<field name="Description" type="text" nillable="true" description="Rudimentary meta data about this concept. Use of ontology terms references to establish unambigious descriptions is recommended." />
-			<field name="OntologySource" type="mref" xref_entity="OntologySource" nillable="true" description="Ontological annotation for this concept. Refers to any kind of third-party identifier that helps to establish an unambiguous identification."/>
+			<field name="ExtendsClass" type="xref" xref_field="EntityClass.Id" nillable="true" description="The parent of this CustomClass from which fields are inherited. If this is left empty, there will be no known columns (fields) associated with this Class, and any data stored will go in the flexible (runtime defined) columns. This field can be used to build a hierarchy of classes, where a CustomClass inherits all columns (predefined or flexible) from all preceding CustomClasses, th root being either an EntityClass or CustomClass." />
+			<field name="Description" type="text" nillable="true" description="Rudimentary meta data about this CustomClass. Use of ontology terms references to establish unambigious descriptions is recommended." />
+			<field name="OntologySource" type="mref" xref_entity="OntologySource" nillable="true" description="Ontological annotation for this CustomClass. Refers to any kind of third-party identifier that helps to establish an unambiguous identification."/>
 		</entity>
 		
 		<entity name="Value" implements="AutoId">
-			<description>The outcome of an observation on a particular concept.
-				Belongs to an ObservationSet, which is in essence a row in a
-				DataSet.
-				SHOULD BEHAVE LIKE ABSTRACT CLASS
-			</description>
-			<!-- field name="Observation" type="xref" xref_entity="Observation" />
-			<field name="Feature" type="xref" xref_entity="Feature" />
-			<unique fields="Observation,Feature" description="There can be only one unique measurement at this timepoint for this particular Feature." /-->
+			<description>Either 1) the outcome of an Observation on a particular Feature, or 2) data that belongs to a flexible column attached to an EntityClass (or CustomClass). When used for 1): Values are referenced by ObservedValue, which belong to an Observation, which is in essence a row in a DataSet. The ObservedValue also references the Feature to which this Value belongs, which therefore acts like a column. When used for 2): Referenced by FlexColValue, which attached data to the flexible column structure via references to FlexCol and Target.[Development note: this class should behave like an abstract class, but it cannot be defined as such, because cross-references are currently not possible to abstract classes. We need to enable this, provided there is at least one implementation of the class, so the references happen to the implementing clas(ses).] </description>
 		</entity>
 
 		<entity name="Target" extends="Value" implements="Identifiable" xref_label="Identifier">
 			<description>
+			
+				Superclass of any object that can be measured or act as a measurement itself. Target is the main extension point of OMX3.
+				
+				It extends value so any instance can be used in lookup lists in DataSets (using ObservedValue) or as data for flexible columns (using FlexColValue).
+				
+				What happens in practice is: A datamodel extension of OMX3, for example 'XGAP', adds an entity called Gene, which extends Target. The Gene entity has all kinds of fields such as 'Chromosome', 'BpStartPosition', and so on. In the user interface, there are generated forms for Gene, and it acts as any regular entity genered by MOLGENIS. However, via the Target extension via OMX3, it is possible to: 1) Use any instance of Gene as a lookup Value in either data sets or flexible columns, because Target extends Value. 2) Using the CustomClass field in Target, any instance of Gene can be subclassed at runtime. For exaple, the class Gene can be subclassed to 'EnsemblGene', adding a new field 'EnsemblId' via flexible columns. Now, these EnsemblGenes are like regular Genes, except they have an extra column. [Development note: this requires a bit of business logic to check if the CustomClass is actually a subclass of the implementing class of the Target.]
+				
 				Targets are concrete objects, typically a physical object or a collection thereof, but can also be an instance of a data type such as 'DataSet' or 'Protocol'. They are typically subjects for observation of particular features. Features that refer to a Target as their MeasuredConcept gain an immediate constraint: the measured value MUST be an XrefValue, and the value MUST be a Target or subclass thereof. Furthermore, a flag can be set on DataSet to check if the referred Targets (or a combination of multiple Targets) are unique.
 				Example: 'Protocol' extends 'Target' because every instance of 'Protocol' can be referred to in a column of data. But to explain that you're measuring 'the concept of a protocol', you should create a Concept named 'Protocol' (with possible ontological references) to explain what you mean, and refer to this Concept via Feature. 
 
@@ -73,16 +79,18 @@
 				SHOULD BEHAVE LIKE ABSTRACT CLASS
 				
 			</description>
-			<field name="CustomClass" type="xref" xref_field="CustomClass.Id" nillable="true" description="(Optional) Specialization of this data type, e.g. 'Gene' subtyped into 'HumanGene'.)"  />
+			<field name="CustomClass" type="xref" xref_field="CustomClass.Id" nillable="true" description="(Optional) Specialization of this data type, e.g. 'Gene' subtyped into 'EnsemblGene'.)"  />
 		</entity>
 		
 		<entity name="FlexCol" implements="Identifiable">
+			<description>Add a column to a datatype at runtime. EntityClass is the datatype (class) you wish to extend. This can be a predefined or a custom class. The definition of the column is given via Feature.</description>
 			<field name="EntityClass" type="xref" xref_entity="EntityClass" nillable="false" description="" />
 			<field name="Feature" type="xref" xref_entity="Feature" nillable="false" description="" />
 			<unique fields="EntityClass,Feature" description="A feature can only be one flexible column"/>
 		</entity>
 		
 		<entity name="FlexColValue" implements="Identifiable">
+			<description>A single value for a FlexCol. The row/column placement of this value is defined via FlexCol and Target, the value given is referenced via Value. There can be only FlexColValue for a FlexCol/Target combination.</description>
 			<field name="FlexCol" type="xref" xref_entity="FlexCol" nillable="false" description="" />
 			<field name="Target" type="xref" xref_entity="Target" nillable="false" description="" />
 			<field name="Value" type="xref" xref_entity="Value" nillable="false" description="" />
@@ -111,11 +119,7 @@
 		</entity>
 		
 		<entity name="Protocol" extends="Target">
-			<description>The Protocol class defines parameterizable descriptions
-				of (analysis)methods. Examples of protocols are: Questionaires,
-				SOPs, assay platforms, statistical analyses, etc. Each protocol has
-				a unique identifier. Protocol has an association to OntologyTerm to
-				represent the type of protocol.
+			<description>The Protocol class defines parameterizable descriptions of (analysis)methods. Examples of protocols are: Questionaires, SOPs, assay platforms, statistical analyses, etc. Each protocol has a unique identifier. Protocol has an association to OntologyTerm to represent the type of protocol.
 			</description>
 			<field name="Features" type="mref" nillable="true" xref_entity="Feature"
 				description="Methods of observing a feature or describing the role of a target in this protocol. This includes all Features in this protocol, and contains all Features in all SubProtocols, if any." />
@@ -137,14 +141,7 @@
 		</entity>
 
 		<entity name="DataSet" extends="Target">
-			<description>A data set is a collection of data, usually presented in
-				tabular form. Each column represents a particular variable. Each row
-				corresponds to a given member of the data set in question. It lists
-				values for each of the variables, such as height and weight of an
-				object. The variables included correspond to the ones in the
-				protocol that this data set belongs to. Any data set and can
-				therefore be thought of as an instance of the protocol it belongs
-				to, like rows in a database are instances of their table definition.
+			<description>A data set is a collection of data, usually presented in tabular form. Each column represents a particular variable. Each row corresponds to a given member of the data set in question. It lists values for each of the variables, such as height and weight of an object. The variables included correspond to the ones in the protocol that this data set belongs to. Any data set and can therefore be thought of as an instance of the protocol it belongs to, like rows in a database are instances of their table definition.
 			</description>
 			<field name="DataSource" type="xref" xref_entity="DataSource" nillable="false"/>
 			<field name="Protocol" type="xref" xref_entity="Protocol" nillable="true" description="The protocol used to create this DataSet. All Features in this Protocol will be measured. Any Features in SubProtocols are already included in the list of the original protocol."/>
@@ -163,10 +160,7 @@
 		</entity>
 		
 		<entity name="Observation" implements="AutoId">
-			<description>A single row of values in a DataSet. The Methods of the
-				ObservedValues referring to this ObservationSet should correspond to
-				the Methods defined in the Protocol of the DataSet this
-				ObservationSet belongs to.
+			<description>A single row of values in a DataSet. The Methods of the ObservedValues referring to this ObservationSet should correspond to the Methods defined in the Protocol of the DataSet this ObservationSet belongs to.
 			</description>
 			<field name="DataSet" type="xref" xref_entity="DataSet"
 				description="The DataSet this Observation is part of." />
@@ -195,14 +189,7 @@
 		</entity>
 
 		<entity name="OntologySource" implements="Identifiable">
-			<description>The location where this OntologyTerm links to
-				or is originating from. The URL possibly needs a little mechanism to
-				insert the alternative identifier into, e.g. URL
-				"http://vega.sanger.ac.uk/Homo_sapiens/Gene/Summary?g={id};r=13:32889611-32973347"
-				where {id} is replaced with an instance of
-				OntologySource.Identifier "OTTHUMG00000017411" to form a
-				valid URL.
-			</description>
+			<description>The location where this OntologyTerm links to or is originating from. The URL possibly needs a little mechanism to insert the alternative identifier into, e.g. URL "http://vega.sanger.ac.uk/Homo_sapiens/Gene/Summary?g={id};r=13:32889611-32973347" where {id} is replaced with an instance of OntologySource.Identifier "OTTHUMG00000017411" to form a valid URL.</description>
 			<field name="Version" type="string" />
 			<field name="urlPattern" type="string" description="Template for the url. E.g. 'http://www.pubmed.org/${Identifier}'"/>
 			<unique fields="urlPattern,Version" description="The combination of url and version is unique"/>
