@@ -40,7 +40,20 @@
 			</description>
 		</entity>
 		
-		<entity name="CustomClass" extends="EntityClass">
+		<entity name="ValueClass" extends="EntityClass">
+			<description>
+				All classes that implement Value directly. Useful for selecting ValueType in Feature. Any classes that implement Target (which is a special type of Value) are ignored here. ValueClass cannot be customized by the user at runtime.
+			</description>
+		</entity>
+		
+		<entity name="TargetClass" extends="EntityClass">
+			<description>
+				All classes that implement Target. Useful for selecting ScopeClass in Feature.
+				The content of TargetClass is automatically filled by 'FillMeta', and should under no circumstance be modified at runtime by anyone. The content of TargetClass is automatically filled by 'FillMeta', and should under no circumstance be modified at runtime by anyone. Runtime extension happens via CustomClass.
+			</description>
+		</entity>
+		
+		<entity name="CustomClass" extends="TargetClass">
 			<description>
 				User defined runtime extentions for the catalog of generated (predefined) entity names. Acts as a new class, but with no additional properties relative to the class it is extending.
 		<!-- 
@@ -89,11 +102,11 @@
 		
 		<entity name="FlexCol" implements="Identifiable">
 			<description>
-				Add a column to a datatype at runtime. EntityClass is the datatype (class) you wish to extend. This can be a predefined or a custom class. The definition of the column is given via Feature.
+				Add a column to a type of Target at runtime. EntityClass is the datatype (class) you wish to extend. This can be a predefined or a custom class. The definition of the column is given via Feature.
 			</description>
-			<field name="EntityClass" type="xref" xref_entity="EntityClass" nillable="false" description="" />
+			<field name="TargetClass" type="xref" xref_entity="TargetClass" nillable="false" description="" />
 			<field name="Feature" type="xref" xref_entity="Feature" nillable="false" description="" />
-			<unique fields="EntityClass,Feature" description="A feature can only be one flexible column"/>
+			<unique fields="TargetClass,Feature" description="A feature can only be one flexible column"/>
 		</entity>
 		
 		<entity name="FlexColValue" implements="Identifiable">
@@ -113,8 +126,8 @@
 			</description>
 			<field name="Unit" type="xref" xref_entity="OntologyTerm" nillable="true" description="(Optional) Reference to the well-defined measurement unit used to observe this feature (if feature is that concrete). E.g. mmHg. Does not make any assumptions on the data type, e.g. integer or string." />
 			<field name="Definition" type="xref" xref_entity="OntologyTerm" description="The concept that is being measured in a specific way." nillable="true" />
-			<field name="ValueType" type="xref" xref_entity="EntityClass" nillable="false" description="The class that holds the values, e.g. DecimalValue or StringValue, but can also be Individual (for XREF) or a CustomClass thereof, e.g. Patient (extends Individual)" />	
-			<field name="ScopeClass" type="xref" xref_entity="EntityClass" nillable="true" description="Used to constrain DataItem scope within a Feature. When ValueType refers to a Target, this field is superfluous, because the values will be 'already scoped' XREFs. Also, this field is not needed when there is only one DataItem for a Feature."/>
+			<field name="ValueType" type="xref" xref_entity="ValueClass" nillable="false" description="The class that holds the values, e.g. DecimalValue, XrefValue or StringValue." />	
+			<field name="ScopeClass" type="xref" xref_entity="TargetClass" nillable="true" description="Used to constrain DataItem scope within a Feature. For XrefValue and MrefValue, the reference to a type of Target will result in a lookup list of instances of that type. For example, it could refer to Individual, resulting in a lookup of Individuals (including subclasses), or Patient (extends Individual), resulting in a lookup of only Patients. This field is not needed when there is only one DataItem for a Feature, and the ValueType is not XREF or MREF."/>
 			<field name="PermittedValues" type="mref" xref_entity="Value" nillable="true" description="Refer to specific value instances or filters (that include 0..N values implicitly) as allowed values for this Feature"/>
 			<field name="AllowMultipleValuesInCell" type="bool" default="false" nillable="false" description="Multiple values in a single cell" />
 			<field name="HasUniqueValues" type="bool" default="false" nillable="false" description="If set to true, all values are unique within this this DataItem. Use this when you want to make sure a 'row identifier' is respected, e.g. a list of microarray probes named 'AGI00001', 'AGI00002' are not duplicated." />
@@ -207,7 +220,7 @@
 				xref_entity="OntologySource" />
 		</entity>
 
-		<entity name="OntologySource" implements="Target">
+		<entity name="OntologySource" extends="Target">
 			<description>
 				The location where this OntologyTerm links to or is originating from. The URL possibly needs a little mechanism to insert the alternative identifier into, e.g. URL "http://vega.sanger.ac.uk/Homo_sapiens/Gene/Summary?g={id};r=13:32889611-32973347" where {id} is replaced with an instance of OntologySource.Identifier "OTTHUMG00000017411" to form a valid URL.
 			</description>
