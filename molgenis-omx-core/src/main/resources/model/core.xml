@@ -25,7 +25,8 @@
 		</entity>
 		
 		<entity name="SystemClass" system="true" implements="AutoId" xref_label="EntityClassName">
-			<description>Referenceable catalog of this applications' menus, forms and plugins. The contents of this table is generated using and GUI items, and should under no circumstance be modified at runtime by anyone.
+			<description>
+				Referenceable catalog of this applications' menus, forms and plugins. The contents of this table is generated using and GUI items, and should under no circumstance be modified at runtime by anyone.
 			</description>
 			<field name="EntityName" nillable="false" description="Name of the entity, e.g. 'AdminMenu' or 'ProtocolViewerPlugin'." />
 			<field name="EntityType" nillable="false" description="Type of the entity: 'FORM', 'PLUGIN' or 'MENU'." />
@@ -34,12 +35,14 @@
 		</entity>
 		
 		<entity name="EntityClass" extends="SystemClass">
-			<description>Referenceable catalog of generated database entity class names. The content of EntityClass is automatically filled by 'FillMeta', and should under no circumstance be modified at runtime by anyone.
+			<description>
+				Referenceable catalog of generated database entity class names. The content of EntityClass is automatically filled by 'FillMeta', and should under no circumstance be modified at runtime by anyone.
 			</description>
 		</entity>
 		
 		<entity name="CustomClass" extends="EntityClass">
-			<description>User defined runtime extentions for the catalog of generated (predefined) entity names. Acts as a new class, but with no additional properties relative to the class it is extending.
+			<description>
+				User defined runtime extentions for the catalog of generated (predefined) entity names. Acts as a new class, but with no additional properties relative to the class it is extending.
 		<!-- 
 			Concepts are abstract objects that mediate between thought, language, and referents.
 			In Observ-OMX, concepts can be defined on any abstraction level, including the point where abstraction reaches a minimum and actual physical objects are denoted.
@@ -57,7 +60,9 @@
 		</entity>
 		
 		<entity name="Value" implements="AutoId">
-			<description>Either 1) the outcome of an Observation on a particular Feature, or 2) data that belongs to a flexible column attached to an EntityClass (or CustomClass). When used for 1): Values are referenced by ObservedValue, which belong to an Observation, which is in essence a row in a DataSet. The ObservedValue also references the Feature to which this Value belongs, which therefore acts like a column. When used for 2): Referenced by FlexColValue, which attached data to the flexible column structure via references to FlexCol and Target.[Development note: this class should behave like an abstract class, but it cannot be defined as such, because cross-references are currently not possible to abstract classes. We need to enable this, provided there is at least one implementation of the class, so the references happen to the implementing clas(ses).] </description>
+			<description>
+				Either 1) the outcome of an Observation on a particular DataItem, or 2) data that belongs to a flexible column attached to an EntityClass (or CustomClass). When used for 1): Values are referenced by ObservedValue, which belong to an Observation, which is in essence a row in a DataSet. The ObservedValue also references the DataItem to which this Value belongs, which therefore acts like a column. When used for 2): Referenced by FlexColValue, which attached data to the flexible column structure via references to FlexCol and Target.[Development note: this class should behave like an abstract class, but it cannot be defined as such, because cross-references are currently not possible to abstract classes. We need to enable this, provided there is at least one implementation of the class, so the references happen to the implementing clas(ses).]
+			</description>
 		</entity>
 
 		<entity name="Target" extends="Value" implements="Identifiable" xref_label="Identifier">
@@ -83,14 +88,18 @@
 		</entity>
 		
 		<entity name="FlexCol" implements="Identifiable">
-			<description>Add a column to a datatype at runtime. EntityClass is the datatype (class) you wish to extend. This can be a predefined or a custom class. The definition of the column is given via Feature.</description>
+			<description>
+				Add a column to a datatype at runtime. EntityClass is the datatype (class) you wish to extend. This can be a predefined or a custom class. The definition of the column is given via Feature.
+			</description>
 			<field name="EntityClass" type="xref" xref_entity="EntityClass" nillable="false" description="" />
 			<field name="Feature" type="xref" xref_entity="Feature" nillable="false" description="" />
 			<unique fields="EntityClass,Feature" description="A feature can only be one flexible column"/>
 		</entity>
 		
 		<entity name="FlexColValue" implements="Identifiable">
-			<description>A single value for a FlexCol. The row/column placement of this value is defined via FlexCol and Target, the value given is referenced via Value. There can be only FlexColValue for a FlexCol/Target combination.</description>
+			<description>
+				A single value for a FlexCol. The row/column placement of this value is defined via FlexCol and Target, the value given is referenced via Value. There can be only FlexColValue for a FlexCol/Target combination.
+			</description>
 			<field name="FlexCol" type="xref" xref_entity="FlexCol" nillable="false" description="" />
 			<field name="Target" type="xref" xref_entity="Target" nillable="false" description="" />
 			<field name="Value" type="xref" xref_entity="Value" nillable="false" description="" />
@@ -102,11 +111,10 @@
 				The characterization of the role or the particular procedure of involvement for a Concept in an ObservationSet. The role 'target' replaces the old target XREF in value/ObservationSet and can consist of multiple targets that together form one (possibly unique) target.
 				Move HasUniqueValues / AllowMultipleValuesInCell to DataItem ?
 			</description>
-			
 			<field name="Unit" type="xref" xref_entity="OntologyTerm" nillable="true" description="(Optional) Reference to the well-defined measurement unit used to observe this feature (if feature is that concrete). E.g. mmHg. Does not make any assumptions on the data type, e.g. integer or string." />
 			<field name="Definition" type="xref" xref_entity="OntologyTerm" description="The concept that is being measured in a specific way." nillable="true" />
 			<field name="ValueType" type="xref" xref_entity="EntityClass" nillable="false" description="The class that holds the values, e.g. DecimalValue or StringValue, but can also be Individual (for XREF) or a CustomClass thereof, e.g. Patient (extends Individual)" />	
-			<field name="ScopeClass" type="xref" xref_entity="Target" nillable="true" description="Used to constrain DataItem scope within a Feature"/>
+			<field name="ScopeClass" type="xref" xref_entity="EntityClass" nillable="true" description="Used to constrain DataItem scope within a Feature. When ValueType refers to a Target, this field is superfluous, because the values will be 'already scoped' XREFs. Also, this field is not needed when there is only one DataItem for a Feature."/>
 			<field name="PermittedValues" type="mref" xref_entity="Value" nillable="true" description="Refer to specific value instances or filters (that include 0..N values implicitly) as allowed values for this Feature"/>
 			<field name="AllowMultipleValuesInCell" type="bool" default="false" nillable="false" description="Multiple values in a single cell" />
 			<field name="HasUniqueValues" type="bool" default="false" nillable="false" description="If set to true, all values are unique within this this DataItem. Use this when you want to make sure a 'row identifier' is respected, e.g. a list of microarray probes named 'AGI00001', 'AGI00002' are not duplicated." />
@@ -114,12 +122,16 @@
 		</entity>
 
 		<entity name="Filter" extends="Value" implements="AutoId" xref_label="Expression">
+			<description>
+				A special kind of Value which is often a range of values, or a dynamic query. The interpretation of these filters is left to the application. They can be used via PermittedValues in Feature, to allow for e.g. a range of integers to be accepted as values for an incoming dataset. This prevents a scenario where all allowed integer values would have to be entered in in database first, then each referred to as a PermittedValue, and then validate against the complete range when importing a dataset. That would be inefficient on many levels.
+			</description>
 			<field name="Expression" unique="true" description="Some constraint expression like '30..300', '>15', 'heart*', 'a-zA-Z0-9', 'q(id_EQUALS_23)' or 'q(label_LIKE_yes)'"/>
 			<field name="AppliedTo" type="xref" xref_entity="EntityClass" nillable="false"/>
 		</entity>
 		
 		<entity name="Protocol" extends="Target">
-			<description>The Protocol class defines parameterizable descriptions of (analysis)methods. Examples of protocols are: Questionaires, SOPs, assay platforms, statistical analyses, etc. Each protocol has a unique identifier. Protocol has an association to OntologyTerm to represent the type of protocol.
+			<description>
+				The Protocol class defines parameterizable descriptions of (analysis)methods. Examples of protocols are: Questionaires, SOPs, assay platforms, statistical analyses, etc. Each protocol has a unique identifier. Protocol has an association to OntologyTerm to represent the type of protocol.
 			</description>
 			<field name="Features" type="mref" nillable="true" xref_entity="Feature"
 				description="Methods of observing a feature or describing the role of a target in this protocol. This includes all Features in this protocol, and contains all Features in all SubProtocols, if any." />
@@ -130,18 +142,21 @@
 		</entity>
 		
 		<entity name="SubProtocol" extends="Protocol">
-			<description>A subprotocol will not be shown if asking for 'main' protocols (e.g. in the protocol browser). Subunit or component of a larger protocol. Can be part of multiple protocols, and can contain even smaller parts (subprotocols) itself. All Features that are part of SubProtocols are added to the Features of the 'source' Protocol.</description>
+			<description>
+				A subprotocol will not be shown if asking for 'main' protocols (e.g. in the protocol browser). Subunit or component of a larger protocol. Can be part of multiple protocols, and can contain even smaller parts (subprotocols) itself. All Features that are part of SubProtocols are added to the Features of the 'source' Protocol.
+			</description>
 		</entity>
 		
 		<entity name="DataSource" implements="Identifiable">
-		<description>
-			Should be filled with some defaults, e.g. "Database"
-		</description>
+			<description>
+				Should be filled with some defaults, e.g. "Database"
+			</description>
 			<field name="todo"/>
 		</entity>
 
 		<entity name="DataSet" extends="Target">
-			<description>A data set is a collection of data, usually presented in tabular form. Each column represents a particular variable. Each row corresponds to a given member of the data set in question. It lists values for each of the variables, such as height and weight of an object. The variables included correspond to the ones in the protocol that this data set belongs to. Any data set and can therefore be thought of as an instance of the protocol it belongs to, like rows in a database are instances of their table definition.
+			<description>
+				A data set is a collection of data, usually presented in tabular form. Each column represents a particular variable. Each row corresponds to a given member of the data set in question. It lists values for each of the variables, such as height and weight of an object. The variables included correspond to the ones in the protocol that this data set belongs to. Any data set and can therefore be thought of as an instance of the protocol it belongs to, like rows in a database are instances of their table definition.
 			</description>
 			<field name="DataSource" type="xref" xref_entity="DataSource" nillable="false"/>
 			<field name="Protocol" type="xref" xref_entity="Protocol" nillable="true" description="The protocol used to create this DataSet. All Features in this Protocol will be measured. Any Features in SubProtocols are already included in the list of the original protocol."/>
@@ -151,6 +166,9 @@
 		</entity>
 		
 		<entity name="DataItem" implements="AutoId" xref_label="Name">
+			<description>
+				DataItem is essentially a column in a dataset. It is a proxy for measuring a Feature. The reason Feature is not directly used as a 'column' is because Feature can be broader. For example, in a dataset of a large, homogeneous character such as genotypes, there could only be a single Feature ('Genotype', datatype = Marker) with many DataItems, each measuring the outcome of one specific Marker. The specific Marker is then referenced using the Scope field. (e.g. a Marker named 'rs723496') DataItems with the same Feature measure the same thing conceptually, only their scope differs.
+			</description>
 			<field name="Name" nillable="false " />
 			<field name="DataSet" type="xref" xref_entity="DataSet" nillable="false" />
 			<field name="Feature" type="xref" xref_entity="Feature" nillable="false" />
@@ -160,7 +178,8 @@
 		</entity>
 		
 		<entity name="Observation" implements="AutoId">
-			<description>A single row of values in a DataSet. The Methods of the ObservedValues referring to this ObservationSet should correspond to the Methods defined in the Protocol of the DataSet this ObservationSet belongs to.
+			<description>
+				A single row of values in a DataSet. The Methods of the ObservedValues referring to this ObservationSet should correspond to the Methods defined in the Protocol of the DataSet this ObservationSet belongs to.
 			</description>
 			<field name="DataSet" type="xref" xref_entity="DataSet"
 				description="The DataSet this Observation is part of." />
@@ -171,16 +190,16 @@
 		</entity>
 		
 		<entity name="ObservedValue" implements="AutoId">
-		<description>
-			Needs a validator: Observation.DataSet == DataItem.DataSet
-		</description>
+			<description>
+				The value measured for the Observation (row) of a DataItem (column). The actual value is a reference to an instance of Value. There can be only one value per Observation/DataItem (row/column).
+			</description>
 			<field name="Value" type="xref" xref_entity="Value" nillable="false" />
 			<field name="Observation" type="xref" xref_entity="Observation" nillable="false" />
 			<field name="DataItem" type="xref" xref_entity="DataItem" nillable="false" />
-			<unique fields="Observation,DataItem" description="There can be only one value per observation/column" />
+			<unique fields="Observation,DataItem" description="There can be only one value per Observation/DataItem (row/column)" />
 		</entity>
 
-		<entity name="OntologyTerm" implements="Identifiable">
+		<entity name="OntologyTerm" extends="Target">
 			<description>
 				An ontology term or other kind of alternative, often external identifier. Usually a link to other kind of database, or just a string denoting another possibility.
 			</description>
@@ -188,8 +207,10 @@
 				xref_entity="OntologySource" />
 		</entity>
 
-		<entity name="OntologySource" implements="Identifiable">
-			<description>The location where this OntologyTerm links to or is originating from. The URL possibly needs a little mechanism to insert the alternative identifier into, e.g. URL "http://vega.sanger.ac.uk/Homo_sapiens/Gene/Summary?g={id};r=13:32889611-32973347" where {id} is replaced with an instance of OntologySource.Identifier "OTTHUMG00000017411" to form a valid URL.</description>
+		<entity name="OntologySource" implements="Target">
+			<description>
+				The location where this OntologyTerm links to or is originating from. The URL possibly needs a little mechanism to insert the alternative identifier into, e.g. URL "http://vega.sanger.ac.uk/Homo_sapiens/Gene/Summary?g={id};r=13:32889611-32973347" where {id} is replaced with an instance of OntologySource.Identifier "OTTHUMG00000017411" to form a valid URL.
+			</description>
 			<field name="Version" type="string" />
 			<field name="urlPattern" type="string" description="Template for the url. E.g. 'http://www.pubmed.org/${Identifier}'"/>
 			<unique fields="urlPattern,Version" description="The combination of url and version is unique"/>
