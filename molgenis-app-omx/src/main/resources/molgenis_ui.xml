@@ -15,6 +15,9 @@
 		</menu>
         <menu label="Admin" name="admin">
 	        <menu label="Entities" name ="entities">
+	        	<plugin id="form.Patient" name="Patient" url="form.Patient"/>
+	        	<plugin id="form.Variant" name="Variant" url="form.Variant"/>
+	        	<plugin id="form.Chromosome" name="Chromosome" url="form.Chromosome"/>
         		<plugin id="form.DataSet" name="DataSet" url="form.DataSet"/>
         		<plugin id="form.Protocol" name="Protocol" url="form.Protocol?subForms=DataSet.ProtocolUsed"/>
         		<plugin id="form.ObservableFeature" name="ObservableFeature" url="form.ObservableFeature?subForms=Category.observableFeature"/>
