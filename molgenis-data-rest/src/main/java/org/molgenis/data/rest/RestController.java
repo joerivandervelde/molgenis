@@ -676,7 +676,9 @@ public class RestController
 		if (null == meta) throw new IllegalArgumentException("meta is null");
 
 		Map<String, Object> entityMap = new LinkedHashMap<String, Object>();
-		entityMap.put("href", String.format(BASE_URI + "/%s/%s", meta.getName(), entity.getIdValue()));
+		entityMap.put("href",
+				String.format(BASE_URI + "/%s/%s", entity.getEntityMetaData().getName(), entity.getIdValue()));
+		entityMap.put("meta", String.format(BASE_URI + "/%s/meta", entity.getEntityMetaData().getName()));
 
 		// TODO system fields
 		for (AttributeMetaData attr : meta.getAtomicAttributes())
