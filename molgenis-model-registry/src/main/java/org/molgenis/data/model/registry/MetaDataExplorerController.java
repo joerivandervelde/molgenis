@@ -16,12 +16,14 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.SessionAttributes;
 
 import com.google.common.collect.Lists;
 
 /**
  * Controller class for the model registry
  */
+@SessionAttributes("metaDataSearchForm")
 @Controller
 @RequestMapping(URI)
 public class MetaDataExplorerController extends MolgenisPluginController
@@ -53,35 +55,38 @@ public class MetaDataExplorerController extends MolgenisPluginController
 	 * @return the viewname
 	 */
 	@RequestMapping
-	public String showMetaDataExplorer(SearchForm searchForm, Model model)
+	public String showMetaDataExplorer(MetaDataSearchForm metaDataSearchForm, Model model)
 	{
-		List<EntityClass> entityClasses = Lists.newArrayList();
+		List<EntityClass> entityClasses;
 		long totalCount = 0;
 
-		if ((searchForm.getEntityClassTypes() != null) && !searchForm.getEntityClassTypes().isEmpty())
+		if ((metaDataSearchForm.getEntityClassTypes() != null) && !metaDataSearchForm.getEntityClassTypes().isEmpty())
 		{
 			Query q = new QueryImpl();
 
-			if (StringUtils.isNotBlank(searchForm.getSearchTerm()))
+			if (StringUtils.isNotBlank(metaDataSearchForm.getSearchTerm()))
 			{
-				q.search(searchForm.getSearchTerm());
+				q.search(metaDataSearchForm.getSearchTerm());
 			}
 
-			q.in(EntityClass.TYPE, searchForm.getEntityClassTypes());
+			q.in(EntityClass.TYPE, metaDataSearchForm.getEntityClassTypes());
 
 			totalCount = dataService.count(EntityClass.ENTITY_NAME, q);
 
 			q.pageSize(NR_ITEMS_PER_PAGE);
-			q.offset((searchForm.getPage() - 1) * NR_ITEMS_PER_PAGE);
+			q.offset((metaDataSearchForm.getPage() - 1) * NR_ITEMS_PER_PAGE);
 
-			entityClasses
-					.addAll(Lists.newArrayList(dataService.findAll(EntityClass.ENTITY_NAME, q, EntityClass.class)));
+			entityClasses = Lists.newArrayList(dataService.findAll(EntityClass.ENTITY_NAME, q, EntityClass.class));
+		}
+		else
+		{
+			entityClasses = Lists.newArrayList();
 		}
 
 		model.addAttribute("nrItems", totalCount);
 		model.addAttribute("nrItemsPerPage", NR_ITEMS_PER_PAGE);
 		model.addAttribute("entityClasses", entityClasses);
-		model.addAttribute("form", searchForm);
+		model.addAttribute("metaDataSearchForm", metaDataSearchForm);
 
 		return "view-metadataexplorer";
 	}
