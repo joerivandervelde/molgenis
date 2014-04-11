@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.molgenis.data.AttributeMetaData;
 import org.molgenis.data.DataService;
+import org.molgenis.data.Entity;
 import org.molgenis.data.EntityMetaData;
 import org.molgenis.fieldtypes.FieldType;
 import org.molgenis.fieldtypes.LongField;
@@ -184,6 +185,13 @@ public class LuceneRepositoryRegistrator implements ApplicationListener<ContextR
 			{
 				for (AttributeMetaData attribute : attributes)
 					if (attribute.getName().equalsIgnoreCase(attributeName)) return attribute;
+				return null;
+			}
+
+			@Override
+			public Class<? extends Entity> getEntityClass()
+			{
+				// TODO Auto-generated method stub
 				return null;
 			}
 		};

@@ -59,12 +59,6 @@ public class LuceneRepository implements Queryable, Repository
 	}
 
 	@Override
-	public Class<? extends Entity> getEntityClass()
-	{
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public <E extends Entity> Iterable<E> iterator(Class<E> clazz)
 	{
 		throw new UnsupportedOperationException();
