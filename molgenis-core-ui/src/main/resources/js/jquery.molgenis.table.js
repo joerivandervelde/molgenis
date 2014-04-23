@@ -117,7 +117,7 @@
 	 * @memberOf molgenis.table
 	 */
 	function createTableBody(data, settings) {
-		function openRefAttributeModal(attribute, refEntity, refAttribute, refValue) {
+		function openRefAttributeModal(attribute, refValue, refEntityUri, refEntityMetaUri) {
 			// create modal structure
 			var modal = $('#table-ref-modal');
 			if(!modal.length) {
@@ -139,6 +139,8 @@
 				items.push('</div>');
 				modal = $(items.join(''));
 			}
+			
+			var refEntity = restApi.get(refEntityMetaUri, {'expand' : [ 'attributes' ]});
 			
 			// inject modal data
 			var refAttributes = molgenis.getAtomicAttributes(refEntity.attributes, restApi);
@@ -191,7 +193,7 @@
 									case 'XREF':
 										var cellValue = $('<a href="#">' + formatTableCellValue(rawValue[refAttribute], refAttributeType) + '</a>'); 
 										cellValue.click(function() {
-											openRefAttributeModal(attribute, refEntity, refAttribute, rawValue); 
+											openRefAttributeModal(attribute, rawValue, rawValue.href, rawValue.meta); 
 										});
 										cell.append(cellValue);
 										break;
@@ -199,7 +201,7 @@
 										$.each(rawValue.items, function(i, rawValue) {
 											var cellValuePart = $('<a href="#">' + formatTableCellValue(rawValue[refAttribute], refAttributeType) + '</a>');
 											cellValuePart.click(function() {
-												openRefAttributeModal(attribute, refEntity, refAttribute, rawValue); 
+												openRefAttributeModal(attribute, rawValue, rawValue.href, rawValue.meta); 
 											});
 											if (i > 0)
 												cell.append(',');
