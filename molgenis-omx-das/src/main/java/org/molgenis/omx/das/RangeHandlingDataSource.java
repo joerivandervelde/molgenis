@@ -18,11 +18,11 @@ public abstract class RangeHandlingDataSource implements RangeHandlingAnnotation
 {
     public static final String MUTATION_STOP_POSITION = "stop_nucleotide";
     public static final String MUTATION_LINK = "linkout";
-    public static final String MUTATION_NAME = "mutation_name";
-    public static final String MUTATION_DESCRIPTION = "description";
-    public static final String MUTATION_START_POSITION = "start_nucleotide";
-    public static final String MUTATION_ID = "mutation_id";
-    public static final String MUTATION_CHROMOSOME = "chromosome";
+    public static final String MUTATION_NAME = "__identifier";
+    public static final String MUTATION_DESCRIPTION = "INFO";
+    public static final String MUTATION_START_POSITION = "POS";
+    public static final String MUTATION_ID = "ID";
+    public static final String MUTATION_CHROMOSOME = "CHROM";
     public static final String PATIENT_ID = "patient_id";
 
     protected DasFeature createDasFeature(Integer start, Integer stop, String identifier, String name,

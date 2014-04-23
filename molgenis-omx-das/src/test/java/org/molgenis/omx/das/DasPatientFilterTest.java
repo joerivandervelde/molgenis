@@ -18,7 +18,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.mockito.ArgumentCaptor;
-import org.molgenis.omx.das.impl.DasPatientFilter;
+import org.molgenis.omx.das.impl.DasURLFilter;
 import org.molgenis.util.HandleRequestDelegationException;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -30,7 +30,7 @@ public class DasPatientFilterTest
 {
 	private HttpServletRequest request;
 	private HttpServletResponse response;
-	private DasPatientFilter filter;
+	private DasURLFilter filter;
 	private FilterChain chain;
 	private HttpServletRequest requestNoPatient;
 	private HttpServletResponse responseNoPatient;
@@ -46,7 +46,7 @@ public class DasPatientFilterTest
 		response = mock(HttpServletResponse.class);
 		chain = mock(FilterChain.class);
 		requestDispatcher = mock(RequestDispatcher.class);
-		filter = new DasPatientFilter();
+		filter = new DasURLFilter();
 		when(request.getRequestURI()).thenReturn("/das/col7a1/patient_502/features");
 		when(request.getQueryString()).thenReturn("3:48618447,48640609;maxbins=636");
 		when(request.getRequestDispatcher("/das/col7a1/features")).thenReturn(requestDispatcher);

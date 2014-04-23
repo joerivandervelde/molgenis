@@ -11,6 +11,7 @@ import java.util.Map;
 
 import javax.servlet.ServletContext;
 
+import com.google.common.collect.Iterables;
 import org.apache.commons.lang3.StringUtils;
 import org.molgenis.data.DataService;
 import org.molgenis.data.Entity;
@@ -67,9 +68,9 @@ public class RepositoryRangeHandlingDataSource extends RangeHandlingDataSource i
 		{
 			segmentId = segmentParts[0];
 			customParam = segmentParts[1];
-			if (customParam.indexOf("dataset_") != -1)
+			if (customParam.indexOf(DasURLFilter.DATASET_PREFIX) != -1)
 			{
-				dataSet = customParam.substring(8);
+				dataSet = customParam.substring(11);
 			}
 		}
 		if (maxbins == null || maxbins < 0)
@@ -103,13 +104,15 @@ public class RepositoryRangeHandlingDataSource extends RangeHandlingDataSource i
 				break;
 			}
 			// no end position? assume mutation of 1 position, so stop == start
-			valueStop = entity.getInt(MUTATION_STOP_POSITION) == null ? valueStart : entity
-					.getInt(MUTATION_STOP_POSITION);
-			valueDescription = entity.getString(MUTATION_DESCRIPTION) == null ? "" : entity
+			Iterable<String> attributes = entity.getAttributeNames();
+
+            valueStop = Iterables.contains(attributes, MUTATION_STOP_POSITION) ? entity
+					.getInt(MUTATION_STOP_POSITION):valueStart;
+			valueDescription = Iterables.contains(attributes, MUTATION_DESCRIPTION) ? "" : entity
 					.getString(MUTATION_DESCRIPTION);
-			valueName = entity.getString(MUTATION_NAME) == null ? "" : entity.getString(MUTATION_NAME);
-			valueLink = entity.getString(MUTATION_LINK) == null ? "" : entity.getString(MUTATION_LINK);
-			valuePatient = entity.getString(PATIENT_ID) == null ? "" : entity.getString(PATIENT_ID);
+			valueName = Iterables.contains(attributes, MUTATION_NAME) ? entity.getString(MUTATION_NAME): "";
+			valueLink = Iterables.contains(attributes, MUTATION_LINK) ? entity.getString(MUTATION_LINK): "";
+			valuePatient = Iterables.contains(attributes, PATIENT_ID) ? entity.getString(PATIENT_ID): "";
 
 			if ((valueStart >= start && valueStart <= stop) || (valueStop >= start && valueStop <= stop))
 			{

@@ -25,7 +25,7 @@ public class VariantReferencer
 {
 	public static void main(String[] args) throws IOException
 	{
-		String indexDir = "D:\\tmp\\variantindex";
+		String indexDir = "/Users/charbonb/data/variants/index";
 
 		String[] entityNames =
 		{ "1000G_Cardio_summary", "1000G_Fakepatient_0", "1000G_Fakepatient_1", "1000G_Fakepatient_2",

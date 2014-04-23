@@ -45,7 +45,7 @@ public class LuceneRepository implements Queryable, Repository
 
 	public LuceneRepository(String indexDir, EntityMetaData entityMetaData, DataService dataService) throws IOException
 	{
-		this.indexReader = DirectoryReader.open(FSDirectory.open(new File("D:\\tmp\\variantindex-out")));
+		this.indexReader = DirectoryReader.open(FSDirectory.open(new File("/Users/charbonb/data/variants/index-out/")));
 		this.indexSearcher = new IndexSearcher(indexReader);
 		this.entityMetaData = entityMetaData;
 		this.queryParser = new QueryParser(Version.LUCENE_45, "fieldname", new StandardAnalyzer(Version.LUCENE_45));

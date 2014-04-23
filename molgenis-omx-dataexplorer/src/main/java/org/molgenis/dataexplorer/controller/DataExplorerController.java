@@ -90,9 +90,9 @@ public class DataExplorerController extends MolgenisPluginController
 	public static final String BROWSERLINKS = "browserLinks";
 	public static final String GENOMEBROWSERTABLE = "genomeBrowserTable";
 
-	public static final String MUTATION_START_POSITION = "start_nucleotide";
-	public static final String MUTATION_ID = "mutation_id";
-	public static final String MUTATION_CHROMOSOME = "chromosome";
+	public static final String MUTATION_START_POSITION = "POS";
+	public static final String MUTATION_ID = "ID";
+	public static final String MUTATION_CHROMOSOME = "CHROM";
 
 	@Autowired
 	private DataService dataService;
