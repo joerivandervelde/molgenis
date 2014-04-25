@@ -106,13 +106,14 @@ public class RepositoryRangeHandlingDataSource extends RangeHandlingDataSource i
 			// no end position? assume mutation of 1 position, so stop == start
 			Iterable<String> attributes = entity.getAttributeNames();
 
-            valueStop = Iterables.contains(attributes, MUTATION_STOP_POSITION) ? entity
-					.getInt(MUTATION_STOP_POSITION):valueStart;
-			valueDescription = Iterables.contains(attributes, MUTATION_DESCRIPTION) ? "" : entity
-					.getString(MUTATION_DESCRIPTION);
-			valueName = Iterables.contains(attributes, MUTATION_NAME) ? entity.getString(MUTATION_NAME): "";
-			valueLink = Iterables.contains(attributes, MUTATION_LINK) ? entity.getString(MUTATION_LINK): "";
-			valuePatient = Iterables.contains(attributes, PATIENT_ID) ? entity.getString(PATIENT_ID): "";
+			valueStop = Iterables.contains(attributes, MUTATION_STOP_POSITION) ? entity.getInt(MUTATION_STOP_POSITION) : valueStart;
+
+			valueDescription = Iterables.contains(attributes, MUTATION_DESCRIPTION) ? entity
+					.getString(MUTATION_DESCRIPTION) : "";
+
+			valueName = Iterables.contains(attributes, MUTATION_NAME) ? entity.getString(MUTATION_NAME) : "";
+			valueLink = Iterables.contains(attributes, MUTATION_LINK) ? entity.getString(MUTATION_LINK) : "";
+			valuePatient = Iterables.contains(attributes, PATIENT_ID) ? entity.getString(PATIENT_ID) : "";
 
 			if ((valueStart >= start && valueStart <= stop) || (valueStop >= start && valueStop <= stop))
 			{

@@ -32,10 +32,11 @@ import org.molgenis.elasticsearch.request.LuceneQueryStringBuilder;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
+import org.springframework.beans.factory.annotation.Value;
 
 public class LuceneRepository implements Queryable, Repository
 {
-	public static final String BASE_URL = "lucene://";
+    public static final String BASE_URL = "lucene://";
 
 	private final IndexReader indexReader;
 	private final IndexSearcher indexSearcher;
@@ -45,7 +46,7 @@ public class LuceneRepository implements Queryable, Repository
 
 	public LuceneRepository(String indexDir, EntityMetaData entityMetaData, DataService dataService) throws IOException
 	{
-		this.indexReader = DirectoryReader.open(FSDirectory.open(new File("/Users/charbonb/data/variants/index-out/")));
+        this.indexReader = DirectoryReader.open(FSDirectory.open(new File(indexDir)));
 		this.indexSearcher = new IndexSearcher(indexReader);
 		this.entityMetaData = entityMetaData;
 		this.queryParser = new QueryParser(Version.LUCENE_45, "fieldname", new StandardAnalyzer(Version.LUCENE_45));

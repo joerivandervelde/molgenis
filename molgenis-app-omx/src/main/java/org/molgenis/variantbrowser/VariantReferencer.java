@@ -1,11 +1,10 @@
 package org.molgenis.variantbrowser;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.InputStream;
+import java.util.*;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -20,28 +19,39 @@ import org.apache.lucene.index.IndexWriterConfig.OpenMode;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
+import org.springframework.beans.factory.annotation.Value;
 
 public class VariantReferencer
 {
 	public static void main(String[] args) throws IOException
 	{
-		String indexDir = "/Users/charbonb/data/variants/index";
+        String usage = "java org.molgenis.variantbrowser.VariantReferencer"
+                + "-index [INPUT_INDEX_PATH]";
+        Properties props = new Properties();
+        InputStream stream = new FileInputStream(System.getProperty("user.home")+"/.molgenis/omx/molgenis-server.properties"); // open the file
+        props.load(stream);
 
-		String[] entityNames =
-		{ "1000G_Cardio_summary", "1000G_Fakepatient_0", "1000G_Fakepatient_1", "1000G_Fakepatient_2",
-				"1000G_Fakepatient_3", "1000G_Fakepatient_4", "CADD_DSP_allsnps", "CADD_PKP2_allsnps",
-				"CADD_TTN_allsnps", "GoNL_CardioGenes_populationvariants", "LOVD_DMD_TTN", "NCBI_ClinVar",
-				"NHGRI_GWAS_Catalog", "UMCG_5GPM_TTN_pat", "UMCG_ARVC_DSP", "UMCG_ARVC_PKP2", "UMCG_ARVC_TTN",
-				"UMCG_Diagnostics_CardioManagedVariants_Artefact", "UMCG_Diagnostics_CardioManagedVariants_Benign",
-				"UMCG_Diagnostics_CardioManagedVariants_LikelyBenign",
-				"UMCG_Diagnostics_CardioManagedVariants_LikelyPathogenic",
-				"UMCG_Diagnostics_CardioManagedVariants_Pathogenic", "UMCG_Diagnostics_CardioManagedVariants_VOUS",
-				"UMCG_Diagnostics_Cardio_Batch1_106Samples", "UMCG_Diagnostics_Cardio_Batch2_107Samples",
-				"UMCG_Diagnostics_Cardio_Batch3_108Samples" };
+        // process properties content
+        String indexOutputDir = props.getProperty("index.directory");
 
-		System.out.println("creating variant map");
+        String indexPath = null;
+        for (int i = 0; i < args.length; i++)
+        {
+            if ("-index".equals(args[i]))
+            {
+                indexPath = args[i + 1];
+                i++;
+            }
+        }
+        if (indexPath == null)
+        {
+            System.err.println("Usage: " + usage);
+            System.exit(1);
+        }
+
+        System.out.println("creating variant map");
 		Map<String, List<String>> variantMap = new HashMap<String, List<String>>();
-		IndexReader indexReader = DirectoryReader.open(FSDirectory.open(new File(indexDir)));
+		IndexReader indexReader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
 		try
 		{
 			for (int i = 0; i < indexReader.maxDoc(); i++)
@@ -71,7 +81,7 @@ public class VariantReferencer
 			}
 
 			System.out.println("writing variant map");
-			Directory dir = FSDirectory.open(new File(indexDir + "-out"));
+			Directory dir = FSDirectory.open(new File(indexOutputDir));
 			Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_45);
 			IndexWriterConfig iwc = new IndexWriterConfig(Version.LUCENE_45, analyzer);
 			iwc.setOpenMode(OpenMode.CREATE);

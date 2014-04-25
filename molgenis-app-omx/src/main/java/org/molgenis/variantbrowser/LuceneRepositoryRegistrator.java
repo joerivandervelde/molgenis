@@ -1,5 +1,6 @@
 package org.molgenis.variantbrowser;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -14,6 +15,7 @@ import org.molgenis.fieldtypes.LongField;
 import org.molgenis.fieldtypes.MrefField;
 import org.molgenis.fieldtypes.StringField;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.Ordered;
@@ -26,7 +28,12 @@ public class LuceneRepositoryRegistrator implements ApplicationListener<ContextR
 {
 	private final DataService dataService;
 
-	@Autowired
+    @Value("${index.directory:@null}")
+    private String indexDirectory;
+    @Value("${data.directory:@null}")
+    private String dataDirectory;
+
+    @Autowired
 	public LuceneRepositoryRegistrator(DataService dataService)
 	{
 		this.dataService = dataService;
@@ -38,60 +45,27 @@ public class LuceneRepositoryRegistrator implements ApplicationListener<ContextR
 		return Ordered.HIGHEST_PRECEDENCE + 2;
 	}
 
-	@Override
+    @Override
 	public void onApplicationEvent(ContextRefreshedEvent event)
 	{
-		String indexMeta = "1000G_Cardio_summary\r\n"
-				+ "CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO\r\n"
-				+ "1000G_Fakepatient_0\r\n"
-				+ "CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO,FORMAT,SAMPLEINDEX_0\r\n"
-				+ "1000G_Fakepatient_1\r\n"
-				+ "CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO,FORMAT,SAMPLEINDEX_1\r\n"
-				+ "1000G_Fakepatient_2\r\n"
-				+ "CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO,FORMAT,SAMPLEINDEX_2\r\n"
-				+ "1000G_Fakepatient_3\r\n"
-				+ "CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO,FORMAT,SAMPLEINDEX_3\r\n"
-				+ "1000G_Fakepatient_4\r\n"
-				+ "CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO,FORMAT,SAMPLEINDEX_4\r\n"
-				+ "CADD_DSP_allsnps\r\n"
-				+ "chr,pos,ref,alt,raw,phred\r\n"
-				+ "CADD_PKP2_allsnps\r\n"
-				+ "chr,pos,ref,alt,raw,phred\r\n"
-				+ "CADD_TTN_allsnps\r\n"
-				+ "chr,pos,ref,alt,raw,phred\r\n"
-				+ "GoNL_CardioGenes_populationvariants\r\n"
-				+ "CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO\r\n"
-				+ "LOVD_DMD_TTN\r\n"
-				+ "Exon,DNA change,TimesReported,Var_pub_as,RNA change,Protein change,DB-ID,Variant remarks,Genet_ori,Segregation,Reference,Template,Technique,Frequency,RE-site,chr,pos,cdna,ref,alt\r\n"
-				+ "NCBI_ClinVar\r\n"
-				+ "CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO\r\n"
-				+ "NHGRI_GWAS_Catalog\r\n"
-				+ "Index,Date.Added.to.Catalog,PUBMEDID,First.Author,Date,Journal,Link,Study,Disease.Trait,Initial.Sample.Size,Replication.Sample.Size,Region,Chr_id,chr,pos,Mapped_gene,Upstream_gene_id,Downstream_gene_id,Snp_gene_ids,Upstream_gene_distance,Downstream_gene_distance,Strongest.SNP.Risk.Allele,SNPs,Merged,Snp_id_current,Context,Intergenic,Risk.Allele.Frequency,p.Value,Pvalue_mlog,p.Value..text.,OR.or.beta,X95..CI..text.,Platform..SNPs.passing.QC.,CNV\r\n"
-				+ "UMCG_5GPM_TTN_pat\r\n"
-				+ "chr,pos,ref,alt,raw,phred\r\n"
-				+ "UMCG_ARVC_DSP\r\n"
-				+ "Gene,Locus,Exon,Mutation,DNA_Change,Protein_Change,Type,Reported_Classification,No_of_clinical_reports,Details,chr,pos,id,ref,alt,raw,phred\r\n"
-				+ "UMCG_ARVC_PKP2\r\n"
-				+ "Gene,Locus,Exon,Mutation,DNA_Change,Protein_Change,Type,Reported_Classification,No_of_clinical_reports,Details,chr,pos,id,ref,alt,raw,phred\r\n"
-				+ "UMCG_ARVC_TTN\r\n"
-				+ "chr,pos,ID,REF,ALT,Gene,Locus,Exon,DNA Change,Protein Change,Type,Reported Classification,No of clinical reports\r\n"
-				+ "UMCG_Diagnostics_CardioManagedVariants_Artefact\r\n"
-				+ "chr,pos,stop,ref,alt,variant_type,location,effect,gene,transcript,exon,c_nomen,p_nomen,dbsnp\r\n"
-				+ "UMCG_Diagnostics_CardioManagedVariants_Benign\r\n"
-				+ "chr,pos,stop,ref,alt,variant_type,location,effect,gene,transcript,exon,c_nomen,p_nomen,dbsnp\r\n"
-				+ "UMCG_Diagnostics_CardioManagedVariants_LikelyBenign\r\n"
-				+ "chr,pos,stop,ref,alt,variant_type,location,effect,gene,transcript,exon,c_nomen,p_nomen,dbsnp\r\n"
-				+ "UMCG_Diagnostics_CardioManagedVariants_LikelyPathogenic\r\n"
-				+ "chr,pos,stop,ref,alt,variant_type,location,effect,gene,transcript,exon,c_nomen,p_nomen,dbsnp\r\n"
-				+ "UMCG_Diagnostics_CardioManagedVariants_Pathogenic\r\n"
-				+ "chr,pos,stop,ref,alt,variant_type,location,effect,gene,transcript,exon,c_nomen,p_nomen,dbsnp\r\n"
-				+ "UMCG_Diagnostics_CardioManagedVariants_VOUS\r\n"
-				+ "chr,pos,stop,ref,alt,variant_type,location,effect,gene,transcript,exon,c_nomen,p_nomen,dbsnp\r\n"
-				+ "UMCG_Diagnostics_Cardio_Batch1_106Samples\r\n" + "CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO\r\n"
-				+ "UMCG_Diagnostics_Cardio_Batch2_107Samples\r\n" + "CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO\r\n"
-				+ "UMCG_Diagnostics_Cardio_Batch3_108Samples\r\n" + "CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO";
-
-		CSVReader csvReader = new CSVReader(new StringReader(indexMeta));
+        StringBuilder indexMeta = new StringBuilder();
+        final File folder = new File(dataDirectory);
+        File[] files = folder.listFiles();
+        for (File file : files){
+            try {
+                if(!file.isHidden()) {
+                    indexMeta.append(MetadataReader.getMetadataString(file));
+                }
+            } catch (IOException e) {
+                System.err.println("ERROR getting headers for file: "+file.getName());
+            }
+        }
+        //indexMeta.append("UMCG_Diagnostics_Cardio_Batch1_106Samples\r\n" + "CHROM,POS,ID,REF,ALT,QUAL,referenceCount,hetrozygoteAltCount,homezygoteAltCount,FILTER,INFO\r\n"
+		//		+ "UMCG_Diagnostics_Cardio_Batch2_107Samples\r\n" + "CHROM,POS,ID,REF,ALT,referenceCount,hetrozygoteAltCount,homezygoteAltCount,QUAL,FILTER,INFO\r\n"
+		//		+ "UMCG_Diagnostics_Cardio_Batch3_108Samples\r\n" + "CHROM,POS,ID,REF,ALT,referenceCount,hetrozygoteAltCount,homezygoteAltCount,QUAL,FILTER,INFO\r\n"
+        //        + "CADD_DSP_allsnps\r\n" + "chr,pos,ref,alt,raw,phred");
+        System.out.println(indexMeta.toString());
+        CSVReader csvReader = new CSVReader(new StringReader(indexMeta.toString()));
 		try
 		{
 			String[] tokens;
@@ -99,9 +73,9 @@ public class LuceneRepositoryRegistrator implements ApplicationListener<ContextR
 			{
 				EntityMetaData entityMetaData = createEntityMetaData(tokens[0], csvReader.readNext());
 				dataService
-						.addRepository(new LuceneRepository("D:\\tmp\\variantindex-out", entityMetaData, dataService));
+						.addRepository(new LuceneRepository(indexDirectory, entityMetaData, dataService));
 			}
-			dataService.addRepository(new LuceneRepository("D:\\tmp\\variantindex-out", createEntityMetaData(
+			dataService.addRepository(new LuceneRepository(indexDirectory, createEntityMetaData(
 					"variantdata", new String[]
 					{ "CHROM", "POS", "INFO" }), dataService));
 		}

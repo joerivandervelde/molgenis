@@ -17,24 +17,14 @@ package org.molgenis.variantbrowser;
  * limitations under the License.
  */
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.*;
+import java.util.*;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.StringField;
-import org.apache.lucene.document.TextField;
+import org.apache.lucene.document.*;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
@@ -44,6 +34,7 @@ import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
 
 import au.com.bytecode.opencsv.CSVReader;
+import org.springframework.beans.factory.annotation.Value;
 
 /**
  * Index all text files under a directory.
@@ -54,30 +45,40 @@ import au.com.bytecode.opencsv.CSVReader;
 public class IndexFiles
 {
 
-	private IndexFiles()
+    public static final String REFERENCE = "referenceCount";
+    public static final String HETROZYGOTE_ALT = "hetrozygoteAltCount";
+    public static final String HOMEZYGOTE_ALT = "homezygoteAltCount";
+    public static final String INFOFIELD = "INFO";
+    public static final String CHROMOSOME = "CHROM";
+    public static final String POSITION = "POS";
+    public static final String GTC_PREFIX = "gtc=";
+
+    private IndexFiles()
 	{
 	}
 
 	/** Index all text files under a directory. */
 	public static void main(String[] args)
-	{
-		String usage = "java org.apache.lucene.demo.IndexFiles"
-				+ " [-index INDEX_PATH] [-docs DOCS_PATH] [-update]\n\n"
-				+ "This indexes the documents in DOCS_PATH, creating a Lucene index"
+	{   Properties props = new Properties();
+        try {
+            InputStream stream = new FileInputStream(System.getProperty("user.home")+"/.molgenis/omx/molgenis-server.properties"); // open the file
+            props.load(stream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // process properties content
+        String docsPath = props.getProperty("data.directory");
+        String usage = "java org.molgenis.variantbrowser.IndexFiles"
+				+ "This indexes the documents in path specified in molgenis-server.properties, creating a Lucene index"
 				+ "in INDEX_PATH that can be searched with SearchFiles";
 		String indexPath = "index";
-		String docsPath = null;
 		boolean create = true;
 		for (int i = 0; i < args.length; i++)
 		{
 			if ("-index".equals(args[i]))
 			{
 				indexPath = args[i + 1];
-				i++;
-			}
-			else if ("-docs".equals(args[i]))
-			{
-				docsPath = args[i + 1];
 				i++;
 			}
 			else if ("-update".equals(args[i]))
@@ -198,7 +199,7 @@ public class IndexFiles
 		// System.out.println(file.getName());
 		// System.out.println("indexing " + file.getPath());
 		FileInputStream fis;
-		try
+        try
 		{
 			fis = new FileInputStream(file);
 		}
@@ -232,27 +233,34 @@ public class IndexFiles
 						fields = new HashMap<String, Field>();
 						for (String header : headers)
 						{
-							Field field;
+                            if("chr".equals(header)) header = CHROMOSOME;
+                            if("pos".equals(header)) header = POSITION;
+                            Field field;
 							// if (!header.equalsIgnoreCase("POS"))
 							// {
+                            if(INFOFIELD.equals(header)) {
+                                addField(doc, fields, new IntField(REFERENCE, -1, Field.Store.YES));
+                                addField(doc, fields, new IntField(HETROZYGOTE_ALT, -1, Field.Store.YES));
+                                addField(doc, fields, new IntField(HOMEZYGOTE_ALT, -1, Field.Store.YES));
+                            }
+
 							field = new TextField(header, "", Field.Store.YES);
 							// }
 							// else
 							// {
 							// field = new LongField(header, -1l, Field.Store.YES);
 							// }
-							fields.put(header, field);
-							doc.add(field);
+                            addField(doc, fields, field);
 						}
 						Field identifierField = new StringField("__identifier", "", Field.Store.YES);
-						fields.put("__identifier", identifierField);
-						doc.add(identifierField);
+                        addField(doc,fields,identifierField);
 
 						entityName = FilenameUtils.removeExtension(file.getName());
 						doc.add(new TextField("__entity", entityName, Field.Store.YES));
 						doc.add(new TextField("__entity", "variantdata", Field.Store.YES));
-						System.out.println(entityName);
-						System.out.println(StringUtils.join(headers, ','));
+
+                        System.out.println("!!!!:" + entityName);
+						System.out.println("!!!!:" + StringUtils.join(headers, ','));
 					}
 					else if (headers == null)
 					{
@@ -265,7 +273,9 @@ public class IndexFiles
 							Field field;
 							// if (!header.equalsIgnoreCase("POS"))
 							// {
-							field = new TextField(header, "", Field.Store.YES);
+                            if("chr".equals(header)) header = CHROMOSOME;
+                            if("pos".equals(header)) header = POSITION;
+                            field = new TextField(header, "", Field.Store.YES);
 							// }
 							// else
 							// {
@@ -274,6 +284,9 @@ public class IndexFiles
 							fields.put(header, field);
 							doc.add(field);
 						}
+                        if(!Arrays.asList(headers).contains("ID")){
+                            addField(doc, fields, new TextField("ID", "", Field.Store.YES));
+                        }
 						Field identifierField = new StringField("__identifier", "", Field.Store.YES);
 						fields.put("__identifier", identifierField);
 						doc.add(identifierField);
@@ -281,8 +294,9 @@ public class IndexFiles
 						entityName = FilenameUtils.removeExtension(file.getName());
 						doc.add(new TextField("__entity", entityName, Field.Store.YES));
 						doc.add(new TextField("__entity", "variantdata", Field.Store.YES));
-						System.out.println(entityName);
-						System.out.println(StringUtils.join(headers, ','));
+
+                        System.out.println("????:" + entityName);
+						System.out.println("????:" + StringUtils.join(headers, ','));
 					}
 					else
 					{
@@ -294,17 +308,45 @@ public class IndexFiles
 						}
 
 						String chr = null, pos = null;
-						for (int i = 0; i < tokens.length; ++i)
+                        fields.get("ID").setStringValue("");
+                        for (int i = 0; i < tokens.length; ++i)
 						{
 							String token = tokens[i];
 							String header = headers[i];
-							if (header.equalsIgnoreCase("CHROM") || header.equalsIgnoreCase("chr")) chr = token;
-							if (header.equalsIgnoreCase("POS") || header.equalsIgnoreCase("pos")) pos = token;
+							if (header.equalsIgnoreCase(CHROMOSOME) || header.equalsIgnoreCase("chr")){
+                                chr = token;
+                                header = CHROMOSOME;
+                            }
+							if (header.equalsIgnoreCase(POSITION)) {
+                                pos = token;
+                                header = POSITION;
+                            };
 							Field field = fields.get(header);
 							// FIXME see http://stackoverflow.com/a/7078087
 							// if (!header.equalsIgnoreCase("POS"))
 							// {
-							field.setStringValue(token);
+							if(header.equals(INFOFIELD)){
+                                String[] gtc;
+                                int index = token.toLowerCase().indexOf(GTC_PREFIX);
+                                if(index != -1) {
+                                    String temp = token.substring(index+4);
+                                    int endIndex = temp.indexOf(";");
+                                    if (endIndex == -1) {
+                                        gtc = temp.split(",");
+                                    } else {
+                                        gtc = temp.substring(0, endIndex).split(",");
+                                    }
+                                    if (gtc.length == 3) {
+                                        fields.get(REFERENCE).setIntValue(new Integer(gtc[0]));
+                                        fields.get(HETROZYGOTE_ALT).setIntValue(new Integer(gtc[1]));
+                                        fields.get(HOMEZYGOTE_ALT).setIntValue(new Integer(gtc[2]));
+                                    } else {
+                                        System.err.println("ERROR - invalid number of gtc values; " + token);
+                                    }
+                                }
+                            }
+                            field.setStringValue(token);
+
 							// }
 							// else
 							// {
@@ -320,6 +362,9 @@ public class IndexFiles
 							// }
 							// }
 						}
+                        if(fields.get("ID").stringValue().equals("")){
+                            fields.get("ID").setStringValue("ID_" + pos + "_" + chr);
+                        }
 						if (chr != null && pos != null) fields.get("__identifier").setStringValue(
 								entityName + ':' + chr + '-' + pos);
 
@@ -336,7 +381,6 @@ public class IndexFiles
 							writer.updateDocument(new Term("path", file.getPath()), doc);
 						}
 					}
-
 					// if (++line % 10000 == 0) System.out.println("parsed " + line + " lines");
 				}
 			}
@@ -350,5 +394,10 @@ public class IndexFiles
 			fis.close();
 		}
 	}
+
+    private static void addField(Document doc, Map<String, Field> fields, Field field) {
+        fields.put(field.name(), field);
+        doc.add(field);
+    }
 
 }
