@@ -14,16 +14,16 @@ import org.molgenis.MolgenisFieldTypes.FieldTypeEnum;
 import org.molgenis.data.Entity;
 import org.molgenis.data.EntityMetaData;
 import org.molgenis.data.annotation.AnnotationService;
-import org.molgenis.data.annotation.cmd.AnnotatorInfo;
-import org.molgenis.data.annotation.utils.AnnotatorUtils;
-import org.molgenis.data.annotation.utils.TabixReader;
 import org.molgenis.data.annotation.VariantAnnotator;
-import org.molgenis.data.vcf.utils.VcfUtils;
+import org.molgenis.data.annotation.mini.AnnotatorInfo;
+import org.molgenis.data.annotation.utils.AnnotatorUtils;
+import org.molgenis.data.annotator.tabix.TabixReader;
 import org.molgenis.data.support.AnnotationServiceImpl;
 import org.molgenis.data.support.DefaultAttributeMetaData;
 import org.molgenis.data.support.DefaultEntityMetaData;
 import org.molgenis.data.support.MapEntity;
 import org.molgenis.data.vcf.VcfRepository;
+import org.molgenis.data.vcf.utils.VcfUtils;
 import org.molgenis.framework.server.MolgenisSettings;
 import org.molgenis.framework.server.MolgenisSimpleSettings;
 import org.slf4j.Logger;
@@ -56,17 +56,19 @@ public class GoNLServiceAnnotator extends VariantAnnotator
 
 	private final MolgenisSettings molgenisSettings;
 	private final AnnotationService annotatorService;
-	
+
 	@Override
-	public AnnotatorInfo.status getStatus(){
+	public AnnotatorInfo.status getStatus()
+	{
 		return AnnotatorInfo.status.BETA;
 	}
 
 	@Override
-	public AnnotatorInfo.type getType(){
+	public AnnotatorInfo.type getType()
+	{
 		return AnnotatorInfo.type.POPULATION_REFERENCE;
 	}
-	
+
 	@Override
 	public String getCode()
 	{

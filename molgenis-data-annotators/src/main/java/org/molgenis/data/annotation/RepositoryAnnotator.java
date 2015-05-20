@@ -1,9 +1,11 @@
 package org.molgenis.data.annotation;
 
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.List;
+
 import org.molgenis.data.Entity;
 import org.molgenis.data.EntityMetaData;
-
-import java.util.Iterator;
 
 /**
  * interface for annotators. annotators take an iterator and return an iterator with some information added or updated
@@ -11,7 +13,7 @@ import java.util.Iterator;
 
 public interface RepositoryAnnotator
 {
-    final static String ANNOTATOR_PREFIX = "molgenis_annotated_";
+	final static String ANNOTATOR_PREFIX = "molgenis_annotated_";
 
 	Iterator<Entity> annotate(Iterable<Entity> source);
 
@@ -44,9 +46,12 @@ public interface RepositoryAnnotator
 	 */
 	String getSimpleName();
 
-    String getFullName();
+	String getFullName();
 
-    default String getDescription(){
-        return "no description";
-    }
+	default String getDescription()
+	{
+		return "no description";
+	}
+
+	List<Entity> annotateEntity(Entity record) throws IOException, InterruptedException;
 }
