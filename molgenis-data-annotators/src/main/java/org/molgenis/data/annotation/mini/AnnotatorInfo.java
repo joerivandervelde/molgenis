@@ -36,10 +36,19 @@ public abstract class AnnotatorInfo
 }
 
 /**
- * Effect predictions & gene names: snpeff Automated protocols: monogenic denovo Pathogenicity estimates & calibration:
- * cadd dann fitcon ccgg Population references: gonl 1kg exac vkgl Phenotype associations: cgd hpo omim phewascatalog
- * gwascatalog clinvar phenomizer Genomic features: ase proteinatlas vistaenhancers splicingcode Unused: kegg cosmic
- * dbnsfp
+ * Effect predictions & gene names: snpeff
+ * 
+ * Automated protocols: monogenic denovo
+ * 
+ * Pathogenicity estimates & calibration: cadd dann fitcon ccgg
+ * 
+ * Population references: gonl 1kg exac vkgl
+ * 
+ * Phenotype associations: cgd hpo omim phewascatalog gwascatalog clinvar phenomizer
+ * 
+ * Genomic features: ase proteinatlas vistaenhancers splicingcode
+ * 
+ * Unused: kegg cosmic dbnsfp
  * 
  * Bron heeft Chrom Pos en evt Ref Alt
  * 

@@ -26,6 +26,7 @@ public class RepositoryAnnotatorImpl extends AbstractRepositoryAnnotator
 		// DefaultEntityMetaData result = new DefaultEntityMetaData(entityAnnotator.getInfo().getCode());
 		// result.addAttributeMetaData(entityAnnotator.getAnnotationAttributeMetaData());
 		// return result;
+		// TODO: Should be a list of attributeMetaData
 		return metaData;
 	}
 
