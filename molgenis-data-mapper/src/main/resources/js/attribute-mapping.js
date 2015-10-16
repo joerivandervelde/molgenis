@@ -231,11 +231,6 @@
 			var name = $(this).data('attribute-name'), inArray = $.inArray(name, sourceAttrs);
 			$(this).prop('checked', inArray >= 0);
 		});
-		
-		// Hide the map tab when no attributes are selected
-		if (sourceAttrs.length < 1) {
-			$('#map-tab').hide();
-		}
 	}
 
 	/**
@@ -410,11 +405,12 @@
 				highlightActiveLine : true
 			});
 			
-			$textarea.data('ace').editor.getSession().on('change', function(object) {		
-				
+			$textarea.data('ace').editor.getSession().on('change', function(object) {
 				var algorithm = $textarea.data('ace').editor.getSession().getValue();
-					// check attributes if manually added
+				
+				// check attributes if manually added
 				checkSelectedAttributes(algorithm);
+				
 				// update save buttons visibility
 				disableEnableSaveButtons(algorithm);
 				
