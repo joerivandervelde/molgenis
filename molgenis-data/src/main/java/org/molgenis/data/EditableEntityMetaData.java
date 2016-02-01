@@ -15,11 +15,29 @@ public interface EditableEntityMetaData extends EntityMetaData
 	EditableEntityMetaData setLabel(String string);
 
 	/**
+	 * Set label for language
+	 * 
+	 * @param languageCode
+	 * @param label
+	 * @return
+	 */
+	EditableEntityMetaData setLabel(String languageCode, String label);
+
+	/**
 	 * Set description
 	 * 
 	 * @param string
 	 */
 	EditableEntityMetaData setDescription(String string);
+
+	/**
+	 * Set description for language
+	 * 
+	 * @param languageCode
+	 * @param description
+	 * @return
+	 */
+	EditableEntityMetaData setDescription(String languageCode, String description);
 
 	/**
 	 * set extends entity metadata
@@ -51,11 +69,32 @@ public interface EditableEntityMetaData extends EntityMetaData
 	void addAttributeMetaData(AttributeMetaData attributeMetaData);
 
 	/**
-	 * Set id attribute
+	 * Add attributes to this entity
+	 * 
+	 * @param attributeMetaData
+	 */
+	void addAllAttributeMetaData(Iterable<AttributeMetaData> attributeMetaData);
+
+	/**
+	 * Remove the given attribute from this entity
+	 * 
+	 * @param attributeMetaData
+	 */
+	void removeAttributeMetaData(AttributeMetaData attributeMetaData);
+
+	/**
+	 * Set id attribute name
 	 * 
 	 * @param string
 	 */
-	void setIdAttribute(String string);
+	void setIdAttribute(String idAttrName);
+
+	/**
+	 * Set label attribute name
+	 * 
+	 * @param string
+	 */
+	void setLabelAttribute(String labelAttrName);
 
 	/**
 	 * add attribute

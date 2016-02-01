@@ -1,7 +1,5 @@
 package org.molgenis.data.meta;
 
-import static com.google.common.collect.Lists.newArrayList;
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 import static org.molgenis.data.meta.AttributeMetaDataMetaData.NAME;
 import static org.molgenis.data.meta.EntityMetaDataMetaData.ABSTRACT;
@@ -28,11 +26,10 @@ import org.molgenis.data.Entity;
 import org.molgenis.data.EntityMetaData;
 import org.molgenis.data.ManageableRepositoryCollection;
 import org.molgenis.data.Repository;
+import org.molgenis.data.i18n.LanguageService;
 import org.molgenis.data.support.DefaultEntityMetaData;
 import org.molgenis.data.support.MapEntity;
 import org.molgenis.util.DependencyResolver;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 
@@ -49,16 +46,16 @@ class EntityMetaDataRepository
 	private final ManageableRepositoryCollection collection;
 	private final Map<String, DefaultEntityMetaData> entityMetaDataCache = new HashMap<>();
 	private final AttributeMetaDataRepository attributeRepository;
-
-	private static final Logger LOG = LoggerFactory.getLogger(EntityMetaDataRepository.class);
+	private final LanguageService languageService;
 
 	public EntityMetaDataRepository(ManageableRepositoryCollection collection, PackageRepository packageRepository,
-			AttributeMetaDataRepository attributeRepository)
+			AttributeMetaDataRepository attributeRepository, LanguageService languageService)
 	{
 		this.packageRepository = packageRepository;
 		this.attributeRepository = attributeRepository;
 		this.repository = collection.addEntityMeta(META_DATA);
 		this.collection = collection;
+		this.languageService = languageService;
 	}
 
 	Repository getRepository()
@@ -86,6 +83,19 @@ class EntityMetaDataRepository
 			entityMetaData.setLabel(entity.getString(LABEL));
 			entityMetaData.setDescription(entity.getString(DESCRIPTION));
 			entityMetaData.setBackend(entity.getString(BACKEND));
+
+			// Language attributes
+			for (String languageCode : languageService.getLanguageCodes())
+			{
+				String attributeName = DESCRIPTION + '-' + languageCode;
+				String description = entity.getString(attributeName);
+				if (description != null) entityMetaData.setDescription(languageCode, description);
+
+				attributeName = LABEL + '-' + languageCode;
+				String label = entity.getString(attributeName);
+				if (label != null) entityMetaData.setLabel(languageCode, label);
+			}
+
 			entityMetaDataCache.put(entity.getString(FULL_NAME), entityMetaData);
 		}
 		// Only then create the AttributeMetaData objects, so that lookups of refEntity values work.
@@ -142,12 +152,24 @@ class EntityMetaDataRepository
 	 */
 	public void add(EntityMetaData entityMetaData)
 	{
-		LOG.debug("Adding" + entityMetaData);
 		DefaultEntityMetaData emd = new DefaultEntityMetaData(entityMetaData.getSimpleName());
 		emd.setLabel(entityMetaData.getLabel());
 		emd.setAbstract(entityMetaData.isAbstract());
 		emd.setDescription(entityMetaData.getDescription());
 		emd.setBackend(entityMetaData.getBackend() == null ? collection.getName() : entityMetaData.getBackend());
+
+		// Language attributes
+		for (String languageCode : entityMetaData.getDescriptionLanguageCodes())
+		{
+			String description = entityMetaData.getDescription(languageCode);
+			if (description != null) emd.setDescription(languageCode, description);
+		}
+
+		for (String languageCode : entityMetaData.getLabelLanguageCodes())
+		{
+			String label = entityMetaData.getLabel(languageCode);
+			if (label != null) emd.setLabel(languageCode, label);
+		}
 
 		if (entityMetaData.getExtends() != null)
 		{
@@ -180,17 +202,17 @@ class EntityMetaDataRepository
 			emd.setIdAttribute(idAttribute.getName());
 			entity.set(ID_ATTRIBUTE, idAttribute.getName());
 		}
-		Iterable<AttributeMetaData> attributes = entityMetaData.getAttributes();
+		Iterable<AttributeMetaData> attributes = entityMetaData.getOwnAttributes();
 		if (attributes != null)
 		{
-			entity.set(ATTRIBUTES,
-					stream(attributes.spliterator(), false).map(attributeRepository::add).collect(toList()));
-			emd.addAllAttributeMetaData(newArrayList(attributes));
+			entity.set(ATTRIBUTES, Lists.newArrayList(attributeRepository.add(attributes)));
+			emd.addAllAttributeMetaData(attributes);
 		}
 		else
 		{
 			entity.set(ATTRIBUTES, Collections.emptyList());
 		}
+
 		repository.add(entity);
 	}
 
@@ -216,6 +238,21 @@ class EntityMetaDataRepository
 		if (emd.getExtends() != null)
 		{
 			entityMetaDataEntity.set(EXTENDS, getEntity(emd.getExtends().getName()));
+		}
+
+		// Language attributes
+		for (String languageCode : emd.getDescriptionLanguageCodes())
+		{
+			String attributeName = DESCRIPTION + '-' + languageCode;
+			String description = emd.getDescription(languageCode);
+			if (description != null) entityMetaDataEntity.set(attributeName, description);
+		}
+
+		for (String languageCode : emd.getLabelLanguageCodes())
+		{
+			String attributeName = LABEL + '-' + languageCode;
+			String label = emd.getLabel(languageCode);
+			if (label != null) entityMetaDataEntity.set(attributeName, label);
 		}
 		return entityMetaDataEntity;
 	}

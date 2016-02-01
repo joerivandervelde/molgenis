@@ -21,32 +21,32 @@ public class AttributeFilterToFetchConverter
 	 * Converts {@link AttributeFilter} to {@link Fetch} based on {@link EntityMetaData}.
 	 * 
 	 * @param attrFilter
+	 *            the {@link AttributeFilter} to convert
 	 * @param entityMeta
-	 * @return {@link Fetch} or null for 'all attributes' {@link AttributeFilter}
+	 *            {@link EntityMetaData} for the entity
+	 * @return {@link Fetch}, or null for 'all attributes' {@link AttributeFilter} there are no refEntities
 	 * @throws UnknownAttributeException
+	 *             if the entity does not have one of the attributes mentioned in the filter
 	 */
-	public static Fetch convert(AttributeFilter attrFilter, EntityMetaData entityMeta)
+	public static Fetch convert(AttributeFilter attrFilter, EntityMetaData entityMeta, String languageCode)
 	{
-		if (attrFilter == null)
+		if (attrFilter == null || attrFilter.isStar())
 		{
-			return createDefaultEntityFetch(entityMeta);
-		}
-
-		if (attrFilter.isIncludeAllAttrs())
-		{
-			return null;
+			return createDefaultEntityFetch(entityMeta, languageCode);
 		}
 
 		Fetch fetch = new Fetch();
-		createFetchContentRec(attrFilter, entityMeta, fetch);
+		createFetchContentRec(attrFilter, entityMeta, fetch, languageCode);
 		return fetch;
 	}
 
-	private static void createFetchContentRec(AttributeFilter attrFilter, EntityMetaData entityMeta, Fetch fetch)
+	private static void createFetchContentRec(AttributeFilter attrFilter, EntityMetaData entityMeta, Fetch fetch,
+			String languageCode)
 	{
 		if (attrFilter.isIncludeAllAttrs())
 		{
-			return;
+			entityMeta.getAtomicAttributes()
+					.forEach(attr -> fetch.field(attr.getName(), createDefaultAttributeFetch(attr, languageCode)));
 		}
 
 		if (attrFilter.isIncludeIdAttr())
@@ -56,18 +56,18 @@ public class AttributeFilterToFetchConverter
 
 		if (attrFilter.isIncludeLabelAttr())
 		{
-			fetch.field(entityMeta.getLabelAttribute().getName());
+			fetch.field(entityMeta.getLabelAttribute(languageCode).getName());
 		}
 
 		attrFilter.forEach(entry -> {
 			String attrName = entry.getKey();
 			AttributeMetaData attr = getAttribute(entityMeta, attrName);
-			createFetchContentRec(attrFilter, entityMeta, attr, fetch);
+			createFetchContentRec(attrFilter, entityMeta, attr, fetch, languageCode);
 		});
 	}
 
 	private static void createFetchContentRec(AttributeFilter attrFilter, EntityMetaData entityMeta,
-			AttributeMetaData attr, Fetch fetch)
+			AttributeMetaData attr, Fetch fetch, String languageCode)
 	{
 		FieldTypeEnum attrType = attr.getDataType().getEnumType();
 		switch (attrType)
@@ -80,23 +80,25 @@ public class AttributeFilterToFetchConverter
 					// include compound attribute parts defined by filter
 					if (subAttrFilter.isIncludeIdAttr())
 					{
-						createFetchContentRec(subAttrFilter, entityMeta, entityMeta.getIdAttribute(), fetch);
+						createFetchContentRec(subAttrFilter, entityMeta, entityMeta.getIdAttribute(), fetch,
+								languageCode);
 					}
 					if (subAttrFilter.isIncludeLabelAttr())
 					{
-						createFetchContentRec(subAttrFilter, entityMeta, entityMeta.getLabelAttribute(), fetch);
+						createFetchContentRec(subAttrFilter, entityMeta, entityMeta.getLabelAttribute(languageCode),
+								fetch, languageCode);
 					}
 					subAttrFilter.forEach(entry -> {
 						String attrPartName = entry.getKey();
 						AttributeMetaData attrPart = attr.getAttributePart(attrPartName);
-						createFetchContentRec(attrFilter, entityMeta, attrPart, fetch);
+						createFetchContentRec(subAttrFilter, entityMeta, attrPart, fetch, languageCode);
 					});
 				}
 				else
 				{
 					// include all compound attribute parts
 					attr.getAttributeParts().forEach(attrPart -> {
-						createFetchContentRec(subAttrFilter, entityMeta, attrPart, fetch);
+						createFetchContentRec(subAttrFilter, entityMeta, attrPart, fetch, languageCode);
 					});
 				}
 				break;
@@ -111,17 +113,17 @@ public class AttributeFilterToFetchConverter
 				Fetch subFetch;
 				if (subAttrFilter != null)
 				{
-					subFetch = convert(subAttrFilter, attr.getRefEntity());
+					subFetch = convert(subAttrFilter, attr.getRefEntity(), languageCode);
 
 				}
 				else
 				{
-					subFetch = createDefaultAttributeFetch(attr);
+					subFetch = createDefaultAttributeFetch(attr, languageCode);
 				}
 				fetch.field(attr.getName(), subFetch);
 				break;
 			}
-				// $CASES-OMITTED$
+			// $CASES-OMITTED$
 			default:
 				fetch.field(attr.getName());
 				break;
@@ -133,8 +135,8 @@ public class AttributeFilterToFetchConverter
 		AttributeMetaData attr = entityMeta.getAttribute(attrName);
 		if (attr == null)
 		{
-			throw new UnknownAttributeException(
-					format("Unknown attribute [%s] of entity [%s]", attrName, entityMeta.getName()));
+			throw new UnknownAttributeException(format("Unknown attribute [%s] of entity [%s]", attrName,
+					entityMeta.getName()));
 		}
 		return attr;
 	}
@@ -145,13 +147,13 @@ public class AttributeFilterToFetchConverter
 	 * @param entityMeta
 	 * @return default entity fetch or null
 	 */
-	public static Fetch createDefaultEntityFetch(EntityMetaData entityMeta)
+	public static Fetch createDefaultEntityFetch(EntityMetaData entityMeta, String languageCode)
 	{
 		boolean hasRefAttr = false;
 		Fetch fetch = new Fetch();
 		for (AttributeMetaData attr : entityMeta.getAtomicAttributes())
 		{
-			Fetch subFetch = createDefaultAttributeFetch(attr);
+			Fetch subFetch = createDefaultAttributeFetch(attr, languageCode);
 			if (subFetch != null)
 			{
 				hasRefAttr = true;
@@ -168,7 +170,7 @@ public class AttributeFilterToFetchConverter
 	 * @param attr
 	 * @return default attribute fetch or null
 	 */
-	public static Fetch createDefaultAttributeFetch(AttributeMetaData attr)
+	public static Fetch createDefaultAttributeFetch(AttributeMetaData attr, String languageCode)
 	{
 		Fetch fetch;
 		if (attr.getDataType() instanceof XrefField || attr.getDataType() instanceof MrefField)
@@ -178,7 +180,7 @@ public class AttributeFilterToFetchConverter
 			String idAttrName = refEntityMeta.getIdAttribute().getName();
 			fetch.field(idAttrName);
 
-			String labelAttrName = refEntityMeta.getLabelAttribute().getName();
+			String labelAttrName = refEntityMeta.getLabelAttribute(languageCode).getName();
 			if (!labelAttrName.equals(idAttrName))
 			{
 				fetch.field(labelAttrName);
