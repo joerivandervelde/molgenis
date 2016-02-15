@@ -988,7 +988,14 @@ public class RestController
 	public ErrorMessageResponse handleAuthenticationException(AuthenticationException e)
 	{
 		LOG.info("", e);
-		return new ErrorMessageResponse(new ErrorMessage(e.getMessage()));
+		// workaround for https://github.com/molgenis/molgenis/issues/4441
+		String message = e.getMessage();
+		String messagePrefix = "org.springframework.security.core.userdetails.UsernameNotFoundException: ";
+		if (message.startsWith(messagePrefix))
+		{
+			message = message.substring(messagePrefix.length());
+		}
+		return new ErrorMessageResponse(new ErrorMessage(message));
 	}
 
 	@ExceptionHandler(MolgenisDataAccessException.class)
@@ -1061,7 +1068,7 @@ public class RestController
 		AttributeMetaData attributeMetaData = meta.getAttribute(attributeName);
 		if (attributeMetaData != null)
 		{
-			return new AttributeMetaDataResponse(entityName, attributeMetaData, attributeSet, attributeExpandSet,
+			return new AttributeMetaDataResponse(entityName, meta, attributeMetaData, attributeSet, attributeExpandSet,
 					molgenisPermissionService, dataService, languageService);
 		}
 		else
@@ -1215,8 +1222,8 @@ public class RestController
 					if (attributeExpandsSet != null && attributeExpandsSet.containsKey(attrName.toLowerCase()))
 					{
 						Set<String> subAttributesSet = attributeExpandsSet.get(attrName.toLowerCase());
-						entityMap.put(attrName, new AttributeMetaDataResponse(meta.getName(), attr, subAttributesSet,
-								null, molgenisPermissionService, dataService, languageService));
+						entityMap.put(attrName, new AttributeMetaDataResponse(meta.getName(), meta, attr,
+								subAttributesSet, null, molgenisPermissionService, dataService, languageService));
 					}
 					else
 					{

@@ -9,6 +9,7 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.web.bind.annotation.RequestMethod.DELETE;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
@@ -464,6 +465,15 @@ class RestControllerV2
 		return new ErrorMessageResponse(new ErrorMessage(e.getMessage()));
 	}
 
+	@ExceptionHandler(MolgenisDataAccessException.class)
+	@ResponseStatus(UNAUTHORIZED)
+	@ResponseBody
+	public ErrorMessageResponse handleMolgenisDataAccessException(MolgenisDataAccessException e)
+	{
+		LOG.debug("Data access exception occurred.", e);
+		return new ErrorMessageResponse(new ErrorMessage(e.getMessage()));
+	}
+
 	@ExceptionHandler(RuntimeException.class)
 	@ResponseStatus(INTERNAL_SERVER_ERROR)
 	@ResponseBody
@@ -487,7 +497,7 @@ class RestControllerV2
 			throw new RuntimeException("attribute : " + attributeName + " does not exist!");
 		}
 
-		return new AttributeMetaDataResponseV2(entityName, attribute, null, permissionService, dataService,
+		return new AttributeMetaDataResponseV2(entityName, entity, attribute, null, permissionService, dataService,
 				languageService);
 	}
 
@@ -517,9 +527,9 @@ class RestControllerV2
 			}
 			AggregateResult aggs = dataService.aggregate(entityName, aggsQ);
 			AttributeMetaDataResponseV2 xAttrResponse = xAttr != null ? new AttributeMetaDataResponseV2(entityName,
-					xAttr, fetch, permissionService, dataService, languageService) : null;
+					meta, xAttr, fetch, permissionService, dataService, languageService) : null;
 			AttributeMetaDataResponseV2 yAttrResponse = yAttr != null ? new AttributeMetaDataResponseV2(entityName,
-					yAttr, fetch, permissionService, dataService, languageService) : null;
+					meta, yAttr, fetch, permissionService, dataService, languageService) : null;
 			return new EntityAggregatesResponse(aggs, xAttrResponse, yAttrResponse, BASE_URI + '/' + entityName);
 		}
 		else
