@@ -83,8 +83,11 @@ public class VcfDiff
 		//only in A
 		for(String key : vcfARecords.keySet())
 		{
-			VcfUtils.writeToVcf(vcfARecords.get(key), onlyInA);
-			onlyInA.write('\n');
+			if(!intersectKeys.contains(key))
+			{
+				VcfUtils.writeToVcf(vcfARecords.get(key), onlyInA);
+				onlyInA.write('\n');
+			}
 		}
 		
 		onlyInA.flush();
@@ -105,7 +108,12 @@ public class VcfDiff
 		while (vcfRepoIter.hasNext())
 		{
 			Entity record = vcfRepoIter.next();
-			vcfARecords.put(record.getString("#CHROM") + "_" + record.getString("POS") + "_" + record.getString("REF") + "_" + record.getString("ALT"), record);
+			String key = record.getString("#CHROM") + "_" + record.getString("POS") + "_" + record.getString("REF") + "_" + record.getString("ALT");
+			if(vcfARecords.containsKey(key))
+			{
+				System.out.println("WARNING: key " + key + " is duplicate !");
+			}
+			vcfARecords.put(key, record);
 		}
 		vcfRepo.close();
 	}
