@@ -30,6 +30,7 @@ public class CaddWebserviceOutputAnnotator
 
 	File vcfToAnnotate;
 	File caddWebserviceOutput;
+	HashMap<String, String> caddScores;
 	PrintWriter pw;
 	
 	public CaddWebserviceOutputAnnotator(File vcfToAnnotate, File caddWebserviceOutput, File outputFile) throws FileNotFoundException
@@ -52,32 +53,11 @@ public class CaddWebserviceOutputAnnotator
 		this.vcfToAnnotate = vcfToAnnotate;
 		this.caddWebserviceOutput = caddWebserviceOutput;
 		this.pw = new PrintWriter(outputFile);
+		caddScores = CaddWebserviceOutputUtils.load(caddWebserviceOutput);
 	}
 	
 	public void annotate() throws Exception
 	{
-		Scanner caddOutputScanner = new Scanner(caddWebserviceOutput);
-		Map<String,String> caddIndelScores = new HashMap<String,String>();
-
-		while(caddOutputScanner.hasNextLine())
-		{
-			//e.g.  '2	47630249	GA	G	1.373305	10.52'
-			String line = caddOutputScanner.nextLine();
-	        if(line.startsWith("#"))
-	        {
-	            continue;
-	        }
-	        String[] split = line.split("\t");
-            if(split.length != 6)
-            {
-                throw new Exception("Expecting exactly 6 columns when splitting CADD indel result file on tab. Line does not conform:\n" + line);
-            }
-            //so: "2	47630249	GA	G" to "1.373305	10.52"
-            caddIndelScores.put(split[0]+"\t"+split[1]+"\t"+split[2]+"\t"+split[3], split[4]+"\t"+split[5]);
-		}
-		caddOutputScanner.close();
-		
-		//now annotate
 		Scanner vcfOutputScanner = new Scanner(vcfToAnnotate);
 		while(vcfOutputScanner.hasNextLine())
 		{
@@ -90,12 +70,33 @@ public class CaddWebserviceOutputAnnotator
 	        }
 	        String[] split = line.split("\t", -1);
 	        
-	        //TODO: obviously, this will fail for multiple alternative alleles etc.
-	        String chrPosRefAlt = split[0] + "\t" + split[1] + "\t" + split[3] + "\t" + split[4];
+	        //splitting into: CHROM POS (id) REF ALT
+	        //FIXME: obviously, this will fail for multiple alternative alleles etc.
+	        String chrPosRefAlt = split[0] + "_" + split[1] + "_" + split[3] + "_" + split[4];
 	        
-	        if(caddIndelScores.containsKey(chrPosRefAlt))
+	        String caddRawAndPhred = null;
+	        if(caddScores.containsKey(chrPosRefAlt))
 	        {
-	        	String[] caddScore = caddIndelScores.get(chrPosRefAlt).split("\t");
+	        	caddRawAndPhred = caddScores.get(chrPosRefAlt);
+	        }
+	        else
+	        {
+	        	//if not found, try trimming alleles and then matching
+	        	String trimmedRefAlt = CaddWebserviceOutputUtils.trimRefAlt(split[3], split[4], "_");
+	        	chrPosRefAlt = split[0] + "_" + split[1] + "_" + trimmedRefAlt;
+	        	if(caddScores.containsKey(chrPosRefAlt))
+		        {
+		        	caddRawAndPhred = caddScores.get(chrPosRefAlt);
+		        }
+	        	else
+	        	{
+	        		System.out.println("WARNING: CADD score missing for " + split[0] + " " + split[1] + " " + split[3] + " " + split[4] + " ! (even when using trimmed key '"+chrPosRefAlt+"')");
+	        	}
+	        }
+	        
+	        if(caddRawAndPhred != null)
+	        {
+	        	String[] caddScore = caddRawAndPhred.split("_");
 	        	String caddRaw = caddScore[0];
 	        	String caddScaled = caddScore[1];
 	        	
