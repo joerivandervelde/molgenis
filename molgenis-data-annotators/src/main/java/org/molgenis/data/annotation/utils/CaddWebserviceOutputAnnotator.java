@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Scanner;
 
 /** 
@@ -59,6 +58,7 @@ public class CaddWebserviceOutputAnnotator
 	public void annotate() throws Exception
 	{
 		Scanner vcfOutputScanner = new Scanner(vcfToAnnotate);
+		boolean printCaddHeaderPrinted = false;
 		while(vcfOutputScanner.hasNextLine())
 		{
 			//e.g.  '2	47630249	GA	G	1.373305	10.52'
@@ -66,6 +66,12 @@ public class CaddWebserviceOutputAnnotator
 	        if(line.startsWith("#"))
 	        {
 	        	pw.println(line);
+	        	if(!printCaddHeaderPrinted)
+	        	{
+	        		pw.println("##INFO=<ID=CADD,Number=.,Type=Float,Description=\"na\">");
+	        		pw.println("##INFO=<ID=CADD_SCALED,Number=.,Type=Float,Description=\"na\">");
+	        		printCaddHeaderPrinted = true;
+	        	}
 	            continue;
 	        }
 	        String[] split = line.split("\t", -1);
@@ -126,6 +132,8 @@ public class CaddWebserviceOutputAnnotator
 		}
 		vcfOutputScanner.close();
 		pw.close();
+		
+		System.out.println("Done!");
 	}
 
 	public static void main(String[] args) throws Exception
