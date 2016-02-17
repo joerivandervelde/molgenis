@@ -65,10 +65,19 @@ public class FixVcfAlleleNotation
 			String ref = split[3];
 			String alt = split[4];
 			
+			//first check if ref or alt need trimming. it does not matter that there may be an N.
+			String[] trimmedRefAlt = CaddWebserviceOutputUtils.trimRefAlt(ref, alt, "_").split("_");
+			if(!ref.equals(trimmedRefAlt[0]) || !alt.equals(trimmedRefAlt[1]))
+			{
+				System.out.println("trimming ref/alt, from " + ref + "/" + alt + " to " + trimmedRefAlt[0] + "/" + trimmedRefAlt[1]);
+				ref = trimmedRefAlt[0];
+				alt =  trimmedRefAlt[1];
+			}
+			
 			//if not both start with N, we expect neither to start with N (see example)
 			if(!(ref.startsWith("N") && alt.startsWith("N")))
 			{
-				System.out.println("no reason to adjust variant " + chr + ":pos " + ref + "/" + alt + " because there is no N");
+				System.out.println("no reason to adjust variant " + chr + ":"+pos+" " + ref + "/" + alt + " because there is no N");
 				pw.println(line);
 				continue;
 			}
@@ -108,25 +117,17 @@ public class FixVcfAlleleNotation
 			}
 			getUrlContent.close();
 			
-			//wait a little bit not too stress out the server we're querying
+			//wait a little bit
 			Thread.sleep(100);
-			
-			//trim ref/alt if needed
-			String fixedRef = split[3].replace("N", replacementRefBase);
-			String fixedAlt = split[4].replace("N", replacementRefBase);
-			String[] trimmedRefAlt = CaddWebserviceOutputUtils.trimRefAlt(fixedRef, fixedAlt, "_").split("_");
 			
 			//print the fixed notation
 			StringBuffer fixedLine = new StringBuffer();
 			for(int i = 0; i < split.length; i ++)
 			{
-				if(i == 3)
+				if(i == 3 || i == 4)
 				{
-					fixedLine.append(trimmedRefAlt[0] + "\t");
-				}
-				else if(i == 4)
-				{
-					fixedLine.append(trimmedRefAlt[1] + "\t");
+					String fixedNotation = i == 3 ? ref.replace("N", replacementRefBase) : alt.replace("N", replacementRefBase);
+					fixedLine.append(fixedNotation + "\t");
 				}
 				else
 				{
@@ -142,7 +143,9 @@ public class FixVcfAlleleNotation
 			pw.flush();
 			
 		}
+		pw.flush();
 		pw.close();
+		
 		s.close();
 		
 		System.out.println("Done!");
