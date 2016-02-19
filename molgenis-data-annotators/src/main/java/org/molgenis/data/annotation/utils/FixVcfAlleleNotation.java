@@ -13,6 +13,7 @@ public class FixVcfAlleleNotation
 {
 	/**
 	 * Fix N notation in VCFs produced by Ensembl VEP web service.
+	 * TODO: code has been merged with other allele fix (the trimming), behaviour may be unexpected!
 	 * 
 	 * Example:
 	 * 11	47354445	MYBPC3:c.3407_3409delACT	NAGT	N
@@ -74,12 +75,14 @@ public class FixVcfAlleleNotation
 				alt =  trimmedRefAlt[1];
 			}
 			
+			boolean queryUCSC = false;
 			//if not both start with N, we expect neither to start with N (see example)
 			if(!(ref.startsWith("N") && alt.startsWith("N")))
 			{
-				System.out.println("no reason to adjust variant " + chr + ":"+pos+" " + ref + "/" + alt + " because there is no N");
-				pw.println(line);
-				continue;
+				// could mean we DID fix the notation, so dont quit yet!
+//				System.out.println("no reason to adjust variant " + chr + ":"+pos+" " + ref + "/" + alt + " because there is no N");
+//				pw.println(line);
+//				continue;
 			}
 			else if(ref.startsWith("N") && alt.startsWith("N"))
 			{
@@ -92,6 +95,7 @@ public class FixVcfAlleleNotation
 					pw.close();
 					throw new Exception("expecting 'N' occurence == 1 for " + ref + " and " + alt);
 				}
+				queryUCSC = true;
 			}
 			//sanity check
 			else
@@ -101,25 +105,29 @@ public class FixVcfAlleleNotation
 				throw new Exception("either ref "+ref+" or alt "+alt+" starts with N, not expected this");
 			}
 			
-			//get replacement base for N from UCSC
-			URL ucsc = new URL("http://genome.ucsc.edu/cgi-bin/das/hg19/dna?segment=chr"+chr+":"+pos+","+pos);
-			BufferedReader getUrlContent = new BufferedReader(new InputStreamReader(ucsc.openStream()));
-			String urlLine;
-			String replacementRefBase = null;
-			while ((urlLine = getUrlContent.readLine()) != null)
+			String replacementRefBase = "if you see this, we did not get a replacement base while we needed one!";
+			if(queryUCSC)
 			{
-				//the base ('g', 'c', 'a', 't') is on line of its own, so length == 1
-				if(urlLine.length() == 1)
+				//get replacement base for N from UCSC
+				URL ucsc = new URL("http://genome.ucsc.edu/cgi-bin/das/hg19/dna?segment=chr"+chr+":"+pos+","+pos);
+				BufferedReader getUrlContent = new BufferedReader(new InputStreamReader(ucsc.openStream()));
+				String urlLine;
+				
+				while ((urlLine = getUrlContent.readLine()) != null)
 				{
-					replacementRefBase = urlLine.toUpperCase();
-					System.out.println("we found replacement base for N = " + replacementRefBase);
+					//the base ('g', 'c', 'a', 't') is on line of its own, so length == 1
+					if(urlLine.length() == 1)
+					{
+						replacementRefBase = urlLine.toUpperCase();
+						System.out.println("we found replacement base for N = " + replacementRefBase);
+					}
 				}
+				getUrlContent.close();
+				
+				//wait a little bit
+				Thread.sleep(100);
 			}
-			getUrlContent.close();
-			
-			//wait a little bit
-			Thread.sleep(100);
-			
+
 			//print the fixed notation
 			StringBuffer fixedLine = new StringBuffer();
 			for(int i = 0; i < split.length; i ++)
