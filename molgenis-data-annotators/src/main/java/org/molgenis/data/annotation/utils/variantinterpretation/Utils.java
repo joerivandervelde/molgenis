@@ -7,7 +7,7 @@ import java.util.Scanner;
 import java.util.Set;
 
 import org.molgenis.data.Entity;
-import org.molgenis.data.annotation.entity.impl.SnpEffAnnotator.Impact;
+import org.molgenis.data.annotation.entity.impl.snpEff.Impact;
 import org.molgenis.data.annotation.utils.variantinterpretation.Entry.Category;
 import org.molgenis.data.annotation.utils.variantinterpretation.Judgment.Classification;
 import org.molgenis.data.annotation.utils.variantinterpretation.Judgment.Method;

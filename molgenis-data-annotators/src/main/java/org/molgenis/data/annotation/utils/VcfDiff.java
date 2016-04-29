@@ -1,16 +1,15 @@
 package org.molgenis.data.annotation.utils;
 
+import org.molgenis.data.Entity;
+import org.molgenis.data.vcf.VcfRepository;
+import org.molgenis.data.vcf.utils.VcfWriterUtils;
+
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
-
-import org.molgenis.data.Entity;
-import org.molgenis.data.vcf.VcfRepository;
-import org.molgenis.data.vcf.utils.VcfUtils;
 
 public class VcfDiff
 {
@@ -65,15 +64,15 @@ public class VcfDiff
 			{
 				//intersect
 				intersectKeys.add(key);
-				VcfUtils.writeToVcf(vcfARecords.get(key), inBothContentA);
+				VcfWriterUtils.writeToVcf(vcfARecords.get(key), inBothContentA);
 				inBothContentA.write('\n');
-				VcfUtils.writeToVcf(record, inBothContentB);
+				VcfWriterUtils.writeToVcf(record, inBothContentB);
 				inBothContentB.write('\n');
 			}
 			else
 			{
 				//only in B
-				VcfUtils.writeToVcf(record, onlyInB);
+				VcfWriterUtils.writeToVcf(record, onlyInB);
 				onlyInB.write('\n');
 			}
 
@@ -85,7 +84,7 @@ public class VcfDiff
 		{
 			if(!intersectKeys.contains(key))
 			{
-				VcfUtils.writeToVcf(vcfARecords.get(key), onlyInA);
+				VcfWriterUtils.writeToVcf(vcfARecords.get(key), onlyInA);
 				onlyInA.write('\n');
 			}
 		}
