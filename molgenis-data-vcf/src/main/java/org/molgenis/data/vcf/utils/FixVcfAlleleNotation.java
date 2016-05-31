@@ -13,7 +13,6 @@ public class FixVcfAlleleNotation
 {
 	/**
 	 * Fix N notation in VCFs produced by Ensembl VEP web service.
-	 * TODO: code has been merged with other allele fix (the trimming), behaviour may be unexpected!
 	 * 
 	 * Example:
 	 * 11	47354445	MYBPC3:c.3407_3409delACT	NAGT	N

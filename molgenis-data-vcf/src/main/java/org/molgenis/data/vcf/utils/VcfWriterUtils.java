@@ -116,7 +116,7 @@ public class VcfWriterUtils
 	 * @param writer
 	 * @throws MolgenisDataException
 	 * @throws IOException
-     */
+	 */
 	public static void writeToVcf(Entity vcfEntity, BufferedWriter writer) throws MolgenisDataException, IOException
 	{
 		writeToVcf(vcfEntity, new ArrayList<AttributeMetaData>(), new ArrayList<String>(), writer);

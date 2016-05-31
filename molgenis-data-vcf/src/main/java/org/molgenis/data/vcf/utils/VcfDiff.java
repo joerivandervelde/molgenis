@@ -22,7 +22,7 @@ public class VcfDiff
 	 * InBothContentA.vcf
 	 * InBothContentB.vcf
 	 * 
-	 * FIXME: does not match when there are multiple alternative alleles!! but for now better than nothing.
+	 * FIXME: does not match when there are multiple alternative alleles! but for now better than nothing.
 	 * 
 	 * @param args
 	 * @throws IOException 
