@@ -20,8 +20,8 @@ public class GavinAlgorithm
 	public static final String REASON = "Reason";
 	public static final String VARIANT_ENTITY = "Variant";
 
-	public static final int CADD_MAXIMUM_THRESHOLD = 25;
-	public static final int CADD_MINIMUM_THRESHOLD = 5;
+	public static final int CADD_MAXIMUM_THRESHOLD = 15;
+	public static final int CADD_MINIMUM_THRESHOLD = 15;
 	public static final double MAF_THRESHOLD = 0.00474;
 
 	/**
@@ -45,7 +45,7 @@ public class GavinAlgorithm
 		// MAF based classification, calibrated
 		if (exacMAF > pathoMAFThreshold)
 		{
-			return new Judgment(Judgment.Classification.Benign, Judgment.Method.calibrated, "Variant MAF of " + exacMAF
+			return new Judgment(Judgment.Classification.Benign, Judgment.Method.calibrated, gene, "Variant MAF of " + exacMAF
 					+ " is greater than the pathogenic 95th percentile MAF of " + pathoMAFThreshold + ".");
 		}
 
@@ -57,27 +57,27 @@ public class GavinAlgorithm
 		{
 			if (category.equals(Category.I1) && impact.equals(Impact.HIGH))
 			{
-				return new Judgment(Judgment.Classification.Pathognic, Judgment.Method.calibrated,
+				return new Judgment(Judgment.Classification.Pathogn, Judgment.Method.calibrated, gene,
 						"Variant is of high impact, while there are no known high impact variants in the population. Also, "
 								+ mafReason);
 			}
 			else if (category.equals(Category.I2)
 					&& (impact.equals(Impact.MODERATE) || impact.equals(Impact.HIGH)))
 			{
-				return new Judgment(Judgment.Classification.Pathognic, Judgment.Method.calibrated,
+				return new Judgment(Judgment.Classification.Pathogn, Judgment.Method.calibrated, gene,
 						"Variant is of high/moderate impact, while there are no known high/moderate impact variants in the population. Also, "
 								+ mafReason);
 			}
 			else if (category.equals(Category.I3) && (impact.equals(Impact.LOW)
 					|| impact.equals(Impact.MODERATE) || impact.equals(Impact.HIGH)))
 			{
-				return new Judgment(Judgment.Classification.Pathognic, Judgment.Method.calibrated,
+				return new Judgment(Judgment.Classification.Pathogn, Judgment.Method.calibrated, gene,
 						"Variant is of high/moderate/low impact, while there are no known high/moderate/low impact variants in the population. Also, "
 								+ mafReason);
 			}
 			else if (impact.equals(Impact.MODIFIER))
 			{
-				return new Judgment(Judgment.Classification.Benign, Judgment.Method.calibrated,
+				return new Judgment(Judgment.Classification.Benign, Judgment.Method.calibrated, gene,
 						"Variant is of 'modifier' impact, and therefore unlikely to be pathogenic. However, "
 								+ mafReason);
 			}
@@ -90,14 +90,14 @@ public class GavinAlgorithm
 			{
 				if (caddScaled > meanPathogenicCADDScore)
 				{
-					return new Judgment(Judgment.Classification.Pathognic, Judgment.Method.calibrated,
+					return new Judgment(Judgment.Classification.Pathogn, Judgment.Method.calibrated, gene,
 							"Variant CADD score of " + caddScaled + " is greater than the mean pathogenic score of "
 									+ meanPathogenicCADDScore
 									+ " in a gene for which CADD scores are informative. Also, " + mafReason);
 				}
 				else if (caddScaled < meanPathogenicCADDScore)
 				{
-					return new Judgment(Judgment.Classification.Benign, Judgment.Method.calibrated,
+					return new Judgment(Judgment.Classification.Benign, Judgment.Method.calibrated, gene,
 							"Variant CADD score of " + caddScaled + " is lesser than the mean population score of "
 									+ meanPathogenicCADDScore
 									+ " in a gene for which CADD scores are informative, although " + mafReason);
@@ -107,13 +107,13 @@ public class GavinAlgorithm
 			{
 				if (caddScaled > spec95thPerCADDThreshold)
 				{
-					return new Judgment(Judgment.Classification.Pathognic, Judgment.Method.calibrated,
+					return new Judgment(Judgment.Classification.Pathogn, Judgment.Method.calibrated, gene,
 							"Variant CADD score of " + caddScaled + " is greater than the 95% specificity threshold of "
 									+ spec95thPerCADDThreshold + " for this gene. Also, " + mafReason);
 				}
 				else if (caddScaled < spec95thPerCADDThreshold)
 				{
-					return new Judgment(Judgment.Classification.Benign, Judgment.Method.calibrated,
+					return new Judgment(Judgment.Classification.Benign, Judgment.Method.calibrated, gene,
 							"Variant CADD score of " + caddScaled + " is lesser than the 95% sensitivity threshold of "
 									+ spec95thPerCADDThreshold + " for this gene, although " + mafReason);
 				}
@@ -139,28 +139,28 @@ public class GavinAlgorithm
 
 		if (exacMAF > GavinAnnotator.MAF_THRESHOLD)
 		{
-			return new Judgment(Judgment.Classification.Benign, Method.genomewide,
+			return new Judgment(Judgment.Classification.Benign, Method.genomewide, gene,
 					"MAF > " + GavinAnnotator.MAF_THRESHOLD);
 		}
 		if (Impact.MODIFIER.equals(impact))
 		{
-			return new Judgment(Judgment.Classification.Benign, Method.genomewide, "Impact is MODIFIER");
+			return new Judgment(Judgment.Classification.Benign, Method.genomewide, gene, "Impact is MODIFIER");
 		}
 		else
 		{
 			if (caddScaled != null && caddScaled > GavinAnnotator.CADD_MAXIMUM_THRESHOLD)
 			{
-				return new Judgment(Judgment.Classification.Pathognic, Method.genomewide,
+				return new Judgment(Judgment.Classification.Pathogn, Method.genomewide, gene,
 						"CADDscore > " + GavinAnnotator.CADD_MAXIMUM_THRESHOLD);
 			}
 			else if (caddScaled != null && caddScaled <= GavinAnnotator.CADD_MINIMUM_THRESHOLD)
 			{
-				return new Judgment(Judgment.Classification.Benign, Method.genomewide,
+				return new Judgment(Judgment.Classification.Benign, Method.genomewide, gene,
 						"CADDscore <= " + GavinAnnotator.CADD_MINIMUM_THRESHOLD);
 			}
 			else
 			{
-				return new Judgment(Judgment.Classification.VOUS, Method.genomewide,
+				return new Judgment(Judgment.Classification.VOUS, Method.genomewide, gene,
 						"Unable to classify variant as benign or pathogenic. The combination of " + impact
 								+ " impact, a CADD score " + (caddScaled != null ? caddScaled : "[missing]")
 								+ " and MAF of " + exacMAF + " in " + gene + " is inconclusive.");
