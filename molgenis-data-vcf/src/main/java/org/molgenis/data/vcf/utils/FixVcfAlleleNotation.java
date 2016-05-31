@@ -67,7 +67,7 @@ public class FixVcfAlleleNotation
 			String alt = split[4];
 			
 			//first check if ref or alt need trimming. it does not matter that there may be an N.
-			String[] trimmedRefAlt = CaddWebserviceOutputUtils.trimRefAlt(ref, alt, "_").split("_");
+			String[] trimmedRefAlt = trimRefAlt(ref, alt, "_").split("_");
 			if(!ref.equals(trimmedRefAlt[0]) || !alt.equals(trimmedRefAlt[1]))
 			{
 				System.out.println("trimming ref/alt, from " + ref + "/" + alt + " to " + trimmedRefAlt[0] + "/" + trimmedRefAlt[1]);
@@ -158,6 +158,45 @@ public class FixVcfAlleleNotation
 		
 		System.out.println("Done!");
 
+	}
+
+
+
+	/**
+	 * Helper method to try and retrieve CADD scores by first trimming ref or alt alleles.
+	 * AT ATT -> A AT
+	 * ATGTG ATG -> ATG A
+	 * ATGTG ATGTGTGTG -> A ATGTG
+	 * GATAT GAT -> GAT G
+	 */
+	public static String trimRefAlt(String ref, String alt, String sep)
+	{
+
+		char[] refRev = org.apache.commons.lang3.StringUtils.reverse(ref).toCharArray();
+		char[] altRev = org.apache.commons.lang3.StringUtils.reverse(alt).toCharArray();
+
+		int nrToDelete = 0;
+		for(int i = 0; i < refRev.length; i++)
+		{
+			char refBase = refRev[i];
+			char altBase = altRev[i];
+			if(i == refRev.length-1 || i == altRev.length-1) //to stop deleting the last base, e.g. in AT/AAT or TA/TTA
+			{
+				break;
+			}
+			else if(refBase == altBase)
+			{
+				nrToDelete++;
+			}
+			else
+			{
+				break;
+			}
+		}
+		String newRef = ref.substring(0, ref.length()-nrToDelete);
+		String newAlt = alt.substring(0, alt.length()-nrToDelete);
+
+		return newRef + sep + newAlt;
 	}
 
 }
