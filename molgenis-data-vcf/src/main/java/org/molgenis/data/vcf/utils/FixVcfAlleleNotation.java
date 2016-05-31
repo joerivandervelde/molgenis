@@ -1,4 +1,4 @@
-package org.molgenis.data.annotation.utils;
+package org.molgenis.data.vcf.utils;
 
 import java.io.BufferedReader;
 import java.io.File;

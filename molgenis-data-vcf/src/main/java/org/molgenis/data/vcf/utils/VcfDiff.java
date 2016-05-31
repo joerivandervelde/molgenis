@@ -1,8 +1,7 @@
-package org.molgenis.data.annotation.utils;
+package org.molgenis.data.vcf.utils;
 
 import org.molgenis.data.Entity;
 import org.molgenis.data.vcf.VcfRepository;
-import org.molgenis.data.vcf.utils.VcfWriterUtils;
 
 import java.io.BufferedWriter;
 import java.io.File;
