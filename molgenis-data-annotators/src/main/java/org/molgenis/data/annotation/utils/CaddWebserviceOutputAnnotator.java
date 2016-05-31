@@ -6,6 +6,8 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Scanner;
 
+import static org.molgenis.data.vcf.utils.FixVcfAlleleNotation.trimRefAlt;
+
 /** 
  * Annotator that adds the output of the CADD webservice to a VCF file.
  * TODO: rewrite into a proper annotator!
@@ -88,7 +90,7 @@ public class CaddWebserviceOutputAnnotator
 	        else
 	        {
 	        	//if not found, try trimming alleles and then matching
-	        	String trimmedRefAlt = CaddWebserviceOutputUtils.trimRefAlt(split[3], split[4], "_");
+	        	String trimmedRefAlt = trimRefAlt(split[3], split[4], "_");
 	        	chrPosRefAlt = split[0] + "_" + split[1] + "_" + trimmedRefAlt;
 	        	if(caddScores.containsKey(chrPosRefAlt))
 		        {

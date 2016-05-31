@@ -6,6 +6,9 @@ import java.util.HashMap;
 import java.util.Scanner;
 
 import org.apache.commons.lang3.StringUtils;
+import org.molgenis.data.vcf.utils.FixVcfAlleleNotation;
+
+import static org.molgenis.data.vcf.utils.FixVcfAlleleNotation.trimRefAlt;
 
 /**
  * Helper methods to deal with CADD web service output
@@ -55,43 +58,6 @@ public class CaddWebserviceOutputUtils
 		cadd.close();
 		return caddScores;
 	}
-	
-	
-	/**
-	 * Helper method to try and retrieve CADD scores by first trimming ref or alt alleles.
-	 * AT ATT -> A AT
-	 * ATGTG ATG -> ATG A
-	 * ATGTG ATGTGTGTG -> A ATGTG
-	 * GATAT GAT -> GAT G
-	 */
-	public static String trimRefAlt(String ref, String alt, String sep)
-	{
-		
-		char[] refRev = StringUtils.reverse(ref).toCharArray();
-		char[] altRev = StringUtils.reverse(alt).toCharArray();
-		
-		int nrToDelete = 0;
-		for(int i = 0; i < refRev.length; i++)
-		{
-			char refBase = refRev[i];
-			char altBase = altRev[i];
-			if(i == refRev.length-1 || i == altRev.length-1) //to stop deleting the last base, e.g. in AT/AAT or TA/TTA
-			{
-				break;
-			}
-			else if(refBase == altBase)
-			{
-				nrToDelete++;
-			}
-			else
-			{
-				break;
-			}
-		}
-		String newRef = ref.substring(0, ref.length()-nrToDelete);
-		String newAlt = alt.substring(0, alt.length()-nrToDelete);
-		
-		return newRef + sep + newAlt;
-	}
+
 	
 }
