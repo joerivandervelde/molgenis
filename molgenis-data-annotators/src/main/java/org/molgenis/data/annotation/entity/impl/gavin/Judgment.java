@@ -5,8 +5,9 @@ package org.molgenis.data.annotation.entity.impl.gavin;
  */
 public class Judgment
 {
-	public enum Classification{
-		Benign, Pathogn, VOUS
+	public enum Classification
+	{
+		Benign, Pathogenic, VOUS
 	}
 
 	public enum Method{
@@ -25,6 +26,7 @@ public class Judgment
 		this.gene = gene;
 		this.classification = classification;
 		this.method = method;
+		this.gene = gene;
 	}
 
 	public String getReason()
@@ -40,6 +42,10 @@ public class Judgment
 	public Method getConfidence()
 	{
 		return method;
+	}
+
+	public String getGene() {
+		return gene;
 	}
 
 	@Override
