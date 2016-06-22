@@ -53,8 +53,4 @@ public class Judgment
 	{
 		return "Judgment [reason=" + reason + ", classification=" + classification + "]";
 	}
-
-	public String getGene() {
-		return gene;
-	}
 }
