@@ -1,23 +1,39 @@
-<div class="modal-header">
-    <h1>Report for 20111499-8392854-DNA<#if datasetRepository.name??>${datasetRepository.name}</#if></h1>
-</div>
+
+
+<div class="row">
+    <div class="col-md-10 col-md-offset-1 well">
+
 <div class="modal-body" style="background-color: #FFFFFF; ">
 
 
+    <div class="btn-group">
+        <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Select patient
+        </button>
+        <div class="dropdown-menu" style="width: 500px">
+        <#list datasetRepository as row>
+            <#list row.getEntities("SAMPLES_ENTITIES") as sample>
 
-<#list datasetRepository as row>
-    ${row.entityMetaData.name}
-    <#break>
-</#list>
+                <#-- the original name of the sample is prefixed with some stuff, we must strip this off here... -->
+                <#assign original_name = "">
+                <#list sample.get("NAME")?split("_") as spl>
+                    <#if spl?index == 0 || spl?index == 1><#else><#assign original_name = original_name + spl></#if>
+                </#list>
 
-<#list datasetRepository as row>
-    <#list row.getEntities("SAMPLES_ENTITIES") as sample>
-        ${sample.get("GT")}
-    </#list>
-<#break>
-</#list>
 
-    <table width="60%">
+                <a class="dropdown-item" href="?entity=rvcf_output&mod=entitiesreport&patient=${sample.get("NAME")}">${original_name}</a><br>
+            </#list>
+            <#break>
+        </#list>
+        </div>
+    </div>
+
+    <div class="modal-header">
+        <h1>Report for ${original_name} <#if datasetRepository.name??>${datasetRepository.name}</#if></h1>
+    </div>
+
+
+    <table>
         <tr>
             <td>
 
@@ -61,7 +77,7 @@
             Referring facility:
         </td>
         <td style="padding: 5px;">
-        datasetRepository.getName()<br>
+            ${original_name}<br>
             98765<br>
             ZXY4562<br>
             Doe, Jane<br>
@@ -69,6 +85,7 @@
         </td>
     </tr>
 </table>
+                <hr />
 
 <h3>GENOME REPORT</h3>
 
@@ -162,7 +179,7 @@
     </tr>
 </table>
 
-<br><br>
+<hr />
 
 <table>
     <tr style="vertical-align: top;">
@@ -187,7 +204,7 @@
     </tr>
 </table>
 
-<br><br>
+                <hr />
 
 <table>
     <tr style="vertical-align: top;">
@@ -208,7 +225,7 @@
     </tr>
 </table>
 
-<br><br>
+                <hr />
 
 <table>
     <tr style="vertical-align: top;">
@@ -235,7 +252,7 @@
     </tr>
 </table>
 
-<br><br>
+                <hr />
 
 <table>
     <tr style="vertical-align: top;">
@@ -256,7 +273,7 @@
     </tr>
 </table>
 
-    <br><br>
+                <hr />
 
 <table>
     <tr style="vertical-align: top;">
@@ -290,4 +307,6 @@
 
 
             </td></tr></table>
+</div>
+    </div>
 </div>
