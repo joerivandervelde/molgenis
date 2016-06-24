@@ -1,6 +1,27 @@
 
 <#assign lateOnsetGenes = ["AIP", "ALK", "APC", "AXIN2", "BAP1", "BMPR1A", "BRCA1", "CDH1", "CDK4", "CDKN2A", "CEBPA", "CHEK2", "CTHRC1", "CTNNA1", "DICER1", "EGFR", "FH", "FLCN", "GATA2", "KIT", "MAX", "MLH1", "MLH3", "MSH2", "MSH3", "MSH6", "MUTYH", "NF2", "PAX5", "PDGFRA", "PMS2", "PRKAR1A", "RAD51D", "STK11", "TMEM127", "TP53"]>
 
+<#assign rvcfMapping = {
+"allele"                            :0,
+"alleleFreq"                        :1,
+"gene"                              :2,
+"transcript"                        :3,
+"phenotype"                         :4,
+"phenotypeInheritance"              :5,
+"phenotypeOnset"                    :6,
+"phenotypeDetails"                  :7,
+"phenotypeGroup"                    :8,
+"sampleStatus"                      :9,
+"samplePhenotype"                   :10,
+"sampleGroup"                       :11,
+"variantSignificance"               :12,
+"variantSignificanceSource"         :13,
+"variantSignificanceJustification"  :14,
+"variantCompoundHet"                :15,
+"variantGroup"                      :16
+}>
+
+
 <div class="row">
     <div class="col-md-10 col-md-offset-1 well">
 
@@ -38,7 +59,7 @@
 
 <#-- if no allele frequency was selected, set default-->
 <#if selectedAlleleFreq??><#else>
-    <#assign selectedAlleleFreq = 2>
+    <#assign selectedAlleleFreq = 0.02>
 </#if>
 
 <#-- if no allele frequency was selected, set default-->
@@ -48,21 +69,21 @@
 
 <#-- if no minimum impact was selected, set default-->
 <#if selectedMinimalImpact??><#else>
-    <#assign selectedMinimalImpact = "MODERATE">
+    <#assign selectedMinimalImpact = "Moderate">
 </#if>
 
     <div class="btn-group">
         <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            Allele frequency: < ${selectedAlleleFreq}%
+            Allele frequency: < ${selectedAlleleFreq?number*100}%
         </button>
         <div class="dropdown-menu" style="width: 500px">
-            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=100&selectedOnsetExclude=${selectedOnsetExclude}"> < 100%</a><br>
-            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=5&selectedOnsetExclude=${selectedOnsetExclude}"> < 5% </a><br>
-            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=2&selectedOnsetExclude=${selectedOnsetExclude}"> < 2% </a><br>
-            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=1&selectedOnsetExclude=${selectedOnsetExclude}"> < 1% </a><br>
-            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=.5&selectedOnsetExclude=${selectedOnsetExclude}"> < .5% </a><br>
-            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=.01&selectedOnsetExclude=${selectedOnsetExclude}"> < .01% </a><br>
-            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=.001&selectedOnsetExclude=${selectedOnsetExclude}"> < .001% </a><br>
+            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=1&selectedOnsetExclude=${selectedOnsetExclude}"> < 100%</a><br>
+            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=.05&selectedOnsetExclude=${selectedOnsetExclude}"> < 5% </a><br>
+            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=.02&selectedOnsetExclude=${selectedOnsetExclude}"> < 2% </a><br>
+            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=.01&selectedOnsetExclude=${selectedOnsetExclude}"> < 1% </a><br>
+            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=.005&selectedOnsetExclude=${selectedOnsetExclude}"> < 0.5% </a><br>
+            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=.001&selectedOnsetExclude=${selectedOnsetExclude}"> < 0.1% </a><br>
+            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=.0001&selectedOnsetExclude=${selectedOnsetExclude}"> < 0.01% </a><br>
         </div>
     </div>
 
@@ -72,7 +93,21 @@
         </button>
         <div class="dropdown-menu" style="width: 500px">
             <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=${selectedAlleleFreq}&selectedOnsetExclude=No"> No exclusion</a><br>
-            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=${selectedAlleleFreq}&selectedOnsetExclude=UMCG"> Exclude UMCG late onset genes</a><br>
+            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=${selectedAlleleFreq}&selectedOnsetExclude=UMCG"> Exclude UMCG late onset</a><br>
+            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=${selectedAlleleFreq}&selectedOnsetExclude=CGD"> Exclude CGD late onset</a><br>
+            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=${selectedAlleleFreq}&selectedOnsetExclude=UMCG_and_CGD"> Exclude UMCG and CGD late onset</a><br>
+        </div>
+    </div>
+
+    <div class="btn-group">
+        <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Minimum variant impact ${selectedMinimalImpact}
+        </button>
+        <div class="dropdown-menu" style="width: 500px">
+            <a class="dropdown-item" href="">Modifier</a><br>
+            <a class="dropdown-item" href="">Low</a><br>
+            <a class="dropdown-item" href="">Moderate</a><br>
+            <a class="dropdown-item" href="">High</a><br>
         </div>
     </div>
 
@@ -157,30 +192,46 @@
             Sequencing of this individual’s genome was performed and covered 95.7% of all positions at 8X coverage or higher, resulting in over 5.4 million variants compared to a reference genome. These data were analyzed to identify previously reported variants of potential clinical relevance as well as novel variants that could reasonably be assumed to cause disease (see methodology below). All results are summarized on page 1 with further details on subsequent pages.
 
             <h5><font color="teal">CAT. I: KNOWN PATHOGENIC VARIANT, IN CLINICAL GENE, AFFECTED STATUS</font></h5>
-            <table>
+            <table class="table table-striped table-condensed table-bordered">
             <@printHeader/>
-            <#list datasetRepository as row>
-                <#if row.getString("RLV")??>
-                    <#assign rlvFields = row.getString("RLV")?split("|")>
-                    <#if rlvFields[8]?contains(selectedOriginalSampleName + ":AFFECTED") && rlvFields[11]?startsWith("Reported pathogenic") && rlvFields[1]?number <= selectedAlleleFreq?number && !(selectedOnsetExclude=="UMCG" && lateOnsetGenes?seqContains(rlvFields[2]))>
-                        <@printRow row rlvFields />
-                    </#if>
-                </#if>
-            </#list>
+                <tbody>
+                    <#list datasetRepository as row>
+                        <#if row.getString("RLV")??>
+                            <#assign rlvFields = row.getString("RLV")?split("|")>
+
+                            <#if rlvFields[rvcfMapping["sampleStatus"]]?contains(selectedOriginalSampleName + ":AFFECTED") &&
+                                 rlvFields[rvcfMapping["variantSignificance"]]?startsWith("Reported pathogenic") &&
+                                 rlvFields[rvcfMapping["alleleFreq"]]?number <= selectedAlleleFreq?number &&
+                                 !((selectedOnsetExclude=="UMCG" || selectedOnsetExclude=="UMCG_and_CGD") && lateOnsetGenes?seqContains(rlvFields[rvcfMapping["gene"]])) &&
+                                 !((selectedOnsetExclude=="CGD" || selectedOnsetExclude=="UMCG_and_CGD") && rlvFields[rvcfMapping["phenotypeOnset"]] == "Adult")
+                                >
+                                <@printRow row rlvFields />
+                            </#if>
+                        </#if>
+                    </#list>
+                </tbody>
             </table>
 
 
             <h5><font color="teal">CAT. II: PREDICTED PATHOGENIC VARIANT, IN CLINICAL GENE, AFFECTED STATUS</font></h5>
-            <table>
+            <table class="table table-striped table-condensed table-bordered">
             <@printHeader/>
-            <#list datasetRepository as row>
-                <#if row.getString("RLV")??>
+                <tbody>
+                <#list datasetRepository as row>
+                        <#if row.getString("RLV")??>
                     <#assign rlvFields = row.getString("RLV")?split("|")>
-                    <#if rlvFields[8]?contains(selectedOriginalSampleName + ":AFFECTED") && rlvFields[11]?startsWith("Predicted pathogenic") && rlvFields[1]?number <= selectedAlleleFreq?number && !(selectedOnsetExclude=="UMCG" && lateOnsetGenes?seqContains(rlvFields[2]))>
+
+                    <#if rlvFields[rvcfMapping["sampleStatus"]]?contains(selectedOriginalSampleName + ":AFFECTED") &&
+                    rlvFields[rvcfMapping["variantSignificance"]]?startsWith("Predicted pathogenic") &&
+                    rlvFields[rvcfMapping["alleleFreq"]]?number <= selectedAlleleFreq?number &&
+                    !((selectedOnsetExclude=="UMCG" || selectedOnsetExclude=="UMCG_and_CGD") && lateOnsetGenes?seqContains(rlvFields[rvcfMapping["gene"]])) &&
+                    !((selectedOnsetExclude=="CGD" || selectedOnsetExclude=="UMCG_and_CGD") && rlvFields[rvcfMapping["phenotypeOnset"]] == "Adult")
+                    >
                         <@printRow row rlvFields />
                     </#if>
                 </#if>
-            </#list>
+                    </#list>
+                </tbody>
             </table>
 
             <h5><font color="teal">CAT. III: KNOWN PATHOGENIC VARIANT, IN UNCHARACTERIZED GENE, HOMOZYGOUS GENOTYPE</font></h5>
@@ -337,81 +388,105 @@
 
 
 <#macro printHeader>
-    <tr style="vertical-align: top; background-color: lightgrey;">
-        <th style="padding: 5px">
-            Gene<br>Transcript
+<thead>
+    <tr style="background-color: lightgrey;">
+        <th>
+            Gene<br>
+            Transcript<br>
+            cDNA
         </th>
-        <th style="padding: 5px">
-            Disease<br>Inheritance
+        <th>
+            AA change<br>
+            Genotype<br>
+            Depth
         </th>
-        <th style="padding: 5px">
-            Variant<br>Zygosity
+        <th>
+            Consequence<br>
+            Impact<br>
+            Frequency
         </th>
-        <th style="padding: 5px">
-            Source<br>Classification
+        <th>
+            Disorder<br>
+            Inheritance<br>
+            Onset
         </th>
-        <th style="padding: 5px">
-            Allele frequency
-        </th>
-        <th style="padding: 5px">
+        <th>
+            Source<br>
             Justification
         </th>
     </tr>
+</thead>
 </#macro>
 
 <#macro printRow row rlvFields>
-    <tr style="vertical-align: top;">
-        <td style="padding: 5px">
 
-            <#-- gene and transcript -->
-            ${rlvFields[2]}<br>
-            ${row.getString("ANN")?split("|")[6]}<br>
+    <#-- get some additional info from ANN field -->
+    <#list row.getString("ANN")?split(",") as ann>
+        <#assign annSplit = ann?split("|")>
+    <#-- match allele and gene -->
+        <#if annSplit[0] == rlvFields[0] && annSplit[3] == rlvFields[2]>
+            <#assign type = annSplit[1]>
+            <#assign impact = annSplit[2]>
+            <#assign cNot = annSplit[9]>
+            <#assign pNot = annSplit[10]>
+        <#break>
+        </#if>
+    </#list>
 
-        </td>
-        <td style="padding: 5px">
 
-            <#-- disease, inheritance and info -->
-            ${rlvFields[4]}<br>
-            ${rlvFields[5]}<br>
-            ${rlvFields[6]}
+    <tr>
+        <td>
 
-        </td>
-        <td style="padding: 5px">
-
-            <#-- variant cDNA and type -->
-            ${row.getString("ANN")?split("|")[9]}<br>
-            ${row.getString("ANN")?split("|")[1]}<br>
-
-        </td>
-        <td style="padding: 5px">
-
-            <#-- source-->
-            ${rlvFields[12]}
-
+            ${rlvFields[rvcfMapping["gene"]]}<br>
+            ${rlvFields[rvcfMapping["transcript"]]}<br>
+            ${cNot}<br>
 
         </td>
-        <td style="padding: 5px">
+        <td>
 
-            <#-- allele frequency -->
-            ${rlvFields[1]}
+            <#if pNot?? && pNot != "">${pNot}<#else>-</#if><br>
+            ${type?replace("_", " ")}<br>
+            ${impact}<br>
+
+
 
         </td>
-        <td style="padding: 5px; font-size: 8px;">
-
-            <#-- pathogenic justification -->
-            ${rlvFields[13]}
-
-
+        <td>
 
             <#list row.getEntities("SAMPLES_ENTITIES") as sample>
-
-            <#assign key = row.getString("POS") + "_" + row.getString("ALT") + "_" + selectedOriginalSampleName>
-
+                <#assign key = row.getString("POS") + "_" + row.getString("ALT") + "_" + selectedOriginalSampleName>
                 <#if sample.get("NAME") == key>
-                    ${sample.get("GT")}, ad= ${sample.get("AD")}
+                ${sample.get("GT")}<br>
+                ${sample.get("AD")}<br>
+                    <#break>
                 </#if>
             </#list>
 
+        ${rlvFields[rvcfMapping["alleleFreq"]]}<br>
+
+
+
         </td>
+
+        <td>
+
+
+        ${rlvFields[rvcfMapping["phenotype"]]}<br>
+        ${rlvFields[rvcfMapping["phenotypeInheritance"]]}<br>
+        ${rlvFields[rvcfMapping["phenotypeOnset"]]}
+
+
+
+        </td>
+        <td>
+
+            ${rlvFields[rvcfMapping["variantSignificanceSource"]]}<br>
+            ${rlvFields[rvcfMapping["variantSignificanceJustification"]]}
+
+
+
+        </td>
+
     </tr>
+
 </#macro>
