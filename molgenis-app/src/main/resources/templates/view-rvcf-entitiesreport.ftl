@@ -77,13 +77,13 @@
             Allele frequency: < ${selectedAlleleFreq?number*100}%
         </button>
         <div class="dropdown-menu" style="width: 500px">
-            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=1&selectedOnsetExclude=${selectedOnsetExclude}"> < 100%</a><br>
-            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=.05&selectedOnsetExclude=${selectedOnsetExclude}"> < 5% </a><br>
-            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=.02&selectedOnsetExclude=${selectedOnsetExclude}"> < 2% </a><br>
-            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=.01&selectedOnsetExclude=${selectedOnsetExclude}"> < 1% </a><br>
-            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=.005&selectedOnsetExclude=${selectedOnsetExclude}"> < 0.5% </a><br>
-            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=.001&selectedOnsetExclude=${selectedOnsetExclude}"> < 0.1% </a><br>
-            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=.0001&selectedOnsetExclude=${selectedOnsetExclude}"> < 0.01% </a><br>
+            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=1&selectedOnsetExclude=${selectedOnsetExclude}&selectedMinimalImpact=${selectedMinimalImpact}"> < 100%</a><br>
+            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=.05&selectedOnsetExclude=${selectedOnsetExclude}&selectedMinimalImpact=${selectedMinimalImpact}"> < 5% </a><br>
+            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=.02&selectedOnsetExclude=${selectedOnsetExclude}&selectedMinimalImpact=${selectedMinimalImpact}"> < 2% </a><br>
+            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=.01&selectedOnsetExclude=${selectedOnsetExclude}&selectedMinimalImpact=${selectedMinimalImpact}"> < 1% </a><br>
+            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=.005&selectedOnsetExclude=${selectedOnsetExclude}&selectedMinimalImpact=${selectedMinimalImpact}"> < 0.5% </a><br>
+            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=.001&selectedOnsetExclude=${selectedOnsetExclude}&selectedMinimalImpact=${selectedMinimalImpact}"> < 0.1% </a><br>
+            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=.0001&selectedOnsetExclude=${selectedOnsetExclude}&selectedMinimalImpact=${selectedMinimalImpact}"> < 0.01% </a><br>
         </div>
     </div>
 
@@ -92,22 +92,22 @@
             Late onset exclusion: ${selectedOnsetExclude}
         </button>
         <div class="dropdown-menu" style="width: 500px">
-            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=${selectedAlleleFreq}&selectedOnsetExclude=No"> No exclusion</a><br>
-            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=${selectedAlleleFreq}&selectedOnsetExclude=UMCG"> Exclude UMCG late onset</a><br>
-            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=${selectedAlleleFreq}&selectedOnsetExclude=CGD"> Exclude CGD late onset</a><br>
-            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=${selectedAlleleFreq}&selectedOnsetExclude=UMCG_and_CGD"> Exclude UMCG and CGD late onset</a><br>
+            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=${selectedAlleleFreq}&selectedOnsetExclude=No&selectedMinimalImpact=${selectedMinimalImpact}"> No exclusion</a><br>
+            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=${selectedAlleleFreq}&selectedOnsetExclude=UMCG&selectedMinimalImpact=${selectedMinimalImpact}"> Exclude UMCG late onset</a><br>
+            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=${selectedAlleleFreq}&selectedOnsetExclude=CGD&selectedMinimalImpact=${selectedMinimalImpact}"> Exclude CGD late onset</a><br>
+            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=${selectedAlleleFreq}&selectedOnsetExclude=UMCG_and_CGD&selectedMinimalImpact=${selectedMinimalImpact}"> Exclude UMCG and CGD late onset</a><br>
         </div>
     </div>
 
     <div class="btn-group">
         <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            Minimum variant impact ${selectedMinimalImpact}
+            Minimum variant impact: ${selectedMinimalImpact}
         </button>
         <div class="dropdown-menu" style="width: 500px">
-            <a class="dropdown-item" href="">Modifier</a><br>
-            <a class="dropdown-item" href="">Low</a><br>
-            <a class="dropdown-item" href="">Moderate</a><br>
-            <a class="dropdown-item" href="">High</a><br>
+            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=${selectedAlleleFreq}&selectedOnsetExclude=No&selectedMinimalImpact=Modifier">Modifier</a><br>
+            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=${selectedAlleleFreq}&selectedOnsetExclude=UMCG&selectedMinimalImpact=Low">Low</a><br>
+            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=${selectedAlleleFreq}&selectedOnsetExclude=CGD&selectedMinimalImpact=Moderate">Moderate</a><br>
+            <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=${selectedAlleleFreq}&selectedOnsetExclude=UMCG_and_CGD&selectedMinimalImpact=High">High</a><br>
         </div>
     </div>
 
@@ -200,11 +200,7 @@
                             <#assign rlvFields = row.getString("RLV")?split("|")>
 
                             <#if rlvFields[rvcfMapping["sampleStatus"]]?contains(selectedOriginalSampleName + ":AFFECTED") &&
-                                 rlvFields[rvcfMapping["variantSignificance"]]?startsWith("Reported pathogenic") &&
-                                 rlvFields[rvcfMapping["alleleFreq"]]?number <= selectedAlleleFreq?number &&
-                                 !((selectedOnsetExclude=="UMCG" || selectedOnsetExclude=="UMCG_and_CGD") && lateOnsetGenes?seqContains(rlvFields[rvcfMapping["gene"]])) &&
-                                 !((selectedOnsetExclude=="CGD" || selectedOnsetExclude=="UMCG_and_CGD") && rlvFields[rvcfMapping["phenotypeOnset"]] == "Adult")
-                                >
+                                 rlvFields[rvcfMapping["variantSignificance"]]?startsWith("Reported pathogenic") >
                                 <@printRow row rlvFields />
                             </#if>
                         </#if>
@@ -222,11 +218,7 @@
                     <#assign rlvFields = row.getString("RLV")?split("|")>
 
                     <#if rlvFields[rvcfMapping["sampleStatus"]]?contains(selectedOriginalSampleName + ":AFFECTED") &&
-                    rlvFields[rvcfMapping["variantSignificance"]]?startsWith("Predicted pathogenic") &&
-                    rlvFields[rvcfMapping["alleleFreq"]]?number <= selectedAlleleFreq?number &&
-                    !((selectedOnsetExclude=="UMCG" || selectedOnsetExclude=="UMCG_and_CGD") && lateOnsetGenes?seqContains(rlvFields[rvcfMapping["gene"]])) &&
-                    !((selectedOnsetExclude=="CGD" || selectedOnsetExclude=="UMCG_and_CGD") && rlvFields[rvcfMapping["phenotypeOnset"]] == "Adult")
-                    >
+                         rlvFields[rvcfMapping["variantSignificance"]]?startsWith("Predicted pathogenic") >
                         <@printRow row rlvFields />
                     </#if>
                 </#if>
@@ -434,6 +426,20 @@
     </#list>
 
 
+<#if
+    rlvFields[rvcfMapping["alleleFreq"]]?number <= selectedAlleleFreq?number &&
+    !((selectedOnsetExclude=="UMCG" || selectedOnsetExclude=="UMCG_and_CGD") && lateOnsetGenes?seqContains(rlvFields[rvcfMapping["gene"]])) &&
+    !((selectedOnsetExclude=="CGD" || selectedOnsetExclude=="UMCG_and_CGD") && rlvFields[rvcfMapping["phenotypeOnset"]] == "Adult") &&
+    (
+        (selectedMinimalImpact == "Modifier" && (impact == "MODIFIER" || impact == "LOW" || impact == "MODERATE" || impact == "HIGH")) ||
+        (selectedMinimalImpact == "Low" && (impact == "LOW" || impact == "MODERATE" || impact == "HIGH")) ||
+        (selectedMinimalImpact == "Moderate" && (impact == "MODERATE" || impact == "HIGH")) ||
+        (selectedMinimalImpact == "High" && (impact == "HIGH"))
+    )
+>
+
+
+
     <tr>
         <td>
 
@@ -488,5 +494,7 @@
         </td>
 
     </tr>
+<#else>
+</#if>
 
 </#macro>
