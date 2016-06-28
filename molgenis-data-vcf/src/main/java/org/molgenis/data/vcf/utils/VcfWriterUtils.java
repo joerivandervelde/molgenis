@@ -12,9 +12,7 @@ import org.molgenis.data.MolgenisDataException;
 import org.molgenis.data.MolgenisInvalidFormatException;
 import org.molgenis.data.vcf.VcfRepository;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -24,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
 
 import static com.google.common.base.Joiner.on;
 import static com.google.common.base.Strings.isNullOrEmpty;
@@ -85,28 +84,45 @@ public class VcfWriterUtils
 	{
 		System.out.println("Detecting VCF column header...");
 
-		Scanner inputVcfFileScanner = new Scanner(inputVcfFile, "UTF-8");
-		String line = inputVcfFileScanner.nextLine();
+		BufferedReader bufferedVCFReader;
+
+		if(inputVcfFile.getName().endsWith(".vcf"))
+		{
+			bufferedVCFReader = new BufferedReader(new FileReader(inputVcfFile));
+		}
+		else if(inputVcfFile.getName().endsWith(".vcf.gz"))
+		{
+			InputStream fileStream = new FileInputStream(inputVcfFile);
+			InputStream gzipStream = new GZIPInputStream(fileStream);
+			Reader decoder = new InputStreamReader(gzipStream, "UTF-8");
+			bufferedVCFReader = new BufferedReader(decoder);
+		}
+		else
+		{
+			throw new IOException("Please provide a .vcf or .vcf.gz file");
+		}
+
+		String line = bufferedVCFReader.readLine();
 
 		Map<String, String> infoHeaderLinesMap = new LinkedHashMap<>();
 		if (line.startsWith(VcfRepository.PREFIX))
 		{
-			line = processHeaders(outputVCFWriter, inputVcfFileScanner, line, infoHeaderLinesMap);
+			line = processHeaders(outputVCFWriter, bufferedVCFReader, line, infoHeaderLinesMap);
 			System.out.println("\nHeader line found:\n" + line);
 
-			checkColumnHeaders(outputVCFWriter, inputVcfFileScanner, line);
+			checkColumnHeaders(outputVCFWriter, bufferedVCFReader, line);
 			writeInfoHeaders(outputVCFWriter, addedAttributes, attributesToInclude, infoHeaderLinesMap);
 			writeColumnHeaders(outputVCFWriter, line);
 		}
 		else
 		{
 			outputVCFWriter.close();
-			inputVcfFileScanner.close();
+			bufferedVCFReader.close();
 			throw new MolgenisInvalidFormatException(
 					"Did not find ## on the first line, are you sure it is a VCF file?");
 		}
 
-		inputVcfFileScanner.close();
+		bufferedVCFReader.close();
 	}
 
 	/**
@@ -175,6 +191,35 @@ public class VcfWriterUtils
 		return line;
 	}
 
+	// *************************************
+	// * Parse header using bufferedreader *
+	// *************************************
+
+	private static String processHeaders(BufferedWriter outputVCFWriter, BufferedReader inputVcfFileReader, String line,
+										 Map<String, String> infoHeaderLinesMap) throws IOException
+	{
+		while (inputVcfFileReader.ready())
+		{
+			if (line.startsWith(VcfRepository.PREFIX + VcfRepository.INFO))
+			{
+				infoHeaderLinesMap.put(VcfUtils.getIdFromInfoField(line), line);
+			}
+			else if (line.startsWith(VcfRepository.PREFIX))
+			{
+				outputVCFWriter.write(line);
+				outputVCFWriter.newLine();
+			}
+			else
+			{
+				break;
+			}
+			line = inputVcfFileReader.readLine();
+
+			System.out.print(".");
+		}
+		return line;
+	}
+
 	private static void checkColumnHeaders(BufferedWriter outputVCFWriter, Scanner inputVcfFileScanner, String line)
 			throws IOException, MolgenisInvalidFormatException
 	{
@@ -182,6 +227,18 @@ public class VcfWriterUtils
 		{
 			outputVCFWriter.close();
 			inputVcfFileScanner.close();
+			throw new MolgenisInvalidFormatException(
+					"Header does not start with #CHROM, are you sure it is a VCF file?");
+		}
+	}
+
+	private static void checkColumnHeaders(BufferedWriter outputVCFWriter, BufferedReader inputVcfFileReader, String line)
+			throws IOException, MolgenisInvalidFormatException
+	{
+		if (!line.startsWith(CHROM))
+		{
+			outputVCFWriter.close();
+			inputVcfFileReader.close();
 			throw new MolgenisInvalidFormatException(
 					"Header does not start with #CHROM, are you sure it is a VCF file?");
 		}
