@@ -141,7 +141,7 @@
 
 
             <a id="reflectedlink" href=""><button type="button" class="btn btn-secondary dropdown-toggle"><font color="black">Filter by genes:</font></button></a>
-            <input id="searchterm" value="<#if geneFilter??>${geneFilter}</#if>"/>
+            <input id="searchterm" size="4" value="<#if geneFilter??>${geneFilter}</#if>"/>
             <script type="text/javascript">
                 var link= document.getElementById('reflectedlink');
                 var input= document.getElementById('searchterm');
@@ -530,5 +530,7 @@
         </tbody>
         </table>
         <#assign rowsPrinted = false>
+    <#else>
+        No variants found.
     </#if>
 </#macro>
