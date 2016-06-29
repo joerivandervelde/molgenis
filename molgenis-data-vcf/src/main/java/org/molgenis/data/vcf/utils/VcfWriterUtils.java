@@ -84,24 +84,7 @@ public class VcfWriterUtils
 	{
 		System.out.println("Detecting VCF column header...");
 
-		BufferedReader bufferedVCFReader;
-
-		if(inputVcfFile.getName().endsWith(".vcf"))
-		{
-			bufferedVCFReader = new BufferedReader(new FileReader(inputVcfFile));
-		}
-		else if(inputVcfFile.getName().endsWith(".vcf.gz"))
-		{
-			InputStream fileStream = new FileInputStream(inputVcfFile);
-			InputStream gzipStream = new GZIPInputStream(fileStream);
-			Reader decoder = new InputStreamReader(gzipStream, "UTF-8");
-			bufferedVCFReader = new BufferedReader(decoder);
-		}
-		else
-		{
-			throw new IOException("Please provide a .vcf or .vcf.gz file");
-		}
-
+		BufferedReader bufferedVCFReader = getBufferedVCFReader(inputVcfFile);
 		String line = bufferedVCFReader.readLine();
 
 		Map<String, String> infoHeaderLinesMap = new LinkedHashMap<>();
@@ -123,6 +106,33 @@ public class VcfWriterUtils
 		}
 
 		bufferedVCFReader.close();
+	}
+
+	/**
+	 * Get BufferedReader object from an input VCF file
+	 * @param inputVcfFile
+	 * @return
+	 * @throws IOException
+     */
+	public static BufferedReader getBufferedVCFReader(File inputVcfFile) throws IOException {
+		BufferedReader bufferedVCFReader;
+
+		if(inputVcfFile.getName().endsWith(".vcf"))
+		{
+			bufferedVCFReader = new BufferedReader(new FileReader(inputVcfFile));
+		}
+		else if(inputVcfFile.getName().endsWith(".vcf.gz"))
+		{
+			InputStream fileStream = new FileInputStream(inputVcfFile);
+			InputStream gzipStream = new GZIPInputStream(fileStream);
+			Reader decoder = new InputStreamReader(gzipStream, "UTF-8");
+			bufferedVCFReader = new BufferedReader(decoder);
+		}
+		else
+		{
+			throw new IOException("Please provide a .vcf or .vcf.gz file");
+		}
+		return bufferedVCFReader;
 	}
 
 	/**
@@ -198,7 +208,8 @@ public class VcfWriterUtils
 	private static String processHeaders(BufferedWriter outputVCFWriter, BufferedReader inputVcfFileReader, String line,
 										 Map<String, String> infoHeaderLinesMap) throws IOException
 	{
-		while (inputVcfFileReader.ready())
+		String readLine = null;
+		while ((readLine = inputVcfFileReader.readLine()) != null)
 		{
 			if (line.startsWith(VcfRepository.PREFIX + VcfRepository.INFO))
 			{
@@ -213,7 +224,7 @@ public class VcfWriterUtils
 			{
 				break;
 			}
-			line = inputVcfFileReader.readLine();
+			line = readLine;
 
 			System.out.print(".");
 		}
