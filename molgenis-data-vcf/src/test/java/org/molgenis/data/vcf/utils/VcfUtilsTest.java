@@ -1,6 +1,7 @@
 package org.molgenis.data.vcf.utils;
 
 import autovalue.shaded.com.google.common.common.collect.Iterators;
+import org.mockito.Mockito;
 import org.molgenis.MolgenisFieldTypes;
 import org.molgenis.data.AttributeMetaData;
 import org.molgenis.data.Entity;
@@ -16,7 +17,9 @@ import org.slf4j.LoggerFactory;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -412,16 +415,14 @@ public class VcfUtilsTest
 	@Test
 	public void vcfPedigreeReaderTest() throws IOException, MolgenisInvalidFormatException
 	{
-		String testHeader = "##PEDIGREE=<Child=27991,Mother=27992,Father=27993>\n"
-				+ "##PEDIGREE=<Child=27939,Mother=27940,Father=27941>\n"
-				+ "##PEDIGREE=<Child=30982,Mother=30983,Father=30984>";
+		BufferedReader bufferedReader = new BufferedReader(new StringReader("##PEDIGREE=<Child=27991,Mother=27992,Father=27993>\n##PEDIGREE=<Child=40991,Mother=40992>\n##PEDIGREE=<Child=50991,Father=50993>\n##PEDIGREE=<Child=27939,Mother=27940,Father=27941\n##PEDIGREE=<Child=30982,Mother=30983,Father=30984\n"));
 
-		Scanner scanner = new Scanner(testHeader);
-
-		HashMap<String, Trio> actualPedigree = VcfUtils.getPedigree(scanner);
+		HashMap<String, Trio> actualPedigree = VcfUtils.getPedigree(bufferedReader);
 
 		HashMap<String, Trio> expectedPedigree = new HashMap<String, Trio>();
 		expectedPedigree.put("27991", new Trio(new Sample("27991"), new Sample("27992"), new Sample("27993")));
+		expectedPedigree.put("40991", new Trio(new Sample("40991"), new Sample("40992"), null));
+		expectedPedigree.put("50991", new Trio(new Sample("50991"), null, new Sample("50993")));
 		expectedPedigree.put("27939", new Trio(new Sample("27939"), new Sample("27940"), new Sample("27941")));
 		expectedPedigree.put("30982", new Trio(new Sample("30982"), new Sample("30983"), new Sample("30984")));
 

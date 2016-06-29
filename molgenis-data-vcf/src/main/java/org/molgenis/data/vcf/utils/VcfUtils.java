@@ -18,7 +18,9 @@ import org.molgenis.data.vcf.datastructures.Sample;
 import org.molgenis.data.vcf.datastructures.Trio;
 import org.molgenis.vcf.meta.VcfMetaInfo;
 
+import java.io.BufferedReader;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -338,17 +340,17 @@ public class VcfUtils
 	 * Get pedigree data from VCF Now only support child, father, mother No fancy data structure either Output:
 	 * result.put(childID, Arrays.asList(new String[]{motherID, fatherID}));
 	 *
-	 * @param inputVcfFileScanner
+	 * @param inputVcfFileReader
 	 * @return
 	 * @throws FileNotFoundException
 	 */
-	public static HashMap<String, Trio> getPedigree(Scanner inputVcfFileScanner) throws FileNotFoundException
+	public static HashMap<String, Trio> getPedigree(BufferedReader inputVcfFileReader) throws IOException
 	{
 		HashMap<String, Trio> result = new HashMap<>();
 
-		while (inputVcfFileScanner.hasNextLine())
+		String line = null;
+		while ((line = inputVcfFileReader.readLine()) != null)
 		{
-			String line = inputVcfFileScanner.nextLine();
 
 			// quit when we don't see header lines anymore
 			if (!line.startsWith(VcfRepository.PREFIX))
@@ -388,10 +390,11 @@ public class VcfUtils
 					}
 				}
 
-				if (childID != null && motherID != null && fatherID != null)
+				// only child ID would be silly, but 1 missing parent is okay, so we want child + mother or child + father
+				if ((childID != null && motherID != null) || (childID != null && fatherID != null))
 				{
 					// good
-					result.put(childID, new Trio(new Sample(childID), new Sample(motherID), new Sample(fatherID)));
+					result.put(childID, new Trio(new Sample(childID), (motherID != null ? new Sample(motherID) : null), (fatherID != null ? new Sample(fatherID) : null)));
 				}
 				else
 				{
