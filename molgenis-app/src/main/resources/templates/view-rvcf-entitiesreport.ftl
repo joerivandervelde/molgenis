@@ -503,7 +503,7 @@
         </td>
         <td>
             ${rlvFields[rvcfMapping["phenotype"]]}<br>
-            ${rlvFields[rvcfMapping["phenotypeInheritance"]]}<br>
+            ${rlvFields[rvcfMapping["phenotypeInheritance"]]} <#if rlvFields[rvcfMapping["sampleStatus"]]?contains(selectedOriginalSampleName + ":AFFECTED_COMPOUNDHET") || rlvFields[rvcfMapping["sampleStatus"]]?contains(selectedOriginalSampleName + ":HOMOZYGOUS_COMPOUNDHET")>Compound het.</#if><br>
             ${rlvFields[rvcfMapping["phenotypeOnset"]]}
         </td>
         <td>
@@ -521,7 +521,7 @@
     <#list datasetRepository as row>
         <#if row.getString("RLV")??>
             <#assign rlvFields = row.getString("RLV")?split("|")>
-            <#if rlvFields[rvcfMapping["sampleStatus"]]?contains(selectedOriginalSampleName + ":${sampleStatus}") && rlvFields[rvcfMapping["variantSignificance"]]?startsWith("${pathogenicStatus}") >
+            <#if rlvFields[rvcfMapping["sampleStatus"]]?startsWith(selectedOriginalSampleName + ":${sampleStatus}") && rlvFields[rvcfMapping["variantSignificance"]]?startsWith("${pathogenicStatus}") >
                 <@printRow row rlvFields />
             </#if>
         </#if>
