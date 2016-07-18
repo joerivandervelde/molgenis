@@ -269,39 +269,51 @@ public class VcfToEntity
 		writeInfoFieldsToEntity(vcfRecord, entity);
 		if (sampleEntityMetaData != null)
 		{
-			List<Entity> samples = createSampleEntities(vcfRecord, entity.get(POS) + "_" + entity.get(ALT), id);
+			Iterator<Entity> samples = createSampleEntities(vcfRecord, entity.get(POS) + "_" + entity.get(ALT), id);
 			entity.set(SAMPLES, samples);
 		}
 		return entity;
 	}
 
-	protected List<Entity> createSampleEntities(VcfRecord vcfRecord, String entityPosAlt, String entityId)
+	protected Iterator<Entity> createSampleEntities(VcfRecord vcfRecord, String entityPosAlt, String entityId)
 	{
-		List<Entity> samples = new ArrayList<Entity>();
-		Iterator<VcfSample> sampleIterator = vcfRecord.getSamples().iterator();
-		if (vcfRecord.getNrSamples() > 0)
+		return new Iterator<Entity>()
 		{
+			String[] format = vcfRecord.getFormat();
+			Iterator<VcfSample> sampleIterator = vcfRecord.getSamples().iterator();
 			Iterator<String> sampleNameIterator = vcfMeta.getSampleNames().iterator();
-			for (int j = 0; sampleIterator.hasNext(); ++j)
-			{
-				String[] format = vcfRecord.getFormat();
+			int counter = 0;
+
+			@Override
+			public boolean hasNext() {
+				if (vcfRecord.getNrSamples() > 0)
+				{
+					return sampleIterator.hasNext();
+				}
+				else
+				{
+					return false;
+				}
+			}
+
+			@Override
+			public Entity next() {
 				VcfSample sample = sampleIterator.next();
 				Entity sampleEntity = new MapEntity(sampleEntityMetaData);
 				for (int i = 0; i < format.length; i = i + 1)
 				{
 					sampleEntity.set(format[i], sample.getData(i));
 				}
-				sampleEntity.set(ID, entityId + j);
-
+				sampleEntity.set(ID, entityId + counter);
+				counter++;
 				// FIXME remove entity ID from Sample label after #1400 is fixed, see also:
 				// jquery.molgenis.table.js line 152
 				String original_name = sampleNameIterator.next();
 				sampleEntity.set(NAME, entityPosAlt + "_" + original_name);
 				sampleEntity.set(ORIGINAL_NAME, original_name);
-				samples.add(sampleEntity);
+				return sampleEntity;
 			}
-		}
-		return samples;
+		};
 	}
 
 	protected void writeInfoFieldsToEntity(VcfRecord vcfRecord, Entity entity)
