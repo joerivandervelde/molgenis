@@ -235,7 +235,6 @@ public class VcfWriterUtils
 			{
 				outputVCFWriter.write(line);
 				outputVCFWriter.newLine();
-				System.out.println("wrote: " + line);
 			}
 			else
 			{

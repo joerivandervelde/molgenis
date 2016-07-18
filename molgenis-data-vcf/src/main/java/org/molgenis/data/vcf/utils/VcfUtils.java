@@ -362,7 +362,7 @@ public class VcfUtils
 			// expecting e.g. ##PEDIGREE=<Child=100400,Mother=100402,Father=100401>
 			if (line.startsWith("##PEDIGREE"))
 			{
-				System.out.println("Pedigree data line: " + line);
+				//System.out.println("Pedigree data line: " + line);
 				String childID = null;
 				String motherID = null;
 				String fatherID = null;
