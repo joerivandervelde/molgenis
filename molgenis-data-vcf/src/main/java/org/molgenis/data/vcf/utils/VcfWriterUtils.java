@@ -67,6 +67,22 @@ public class VcfWriterUtils
 	}
 
 	/**
+	 * Overloaded to use default to not skip genotypes in the output header (ie. leave column header untouched)
+	 * @param inputVcfFile
+	 * @param outputVCFWriter
+	 * @param addedAttributes
+	 * @param attributesToInclude
+	 * @throws MolgenisInvalidFormatException
+     * @throws IOException
+     */
+	public static void writeVcfHeader(File inputVcfFile, BufferedWriter outputVCFWriter,
+									  List<AttributeMetaData> addedAttributes, List<String> attributesToInclude)
+			throws MolgenisInvalidFormatException, IOException
+	{
+		writeVcfHeader(inputVcfFile, outputVCFWriter, addedAttributes, attributesToInclude, false);
+	}
+
+	/**
 	 * Checks for previous annotations
 	 *
 	 * @param inputVcfFile
@@ -79,7 +95,7 @@ public class VcfWriterUtils
 	 * @throws IOException
 	 */
 	public static void writeVcfHeader(File inputVcfFile, BufferedWriter outputVCFWriter,
-			List<AttributeMetaData> addedAttributes, List<String> attributesToInclude)
+			List<AttributeMetaData> addedAttributes, List<String> attributesToInclude, boolean forceNoGenotypes)
 					throws MolgenisInvalidFormatException, IOException
 	{
 		System.out.println("Detecting VCF column header...");
@@ -95,7 +111,7 @@ public class VcfWriterUtils
 
 			checkColumnHeaders(outputVCFWriter, bufferedVCFReader, line);
 			writeInfoHeaders(outputVCFWriter, addedAttributes, attributesToInclude, infoHeaderLinesMap);
-			writeColumnHeaders(outputVCFWriter, line);
+			writeColumnHeaders(outputVCFWriter, line, forceNoGenotypes);
 		}
 		else
 		{
@@ -219,6 +235,7 @@ public class VcfWriterUtils
 			{
 				outputVCFWriter.write(line);
 				outputVCFWriter.newLine();
+				System.out.println("wrote: " + line);
 			}
 			else
 			{
@@ -259,9 +276,24 @@ public class VcfWriterUtils
 	// * Write header *
 	// ****************
 
-	private static void writeColumnHeaders(BufferedWriter outputVCFWriter, String line) throws IOException
+	private static void writeColumnHeaders(BufferedWriter outputVCFWriter, String line, boolean forceNoGenotypes) throws IOException
 	{
-		outputVCFWriter.write(line);
+		if(forceNoGenotypes)
+		{
+			String[] split = line.split("\t", -1);
+			StringBuffer noGenoHeader = new StringBuffer();
+			for(int i = 0; i < 8; i++)
+			{
+				noGenoHeader.append(split[i] + "\t");
+			}
+			noGenoHeader.deleteCharAt(noGenoHeader.length() -1 );
+			outputVCFWriter.write(noGenoHeader.toString());
+		}
+		else
+		{
+			//default
+			outputVCFWriter.write(line);
+		}
 		outputVCFWriter.newLine();
 	}
 
@@ -279,6 +311,11 @@ public class VcfWriterUtils
 	{
 		for (AttributeMetaData annotatorInfoAttr : annotatorAttributes.values())
 		{
+			if(annotatorInfoAttr.getName().equals(SAMPLES))
+			{
+				//System.out.println("Hotfix for #5005 (https://github.com/molgenis/molgenis/issues/5005): skipping SAMPLES_ENTITIES when writing headers...");
+				continue;
+			}
 			if (attributesToInclude.isEmpty() || attributesToInclude.contains(annotatorInfoAttr.getName())
 					|| annotatorInfoAttr.getDataType().equals(XREF) || annotatorInfoAttr.getDataType().equals(MREF))
 			{
@@ -403,6 +440,11 @@ public class VcfWriterUtils
 
 		for (AttributeMetaData attributeMetaData : vcfEntity.getEntityMetaData().getAttribute(INFO).getAttributeParts())
 		{
+			if(attributeMetaData.getName().equals(SAMPLES))
+			{
+				//System.out.println("Hotfix for #5005 (https://github.com/molgenis/molgenis/issues/5005): skipping SAMPLES_ENTITIES when writing INFO fields...");
+				continue;
+			}
 			if (isOutputAttribute(attributeMetaData, annotatorAttributes, attributesToInclude))
 			{
 				hasInfoFields = writeSingleInfoField(vcfEntity, writer, hasInfoFields, attributeMetaData);
