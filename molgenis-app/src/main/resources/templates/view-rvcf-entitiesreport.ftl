@@ -51,7 +51,9 @@
 <#-- ############################ -->
 
 <#-- if no sample was selected, take the first one from the list and select it-->
-<#assign selectedSampleName = samples[0]>
+<#if !selectedSampleName??>
+    <#assign selectedSampleName = samples[0]>
+</#if>
 
 <#-- if no allele frequency was selected, set a default-->
 <#if selectedAlleleFreq??><#else>
@@ -446,7 +448,7 @@
             </#if>
 
         ${rlvFields[rvcfMapping["alleleFreq"]]}<br>
-            
+
         <#assign fdrAffected = rlvFields[rvcfMapping["fdr"]]?split(",")[0]>
         <#assign fdrCarr = rlvFields[rvcfMapping["fdr"]]?split(",")[1]>
         ${(fdrAffected?number * 100)?round}% / ${(fdrCarr?number * 100)?round}%
