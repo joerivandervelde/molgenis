@@ -18,6 +18,8 @@ public class Judgment
 	Classification classification;
 	Method method;
 	String gene;
+	String source; //e.g. "LabVariants", "ClinVar", "GAVIN"
+	String type; //e.g. "Reported pathogenic", "Predicted pathogenic"
 
 	public Judgment(Classification classification, Method method, String gene, String reason)
 	{
@@ -27,6 +29,24 @@ public class Judgment
 		this.classification = classification;
 		this.method = method;
 		this.gene = gene;
+	}
+
+	public String getSource() {
+		return source != null ? source : "";
+	}
+
+	public Judgment setSource(String source) {
+		this.source = source;
+		return this;
+	}
+
+	public String getType() {
+		return type != null ? type : "";
+	}
+
+	public Judgment setType(String type) {
+		this.type = type;
+		return this;
 	}
 
 	public String getReason()
