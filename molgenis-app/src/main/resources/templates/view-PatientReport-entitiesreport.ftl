@@ -91,7 +91,7 @@
                     <#list samples as sampleName>
                     <#-- create dropdown items, with original name as label and the prefixed name as a key-->
                         <a class="dropdown-item"
-                           href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${sampleName}&selectedAlleleFreq=${selectedAlleleFreq}&selectedOnsetExclude=${selectedOnsetExclude}&selectedMinimalImpact=${selectedMinimalImpact}<#if geneFilter??>&geneFilter=${geneFilter}</#if>">${sampleName}</a><br>
+                           href="dataexplorer/module/entitiesreport?entity=${entity}&moduleName=PatientReport&selectedSampleName=${sampleName}&selectedAlleleFreq=${selectedAlleleFreq}&selectedOnsetExclude=${selectedOnsetExclude}&selectedMinimalImpact=${selectedMinimalImpact}<#if geneFilter??>&geneFilter=${geneFilter}</#if>">${sampleName}</a><br>
                     </#list>
                     <#break>
                 </#list>
@@ -103,7 +103,7 @@
                 </button>
                 <div class="dropdown-menu" style="width: 500px">
                 <#list alleleFreqOptions as afo>
-                    <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${selectedSampleName}&selectedAlleleFreq=${afo}&selectedOnsetExclude=${selectedOnsetExclude}&selectedMinimalImpact=${selectedMinimalImpact}<#if geneFilter??>&geneFilter=${geneFilter}</#if>">< ${afo?number*100}%</a><br>
+                    <a class="dropdown-item" href="dataexplorer/module/entitiesreport?entity=${entity}&moduleName=PatientReport&selectedSampleName=${selectedSampleName}&selectedAlleleFreq=${afo}&selectedOnsetExclude=${selectedOnsetExclude}&selectedMinimalImpact=${selectedMinimalImpact}<#if geneFilter??>&geneFilter=${geneFilter}</#if>">< ${afo?number*100}%</a><br>
                 </#list>
                 </div>
             </div>
@@ -113,10 +113,10 @@
                     Late onset exclusion: ${selectedOnsetExclude}
                 </button>
                 <div class="dropdown-menu" style="width: 500px">
-                    <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${selectedSampleName}&selectedAlleleFreq=${selectedAlleleFreq}&selectedOnsetExclude=No&selectedMinimalImpact=${selectedMinimalImpact}<#if geneFilter??>&geneFilter=${geneFilter}</#if>">No exclusion</a><br>
-                    <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${selectedSampleName}&selectedAlleleFreq=${selectedAlleleFreq}&selectedOnsetExclude=UMCG&selectedMinimalImpact=${selectedMinimalImpact}<#if geneFilter??>&geneFilter=${geneFilter}</#if>">Exclude UMCG late onset</a><br>
-                    <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${selectedSampleName}&selectedAlleleFreq=${selectedAlleleFreq}&selectedOnsetExclude=CGD&selectedMinimalImpact=${selectedMinimalImpact}<#if geneFilter??>&geneFilter=${geneFilter}</#if>">Exclude CGD late onset</a><br>
-                    <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${selectedSampleName}&selectedAlleleFreq=${selectedAlleleFreq}&selectedOnsetExclude=UMCG_and_CGD&selectedMinimalImpact=${selectedMinimalImpact}<#if geneFilter??>&geneFilter=${geneFilter}</#if>">Exclude UMCG and CGD late onset</a><br>
+                    <a class="dropdown-item" href="dataexplorer/module/entitiesreport?entity=${entity}&moduleName=PatientReport&selectedSampleName=${selectedSampleName}&selectedAlleleFreq=${selectedAlleleFreq}&selectedOnsetExclude=No&selectedMinimalImpact=${selectedMinimalImpact}<#if geneFilter??>&geneFilter=${geneFilter}</#if>">No exclusion</a><br>
+                    <a class="dropdown-item" href="dataexplorer/module/entitiesreport?entity=${entity}&moduleName=PatientReport&selectedSampleName=${selectedSampleName}&selectedAlleleFreq=${selectedAlleleFreq}&selectedOnsetExclude=UMCG&selectedMinimalImpact=${selectedMinimalImpact}<#if geneFilter??>&geneFilter=${geneFilter}</#if>">Exclude UMCG late onset</a><br>
+                    <a class="dropdown-item" href="dataexplorer/module/entitiesreport?entity=${entity}&moduleName=PatientReport&selectedSampleName=${selectedSampleName}&selectedAlleleFreq=${selectedAlleleFreq}&selectedOnsetExclude=CGD&selectedMinimalImpact=${selectedMinimalImpact}<#if geneFilter??>&geneFilter=${geneFilter}</#if>">Exclude CGD late onset</a><br>
+                    <a class="dropdown-item" href="dataexplorer/module/entitiesreport?entity=${entity}&moduleName=PatientReport&selectedSampleName=${selectedSampleName}&selectedAlleleFreq=${selectedAlleleFreq}&selectedOnsetExclude=UMCG_and_CGD&selectedMinimalImpact=${selectedMinimalImpact}<#if geneFilter??>&geneFilter=${geneFilter}</#if>">Exclude UMCG and CGD late onset</a><br>
                 </div>
             </div>
 
@@ -127,7 +127,7 @@
                 <div class="dropdown-menu" style="width: 500px">
 
                 <#list impactOptions as io>
-                    <a class="dropdown-item" href="?entity=${entity}&mod=entitiesreport&selectedSampleName=${selectedSampleName}&selectedAlleleFreq=${selectedAlleleFreq}&selectedOnsetExclude=${selectedOnsetExclude}&selectedMinimalImpact=${io}<#if geneFilter??>&geneFilter=${geneFilter}</#if>">${io}</a><br>
+                    <a class="dropdown-item" href="dataexplorer/module/entitiesreport?entity=${entity}&moduleName=PatientReport&selectedSampleName=${selectedSampleName}&selectedAlleleFreq=${selectedAlleleFreq}&selectedOnsetExclude=${selectedOnsetExclude}&selectedMinimalImpact=${io}<#if geneFilter??>&geneFilter=${geneFilter}</#if>">${io}</a><br>
                 </#list>
                 </div>
             </div>
@@ -137,7 +137,7 @@
                 var link= document.getElementById('reflectedlink');
                 var input= document.getElementById('searchterm');
                 input.onchange=input.onkeyup= function() {
-                    link.search= '?entity=${entity}&mod=entitiesreport&selectedSampleName=${selectedSampleName}&selectedAlleleFreq=${selectedAlleleFreq}&selectedOnsetExclude=${selectedOnsetExclude}&selectedMinimalImpact=${selectedMinimalImpact}&geneFilter='+input.value;
+                    link.search= 'dataexplorer/module/entitiesreport?entity=${entity}&moduleName=PatientReport&selectedSampleName=${selectedSampleName}&selectedAlleleFreq=${selectedAlleleFreq}&selectedOnsetExclude=${selectedOnsetExclude}&selectedMinimalImpact=${selectedMinimalImpact}&geneFilter='+input.value;
                 };
             </script>
         <#-- ################# -->

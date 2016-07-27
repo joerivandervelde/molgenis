@@ -68,17 +68,17 @@ public class DataExplorerControllerTest extends AbstractTestNGSpringContextTests
 
 		mockMvc = MockMvcBuilders.standaloneSetup(controller).setMessageConverters(gsonHttpMessageConverter).build();
 	}
-
-	@Test
-	public void getAnnotatorModuleSuccess() throws Exception
-	{
-		assertEquals("view-dataexplorer-mod-" + DataExplorerController.MOD_ANNOTATORS,
-				controller.getModule(DataExplorerController.MOD_ANNOTATORS, "yes", mock(Model.class), null));
-	}
-
-	@Test(expectedExceptions = MolgenisDataAccessException.class)
-	public void getAnnotatorModuleFail() throws Exception
-	{
-		controller.getModule(DataExplorerController.MOD_ANNOTATORS, "no", mock(Model.class), null);
-	}
+//
+//	@Test
+//	public void getAnnotatorModuleSuccess() throws Exception
+//	{
+//		assertEquals("view-dataexplorer-mod-" + DataExplorerController.MOD_ANNOTATORS,
+//				controller.getModule(DataExplorerController.MOD_ANNOTATORS, "yes", mock(Model.class), null));
+//	}
+//
+//	@Test(expectedExceptions = MolgenisDataAccessException.class)
+//	public void getAnnotatorModuleFail() throws Exception
+//	{
+//		controller.getModule(DataExplorerController.MOD_ANNOTATORS, "no", mock(Model.class), null);
+//	}
 }

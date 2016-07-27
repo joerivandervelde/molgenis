@@ -8,7 +8,9 @@ import static org.molgenis.MolgenisFieldTypes.TEXT;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.molgenis.data.AttributeMetaData;
@@ -464,10 +466,19 @@ public class DataExplorerSettings extends DefaultSettingsEntity
 		return getString(Meta.REPORTS_ENTITIES);
 	}
 
-	public String getEntityReport(String entityName)
+	public String getEntityReport(String entityName, String moduleName)
 	{
 		Map<String, String> entityReports = getEntityReportsAsMap();
-		return entityReports != null ? entityReports.get(entityName) : null;
+		List<String> entitiesReports = Arrays.asList(entityReports.get(entityName).split(";"));
+		int index = 0;
+		if (!moduleName.equals("undefined")) index = entitiesReports.indexOf(moduleName);
+		return entityReports != null ? entitiesReports.get(index) : null;
+	}
+
+	public List<String> getEntitiesReports(String entityName)
+	{
+		Map<String, String> entityReports = getEntityReportsAsMap();
+		return entityReports != null && entityReports.get(entityName) != null ? Arrays.asList(entityReports.get(entityName).split(";")) : null;
 	}
 
 	public void setEntityReports(String entityReportsStr)

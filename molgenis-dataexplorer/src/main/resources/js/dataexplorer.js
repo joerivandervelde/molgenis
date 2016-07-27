@@ -94,8 +94,10 @@ function($, molgenis, settingsXhr) {
 		var items = [];
 		items.push('<ul class="nav nav-tabs pull-left" style="width: 100%" role="tablist">');
 		$.each(modules, function() {
-			var href = molgenis.getContextUrl() + '/module/' + this.id+'?entity=' + entity + "&" + window.location.search;
-			items.push('<li data-id="' + this.id + '"><a href="' + href + '" data-target="#tab-' + this.id + '" data-id="' + this.id + '" role="tab" data-toggle="tab"><img src="/img/' + this.icon + '"> ' + this.label + '</a></li>');
+			var moduleId = this.id;
+			if (moduleId === "entitiesreport") moduleId = moduleId + this.label;
+			var href = molgenis.getContextUrl() + '/module/' + this.id + '?entity=' + entity + '&moduleName=' + this.label;
+			items.push('<li data-id="' + this.id + '"><a href="' + href + '" data-target="#tab-' + moduleId + '" data-id="' + this.id + '" role="tab" data-toggle="tab"><img src="/img/' + this.icon + '"> ' + this.label + '</a></li>');
 		});
         items.push('<li class="pull-right">');
         items.push('<button type="button" class="btn btn-default" id="toggleSelectors">')+
@@ -104,7 +106,9 @@ function($, molgenis, settingsXhr) {
 		items.push('</ul>');
 		items.push('<div class="tab-content">');
 		$.each(modules, function() {
-			items.push('<div class="tab-pane" id="tab-' + this.id + '" data-id="' + this.id + '">Loading...</div>');
+			var moduleId = this.id;
+			if (moduleId === "entitiesreport") moduleId = moduleId + this.label;
+			items.push('<div class="tab-pane" id="tab-' + moduleId + '" data-id="' + this.id + '">Loading...</div>');
 		});
 		items.push('</div>');
 		

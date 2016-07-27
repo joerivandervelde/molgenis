@@ -164,7 +164,7 @@ public class DataExplorerController extends MolgenisPluginController
 
 	@RequestMapping(value = "/module/{moduleId}", method = GET)
 	public String getModule(@PathVariable("moduleId") String moduleId, @RequestParam("entity") String entityName,
-			Model model, HttpServletRequest request)
+							@RequestParam(value = "moduleName", required = false) String moduleName, Model model, HttpServletRequest request)
 	{
 		if (moduleId.equals(MOD_DATA))
 		{
@@ -178,7 +178,8 @@ public class DataExplorerController extends MolgenisPluginController
 				model.addAttribute(e.getKey(), e.getValue()[0]);
 			}
 			model.addAttribute("datasetRepository", dataService.getRepository(entityName));
-			model.addAttribute("viewName", dataExplorerSettings.getEntityReport(entityName));
+			model.addAttribute("viewName", dataExplorerSettings.getEntityReport(entityName, moduleName));
+			return "view-" + dataExplorerSettings.getEntityReport(entityName, moduleName) + "-entitiesreport";
 		}
 		else if (moduleId.equals(MOD_ANNOTATORS))
 		{
@@ -272,11 +273,12 @@ public class DataExplorerController extends MolgenisPluginController
 					}
 					if (modReports)
 					{
-						String modEntitiesReportName = dataExplorerSettings.getEntityReport(entityName);
-						if (modEntitiesReportName != null)
+						List<String> modEntitiesReportNames = dataExplorerSettings.getEntitiesReports(entityName);
+						if (modEntitiesReportNames != null)
 						{
-							modulesConfig
-									.add(new ModuleConfig("entitiesreport", modEntitiesReportName, "report-icon.png"));
+							for (String report : modEntitiesReportNames)
+							{
+								modulesConfig.add(new ModuleConfig(MOD_ENTITIESREPORT, report, "report-icon.png")); 							}
 						}
 					}
 					break;
@@ -404,18 +406,20 @@ public class DataExplorerController extends MolgenisPluginController
 	 */
 	@RequestMapping(value = "/details", method = RequestMethod.POST)
 	public String viewEntityDetails(@RequestParam(value = "entityName") String entityName,
-			@RequestParam(value = "entityId") String entityId, Model model) throws Exception
+									@RequestParam(value = "entityId") String entityId, @RequestParam(value = "moduleName") String moduleName,
+									Model model) throws Exception
 	{
 		model.addAttribute("entity", dataService.getRepository(entityName).findOne(entityId));
 		model.addAttribute("entityMetadata", dataService.getEntityMetaData(entityName));
-		model.addAttribute("viewName", getViewName(entityName));
+		model.addAttribute("viewName", getViewName(entityName, moduleName));
 		return "view-entityreport";
 	}
 
-	private String getViewName(String entityName)
+	private String getViewName(String entityName, String moduleName)
 	{
+		if (moduleName.equals("undefined")) moduleName = null;
 		// check if entity report is set for this entity
-		String reportTemplate = dataExplorerSettings.getEntityReport(entityName);
+		String reportTemplate = dataExplorerSettings.getEntityReport(entityName, moduleName);
 		if (reportTemplate != null)
 		{
 			String specificViewname = "view-entityreport-specific-" + reportTemplate;
