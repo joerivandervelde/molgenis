@@ -1,5 +1,29 @@
+<script type="text/javascript">
+    $(document).ready(function() {
+        $('.checkbox').on("change", function() {
+            var aHrefVals = [];
+
+            $('.checkbox').filter(":checked").each(function() {
+                aHrefVals.push($(this).val());
+            });
+
+            $("#updateSampleAnchor").attr("href", "?entity=${entity}&mod=entitiesreport&selectedSamples=" + aHrefVals.join(","));
+        });
+        $('.checkbox').trigger('change');
+        $("#toggleSampleSelect").click(function(){
+            $("#sampleSelect").toggle();
+        });
+    });
+</script>
 
 <#import "view-PatientReport-entitiesreport.ftl" as patientReport>
+
+<#-- ######################## -->
+<#-- passed variables         -->
+<#-- ######################## -->
+<#if selectedSamples??>
+    <#assign selectedSampleValues = selectedSamples?split(",")>
+</#if>
 
 <#-- ######################## -->
 <#-- static variables/helpers -->
@@ -30,6 +54,7 @@
 <#assign lowFdrGeneToVariant = {}>
 <#assign mediumFdrGeneToVariant = {}>
 <#assign highFdrGeneToVariant = {}>
+<#assign uniqSampleNames = []>
 
 <#list datasetRepository as row>
     <#if row.getString("RLV")??>
@@ -56,17 +81,47 @@
                 <#assign highFdrGeneToVariant = highFdrGeneToVariant + { gene : [row] }>
             </#if>
         </#if>
-            <#--${gene} - ${sampleName}<br-->
 
+
+        <#list rlvFields[rvcfMapping["sampleGenotype"]]?split("/") as sampleGeno>
+            <#assign sampleName = sampleGeno?split(":")[0]>
+            <#if !uniqSampleNames?seq_contains(sampleName)>
+                <#assign uniqSampleNames = uniqSampleNames + [ sampleName ]>
+            </#if>
+        </#list>
 
     </#if>
 </#list>
 
+<#if !selectedSampleValues??>
+!selectedSampleValues??
+<#elseif selectedSampleValues?seq_contains(sampleName)>
+selectedSampleValues?seq_contains(sampleName)
+</#if>
+
+
 <div class="row">
     <div class="col-md-10 col-md-offset-1 well">
         <div class="modal-body" style="background-color: #FFFFFF; ">
-            <h3>GENE REPORT</h3>
 
+
+            <button type="button" class="btn btn-secondary dropdown-toggle" id="toggleSampleSelect">Select samples</button>
+
+            <div id="sampleSelect" style = "display:none">
+                <#assign sampleListForURL = ""/>
+                <#list uniqSampleNames as sampleName>
+                    <input class="checkbox" id="one" type="checkbox" <#if !selectedSampleValues??>checked<#elseif selectedSampleValues?seq_contains(sampleName)>checked</#if> value="${sampleName}">${sampleName}<br />
+                    <#assign sampleListForURL = sampleListForURL + sampleName + ",">
+            </#list>
+            </div>
+
+
+            <#---a id="updateSampleAnchor" href="?entity=${entity}&mod=entitiesreport&selectedSamples=${sampleListForURL}"><button type="button" class="btn btn-secondary dropdown-toggle"><font color="black">Update</font></button></a-->
+            <a id="updateSampleAnchor" href="?entity=${entity}&mod=entitiesreport&selectedSamples="><button type="button" class="btn btn-secondary dropdown-toggle"><font color="black">Update</font></button></a>
+
+
+
+            <h3>GENE REPORT</h3>
 
             <table>
                 <tr style="vertical-align: top;">
@@ -147,7 +202,7 @@
             <#list genes[gene] as row>
                 <#assign rlvFields = row.getString("RLV")?split("|")>
 
-                <i>
+                <i></i>
                 ${rlvFields[rvcfMapping["transcript"]]}
                 <#list row.getString("ANN")?split(",") as ann>
                     <#assign annSplit = ann?split("|")>
@@ -163,7 +218,7 @@
 
                 ${cNot} <#if pNot?? && pNot != "">${pNot}<#else>-</#if> ${type?replace("_", " ")} ${impact}
 
-                </i>
+                <br><br>
                 <#list rlvFields[rvcfMapping["sampleGenotype"]]?split("/") as sampleGeno>
 
                     <#assign sampleName = sampleGeno?split(":")[0]>
@@ -173,7 +228,7 @@
 
                 ${sampleName} - ${sampleGT},
                 </#list>
-                <br>
+                <br><br>
             </#list>
             </td>
         </tr>
