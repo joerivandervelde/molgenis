@@ -270,10 +270,10 @@
 
                                     <h4><font color="DarkGoldenRod ">CARRIER STATUS OF MONOGENIC DISORDER</font></h4>
 
-                                    <h5><font color="DarkGoldenRod">CAT. V: KNOWN PATHOGENIC VARIANT, IN CLINICAL GENE, CARRIER GENOTYPE</font></h5>
+                                    <h5><font color="DarkGoldenRod">CAT. IX: KNOWN PATHOGENIC VARIANT, IN CLINICAL GENE, CARRIER GENOTYPE</font></h5>
                                     <@printTable "CARRIER" "Reported pathogenic"/>
 
-                                    <h5><font color="DarkGoldenRod">CAT. VI: PREDICTED PATHOGENIC VARIANT, IN CLINICAL GENE, CARRIER GENOTYPE</font></h5>
+                                    <h5><font color="DarkGoldenRod">CAT. X: PREDICTED PATHOGENIC VARIANT, IN CLINICAL GENE, CARRIER GENOTYPE</font></h5>
                                     <@printTable "CARRIER" "Predicted pathogenic"/>
 
                                 </td>
@@ -474,7 +474,7 @@
     <#list datasetRepository as row>
         <#if row.getString("RLV")??>
             <#assign rlvFields = row.getString("RLV")?split("|")>
-            <#if rlvFields[rvcfMapping["sampleStatus"]]?startsWith(selectedSampleName + ":${sampleStatus}") && rlvFields[rvcfMapping["variantSignificance"]]?startsWith("${pathogenicStatus}") >
+            <#if rlvFields[rvcfMapping["sampleStatus"]]?contains(selectedSampleName + ":${sampleStatus}") && rlvFields[rvcfMapping["variantSignificance"]]?startsWith("${pathogenicStatus}") >
                 <@printRow row rlvFields />
             </#if>
         </#if>
