@@ -52,9 +52,6 @@ public class GavinAnnotator
 	public static final String REASON = "Reason";
 	public static final String VARIANT_ENTITY = "Variant";
 
-	public static final int CADD_MAXIMUM_THRESHOLD = 15;
-	public static final int CADD_MINIMUM_THRESHOLD = 15;
-	public static final double MAF_THRESHOLD = 0.00474;
 	private final GavinAlgorithm gavinAlgorithm = new GavinAlgorithm();
 
 	@Autowired
