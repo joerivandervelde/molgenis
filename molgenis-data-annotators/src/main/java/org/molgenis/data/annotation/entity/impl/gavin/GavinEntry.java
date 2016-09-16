@@ -5,12 +5,12 @@ public class GavinEntry
 	public String gene;
 	public Category category;
 	public String chromosome;
-	public int start;
-	public int end;
-	public int NrOfPopulationVariants;
-	public int NrOfPathogenicVariants;
-	public int NrOfOverlappingVariants;
-	public int NrOfFilteredPopVariants;
+	public Long start;
+	public Long end;
+	public Integer NrOfPopulationVariants;
+	public Integer NrOfPathogenicVariants;
+	public Integer NrOfOverlappingVariants;
+	public Integer NrOfFilteredPopVariants;
 	public Double PathoMAFThreshold;
 	public Double PopImpactHighPerc;
 	public Double PopImpactModeratePerc;
@@ -34,26 +34,36 @@ public class GavinEntry
 	public Double Spec95thPerCADDThreshold;
 	
 	public enum Category{
-		N1, N2, T1, T2, I1, I2, I3, C1, C2, C3, C4, C5
+		N1, N2, T1, T2, I1, I2, I3, C1, C2, C3, C4, C5, Cx
 	}
-	
+
+	public GavinEntry(String gene, Category cat, String chrom, long leftMostPos, long rightMostPos, Double pathoMAF) throws Exception
+	{
+		this.gene = gene;
+		this.category = cat;
+		this.chromosome = chrom;
+		this.start = leftMostPos;
+		this.end = rightMostPos;
+		this.PathoMAFThreshold = pathoMAF;
+	}
+
 	public GavinEntry(String lineFromFile) throws Exception
 	{
 		String[] split = lineFromFile.split("\t", -1);
 		if(split.length != 30)
 		{
-			throw new Exception("not 30 elements");
+			throw new Exception("not 30 elements, have "+split.length+" at line " + lineFromFile);
 		}
 		
 		this.gene = split[0];
 		this.category = Category.valueOf(split[1]);
 		this.chromosome = split[2];
-		this.start = Integer.valueOf(split[3]);
-		this.end = Integer.valueOf(split[4]);
-		this.NrOfPopulationVariants = Integer.valueOf(split[5]);
-		this.NrOfPathogenicVariants = Integer.valueOf(split[6]);
-		this.NrOfOverlappingVariants = Integer.valueOf(split[7]);
-		this.NrOfFilteredPopVariants = Integer.valueOf(split[8]);
+		this.start = Long.valueOf(split[3]);
+		this.end = Long.valueOf(split[4]);
+		this.NrOfPopulationVariants = split[5].isEmpty() ? null : Integer.valueOf(split[5]);
+		this.NrOfPathogenicVariants = split[6].isEmpty() ? null : Integer.valueOf(split[6]);
+		this.NrOfOverlappingVariants = split[7].isEmpty() ? null : Integer.valueOf(split[7]);
+		this.NrOfFilteredPopVariants = split[8].isEmpty() ? null : Integer.valueOf(split[8]);
 		this.PathoMAFThreshold = split[9].isEmpty() ? null : Double.parseDouble(split[9]);
 		
 		this.PopImpactHighPerc = split[10].isEmpty() ? null : Double.parseDouble(split[10]);
