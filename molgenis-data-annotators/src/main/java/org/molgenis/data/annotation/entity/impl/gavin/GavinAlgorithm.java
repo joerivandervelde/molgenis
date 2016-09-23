@@ -27,6 +27,13 @@ public class GavinAlgorithm
 	public static final double GENOMEWIDE_MAF_THRESHOLD = 0.004264361;
 	public static final int GENOMEWIDE_CADD_THRESHOLD = 15;
 
+	// sensitivity is more important than specificity, so we can adjust this parameter to globally adjust the thresholds
+	// in r0.2, at a setting of 1, ie. default behaviour, GAVIN is 87% sensitive and 82% specific
+	// in r0.2, at a setting of 5, a more sensitive setting, GAVIN is 91% sensitive and 77% specific
+	// technically we lose more than we gain, but having >90% sensitivity is really important
+	// better to have a few more false positives than to miss a true positive
+	public static final int extraSensitivityFactor = 5;
+
 	/**
 	 * @param impact
 	 * @param caddScaled
@@ -39,13 +46,6 @@ public class GavinAlgorithm
 									Entity annotationSourceEntity, HashMap<String, GavinEntry> geneToEntry) {
 		Double pathoMAFThreshold, meanPathogenicCADDScore, meanPopulationCADDScore, spec95thPerCADDThreshold, sens95thPerCADDThreshold = null;
 		Category category = null;
-
-		// sensitivity is more important than specificity, so we can adjust this parameter to globally adjust the thresholds
-		// in r0.2, at a setting of 1, ie. default behaviour, GAVIN is 87% sensitive and 82% specific
-		// in r0.2, at a setting of 5, a more sensitive setting, GAVIN is 91% sensitive and 77% specific
-		// technically we lose more than we gain, but having >90% sensitivity is really important
-		// better to have a few more false positives than to miss a true positive
-		int extraSensitivityFactor = 5;
 
 		if (geneToEntry == null)
 		{
