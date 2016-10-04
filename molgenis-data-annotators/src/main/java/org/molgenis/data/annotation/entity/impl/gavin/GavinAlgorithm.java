@@ -183,17 +183,17 @@ public class GavinAlgorithm
 						"Variant is of high/moderate impact, while there are no known high/moderate impact variants in the population. Also, "
 								+ mafReason);
 			}
-		}
-		else if (category == I3 && (impact == LOW || impact == MODERATE || impact == HIGH))
-		{
-			return new Judgment(Pathogenic, calibrated, gene,
-					"Variant is of high/moderate/low impact, while there are no known high/moderate/low impact variants in the population. Also, "
-							+ mafReason);
-		}
-		else if (impact == MODIFIER)
-		{
-			return new Judgment(Benign, calibrated, gene,
-					"Variant is of 'modifier' impact, and therefore unlikely to be pathogenic. However, " + mafReason);
+			else if (category == I3 && (impact == LOW || impact == MODERATE || impact == HIGH))
+			{
+				return new Judgment(Pathogenic, calibrated, gene,
+						"Variant is of high/moderate/low impact, while there are no known high/moderate/low impact variants in the population. Also, "
+								+ mafReason);
+			}
+			else if (impact == MODIFIER)
+			{
+				return new Judgment(Benign, calibrated, gene,
+						"Variant is of 'modifier' impact, and therefore unlikely to be pathogenic. However, " + mafReason);
+			}
 		}
 
 		//if everything so far has failed, we can still fall back to the genome-wide method
