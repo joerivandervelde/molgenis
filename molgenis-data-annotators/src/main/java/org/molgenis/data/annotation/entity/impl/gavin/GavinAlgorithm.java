@@ -171,8 +171,7 @@ public class GavinAlgorithm
 			else if (impact == MODIFIER)
 			{
 				return new Judgment(Benign, calibrated, gene,
-						"Variant is of 'modifier' impact, and therefore unlikely to be pathogenic. However, "
-								+ mafReason);
+						"Variant is of 'modifier' impact, and therefore unlikely to be pathogenic. However, " + mafReason);
 			}
 		}
 
