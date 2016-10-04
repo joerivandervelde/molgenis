@@ -413,8 +413,7 @@ public class VcfUtilsTest
 	}
 
 	@Test
-	public void vcfPedigreeReaderTest() throws IOException, MolgenisInvalidFormatException
-	{
+	public void vcfPedigreeReaderTest() throws Exception {
 		BufferedReader bufferedReader = new BufferedReader(new StringReader("##PEDIGREE=<Child=27991,Mother=27992,Father=27993>\n##PEDIGREE=<Child=40991,Mother=40992>\n##PEDIGREE=<Child=50991,Father=50993>\n##PEDIGREE=<Child=27939,Mother=27940,Father=27941\n##PEDIGREE=<Child=30982,Mother=30983,Father=30984\n"));
 
 		HashMap<String, Trio> actualPedigree = VcfUtils.getPedigree(bufferedReader);

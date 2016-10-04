@@ -340,11 +340,13 @@ public class VcfUtils
 	 * Get pedigree data from VCF Now only support child, father, mother No fancy data structure either Output:
 	 * result.put(childID, Arrays.asList(new String[]{motherID, fatherID}));
 	 *
+	 * TODO: check that a MotherID cannot also be a FatherID ?
+	 *
 	 * @param inputVcfFileReader
 	 * @return
 	 * @throws FileNotFoundException
 	 */
-	public static HashMap<String, Trio> getPedigree(BufferedReader inputVcfFileReader) throws IOException
+	public static HashMap<String, Trio> getPedigree(BufferedReader inputVcfFileReader) throws Exception
 	{
 		HashMap<String, Trio> result = new HashMap<>();
 
@@ -374,6 +376,10 @@ public class VcfUtils
 					if (element.startsWith("Child"))
 					{
 						childID = element.replace("Child=", "");
+						if(result.containsKey(childID))
+						{
+							throw new Exception("Child has multiple occurences in pedigree data: " + childID);
+						}
 					}
 					else if (element.startsWith("Mother"))
 					{
