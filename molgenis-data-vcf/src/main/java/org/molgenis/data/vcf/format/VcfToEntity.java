@@ -356,7 +356,12 @@ public class VcfToEntity
 			if (val instanceof List<?>)
 			{
 				// TODO support list of primitives datatype
-				val = StringUtils.join((List<?>) val, ',');
+				StringBuffer sb = new StringBuffer();
+				for(Object o : (List<?>) val){
+					sb.append((o != null ? o : ".") + ",");
+				}
+				sb.deleteCharAt(sb.length()-1);
+				val = sb.toString();
 			}
 			if (val instanceof Float && Float.isNaN((Float) val))
 			{
