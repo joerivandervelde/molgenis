@@ -353,7 +353,7 @@ public class VcfToEntity
 				continue;
 			}
 			Object val = vcfInfo.getVal();
-			if (val instanceof List<?>)
+			if (val instanceof List<?> && !((List) val).isEmpty())
 			{
 				// TODO support list of primitives datatype
 				StringBuffer sb = new StringBuffer();
