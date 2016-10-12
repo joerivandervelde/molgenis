@@ -19,8 +19,10 @@ import org.molgenis.data.vcf.datastructures.Trio;
 import org.molgenis.vcf.meta.VcfMetaInfo;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -409,6 +411,76 @@ public class VcfUtils
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * Group samples for the sample phenotype together
+	 * @param sampleToPhenotype
+	 * @return
+     */
+	public static HashMap<String, List<String>> getPhenotypeToSampleIDs(HashMap<String, String> sampleToPhenotype)
+	{
+		HashMap<String, List<String>> res = new HashMap<>();
+
+		for(String sample : sampleToPhenotype.keySet())
+		{
+			String phenotype = sampleToPhenotype.get(sample);
+			if(res.containsKey(phenotype))
+			{
+				res.get(phenotype).add(sample);
+			}
+			else
+			{
+				ArrayList<String> sampleIDs = new ArrayList<>();
+				sampleIDs.add(sample);
+				res.put(phenotype, sampleIDs);
+			}
+		}
+
+		return res;
+	}
+
+	/**
+	 * Get sample-phenotype relations out of VCF header
+	 * @param vcfFile
+	 * @return
+	 * @throws Exception
+     */
+	public static HashMap<String, String> getSampleToPhenotype(File vcfFile) throws Exception {
+
+		String line;
+		HashMap<String, String> res = new HashMap<>();
+		Scanner s = new Scanner(vcfFile);
+
+		while ((line = s.nextLine()) != null)
+		{
+			// quit when we don't see header lines anymore
+			if (!line.startsWith(VcfRepository.PREFIX)) {
+				break;
+			}
+
+			if (line.startsWith("##SAMPLE")) {
+				String phenotype = null;
+				String id = null;
+				String lineStripped = line.replace("##SAMPLE=<", "").replace(">", "");
+				String[] lineSplit = lineStripped.split(",", -1);
+				for (String element : lineSplit) {
+					if (element.startsWith("PHENOTYPE")) {
+						phenotype = element.replace("PHENOTYPE=", "");
+					} else if (element.startsWith("ID")) {
+						id = element.replace("ID=", "");
+					}
+				}
+				if (id == null) {
+					throw new Exception("Sample line does not contain 'ID': " + line);
+				}
+				if (phenotype == null) {
+					throw new Exception("Sample line does not contain 'PHENOTYPE': " + line);
+				}
+				res.put(id, phenotype);
+			}
+		}
+		return res;
 	}
 
 }
