@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Scanner;
 
 import org.springframework.util.StringUtils;
@@ -162,28 +163,32 @@ public class FixVcfAlleleNotation
 
 
 	/**
-	 * Helper method to try and retrieve CADD scores by first trimming ref or alt alleles.
 	 * AT ATT -> A AT
 	 * ATGTG ATG -> ATG A
 	 * ATGTG ATGTGTGTG -> A ATGTG
 	 * GATAT GAT -> GAT G
+	 *
+	 * Examples:
+	 * GATA GATAGATA -> G GATAG
+	 * TTCTT T -> TTCTT T (don't touch)
 	 */
 	public static String trimRefAlt(String ref, String alt, String sep)
 	{
-
+		// GATA -> ATAG
 		char[] refRev = org.apache.commons.lang3.StringUtils.reverse(ref).toCharArray();
+		// GATAGATA -> ATAGATAG
 		char[] altRev = org.apache.commons.lang3.StringUtils.reverse(alt).toCharArray();
 
 		int nrToDelete = 0;
-		for(int i = 0; i < refRev.length; i++)
+		//iterate over: A, T, A. Do not touch the last reference base (G).
+		for(int i = 0; i < refRev.length-1; i++)
 		{
 			char refBase = refRev[i];
 			char altBase = altRev[i];
-			if(i == refRev.length-1 || i == altRev.length-1) //to stop deleting the last base, e.g. in AT/AAT or TA/TTA
-			{
-				break;
-			}
-			else if(refBase == altBase)
+
+			//altRev.length > i+1 prevents the last matching alt base from being/attempted deleted, e.g. TTCTT_T -> TTCT_
+			//this may happen because we iterate over reference, which may be longer in case of a deletion
+			if(refBase == altBase && altRev.length > i+1)
 			{
 				nrToDelete++;
 			}
@@ -195,6 +200,7 @@ public class FixVcfAlleleNotation
 		String newRef = ref.substring(0, ref.length()-nrToDelete);
 		String newAlt = alt.substring(0, alt.length()-nrToDelete);
 
+		//result: GATA GATAGATA -> G GATAG
 		return newRef + sep + newAlt;
 	}
 
