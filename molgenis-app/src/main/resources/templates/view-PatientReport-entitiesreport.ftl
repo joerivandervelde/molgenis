@@ -166,7 +166,7 @@
                                     Test:
                                 </td>
                                 <td style="padding: 5px;">
-                                    n/a<br>
+                                    ${selectedSampleName}<br>
                                     n/a<br>
                                     n/a<br>
                                     n/a<br>
@@ -180,7 +180,7 @@
                                 </td>
                                 <td style="padding: 5px;">
                                     n/a<br>
-                                    n/a<br>
+                                    whole-blood sample<br>
                                     n/a
                                 </td>
 
@@ -449,8 +449,8 @@
 
         ${rlvFields[rvcfMapping["alleleFreq"]]}<br>
 
-        <#assign fdrAffected = rlvFields[rvcfMapping["fdr"]]?split(",")[0]>
-        <#assign fdrCarr = rlvFields[rvcfMapping["fdr"]]?split(",")[1]>
+        <#assign fdrAffected = rlvFields[rvcfMapping["fdr"]]?split(" ")[0]>
+        <#assign fdrCarr = rlvFields[rvcfMapping["fdr"]]?split(" ")[1]>
         ${(fdrAffected?number * 100)?round}% / ${(fdrCarr?number * 100)?round}%
 
         </td>
