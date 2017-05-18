@@ -65,14 +65,27 @@ public class FixVcfAlleleNotation
 			String pos = split[1];
 			String ref = split[3];
 			String alt = split[4];
+
+			if(alt.contains(",")) { throw new Exception("multiple alt alleles not supported, stopping at line: " + line); }
 			
 			//first check if ref or alt need trimming. it does not matter that there may be an N.
-			String[] trimmedRefAlt = trimRefAlt(ref, alt, "_").split("_");
+			String[] trimmedRefAlt = backTrimRefAlt(ref, alt, "_").split("_");
 			if(!ref.equals(trimmedRefAlt[0]) || !alt.equals(trimmedRefAlt[1]))
 			{
-				System.out.println("trimming ref/alt, from " + ref + "/" + alt + " to " + trimmedRefAlt[0] + "/" + trimmedRefAlt[1]);
+				System.out.println("back-trimming ref/alt, from " + ref + "/" + alt + " to " + trimmedRefAlt[0] + "/" + trimmedRefAlt[1]);
 				ref = trimmedRefAlt[0];
 				alt =  trimmedRefAlt[1];
+			}
+
+			//front trim, trickier
+			String[] frontTrimmedRefAlt = frontTrimRefAlt(ref, alt, "_").split("_");
+			int posDiff = ref.length() - frontTrimmedRefAlt[0].length();
+			if(!ref.equals(frontTrimmedRefAlt[0]) || !alt.equals(frontTrimmedRefAlt[1]))
+			{
+				System.out.println("front-trimming ref/alt, from " + ref + "/" + alt + " to " + frontTrimmedRefAlt[0] + "/" + frontTrimmedRefAlt[1] + ", position update needed!");
+				ref = frontTrimmedRefAlt[0];
+				alt =  frontTrimmedRefAlt[1];
+				pos = Integer.parseInt(pos)+posDiff + ""; //shift position if ref base has 'moved'
 			}
 			
 			boolean queryUCSC = false;
@@ -132,7 +145,12 @@ public class FixVcfAlleleNotation
 			StringBuffer fixedLine = new StringBuffer();
 			for(int i = 0; i < split.length; i ++)
 			{
-				if(i == 3 || i == 4)
+				if(i == 1)
+				{
+					//update the pos if trimmed
+					fixedLine.append(pos + "\t");
+				}
+				else if(i == 3 || i == 4)
 				{
 					String fixedNotation = i == 3 ? ref.replace("N", replacementRefBase) : alt.replace("N", replacementRefBase);
 					fixedLine.append(fixedNotation + "\t");
@@ -172,7 +190,7 @@ public class FixVcfAlleleNotation
 	 * GATA GATAGATA -> G GATAG
 	 * TTCTT T -> TTCTT T (don't touch)
 	 */
-	public static String trimRefAlt(String ref, String alt, String sep)
+	public static String backTrimRefAlt(String ref, String alt, String sep)
 	{
 		// GATA -> ATAG
 		char[] refRev = org.apache.commons.lang3.StringUtils.reverse(ref).toCharArray();
@@ -199,6 +217,63 @@ public class FixVcfAlleleNotation
 		}
 		String newRef = ref.substring(0, ref.length()-nrToDelete);
 		String newAlt = alt.substring(0, alt.length()-nrToDelete);
+
+		//result: GATA GATAGATA -> G GATAG
+		return newRef + sep + newAlt;
+	}
+
+	/**
+	 * cut off from the front, needs pos update afterwards
+	 * e.g.
+	 * 2	27693815	587777083	CT	CTCT
+	 * to
+	 * 2	27693816	587777083	T	TCT
+	 *
+	 * and
+	 * GAGAGT/GAGC to GAGT/GC
+	 * and
+	 * AAACGCTCATAGAGTAACTGGTTGTGCAGTAAAAGCAACTGGTCTC/AAACGCTCATAGAGTAACTGGTTGTGCAGTAAAAGCAACTGGTCTCAAACGCTCAT to C/CAAACGCTCAT
+	 * and
+	 * CTTTTAAATTTGATTTTATTGAGCACTTTCCTCT/CTTTTAAATTTGATTTTATTGAGCACTTTCCTCTCTTTTAAATTTGATTTTATTGA to T/TCTTTTAAATTTGATTTTATTGA
+	 *
+	 *
+	 * however cannot shorten
+	 * 7	150644438	794728471	CATCCAGCCTGCTCTCCAC	CTG
+	 *
+	 * @param ref
+	 * @param alt
+	 * @param sep
+     * @return
+     */
+	public static String frontTrimRefAlt(String ref, String alt, String sep)
+	{
+		char[] refChars = ref.toCharArray();
+		char[] altChars = alt.toCharArray();
+
+		int nrToDelete = 0;
+
+		for(int i = 0; i < refChars.length-1; i++)
+		{
+			char refBase = refChars[i];
+			char altBase = altChars[i];
+
+			//altChars.length > i+1 prevents the last matching alt base from being/attempted deleted
+			//refChars[i+1] == altChars[i+1] checks if we still have at lease 1 matching ref base left in alt notation
+			if(refBase == altBase && altChars.length > i+1 && refChars[i+1] == altChars[i+1] )
+			{
+				nrToDelete++;
+			}
+			else
+			{
+				break;
+			}
+		}
+		String newRef = ref.substring(nrToDelete, ref.length());
+		String newAlt = alt.substring(nrToDelete, alt.length());
+
+		if(nrToDelete > 0) {
+			System.out.println("input ref: " + ref + ", alt: " + alt + ", nr to delete: " + nrToDelete + " resulting in:" + newRef + " / " + newAlt);
+		}
 
 		//result: GATA GATAGATA -> G GATAG
 		return newRef + sep + newAlt;
