@@ -1,33 +1,36 @@
 package org.molgenis.data.excel;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.molgenis.data.AbstractMolgenisSpringTest;
+import org.molgenis.data.Entity;
+import org.molgenis.data.MolgenisDataException;
+import org.molgenis.data.meta.AttributeType;
+import org.molgenis.data.meta.model.Attribute;
+import org.molgenis.data.meta.model.AttributeFactory;
+import org.molgenis.data.meta.model.EntityTypeFactory;
+import org.molgenis.data.processor.CellProcessor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.usermodel.WorkbookFactory;
-import org.molgenis.MolgenisFieldTypes.FieldTypeEnum;
-import org.molgenis.data.AttributeMetaData;
-import org.molgenis.data.Entity;
-import org.molgenis.data.MolgenisDataException;
-import org.molgenis.data.processor.CellProcessor;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import static org.mockito.Mockito.*;
+import static org.testng.Assert.*;
 
-public class ExcelRepositoryTest
+public class ExcelRepositoryTest extends AbstractMolgenisSpringTest
 {
+	@Autowired
+	private EntityTypeFactory entityTypeFactory;
+
+	@Autowired
+	private AttributeFactory attrMetaFactory;
+
 	private ExcelRepository excelSheetReader;
 
 	private Workbook workbook;
@@ -38,20 +41,21 @@ public class ExcelRepositoryTest
 	{
 		is = getClass().getResourceAsStream("/test.xls");
 		workbook = WorkbookFactory.create(is);
-		excelSheetReader = new ExcelRepository("test.xls", workbook.getSheet("test"));
+		excelSheetReader = new ExcelRepository("test.xls", workbook.getSheet("test"), entityTypeFactory,
+				attrMetaFactory);
 	}
 
 	@AfterMethod
-	public void afterMethod()
+	public void afterMethod() throws IOException
 	{
-		IOUtils.closeQuietly(is);
+		is.close();
 	}
 
 	@SuppressWarnings("resource")
 	@Test(expectedExceptions = MolgenisDataException.class)
 	public void ExcelRepository()
 	{
-		new ExcelRepository("test.xls", workbook.getSheet("test_mergedcells"));
+		new ExcelRepository("test.xls", workbook.getSheet("test_mergedcells"), entityTypeFactory, attrMetaFactory);
 	}
 
 	@Test
@@ -63,8 +67,7 @@ public class ExcelRepositoryTest
 		when(processor.process("col2")).thenReturn("col2");
 
 		excelSheetReader.addCellProcessor(processor);
-		for (@SuppressWarnings("unused")
-		Entity entity : excelSheetReader)
+		for (@SuppressWarnings("unused") Entity entity : excelSheetReader)
 		{
 		}
 		verify(processor).process("col1");
@@ -87,16 +90,16 @@ public class ExcelRepositoryTest
 	@Test
 	public void getAttribute()
 	{
-		AttributeMetaData attr = excelSheetReader.getEntityMetaData().getAttribute("col1");
+		Attribute attr = excelSheetReader.getEntityType().getAttribute("col1");
 		assertNotNull(attr);
-		assertEquals(attr.getDataType().getEnumType(), FieldTypeEnum.STRING);
+		assertEquals(attr.getDataType(), AttributeType.STRING);
 		assertEquals(attr.getName(), "col1");
 	}
 
 	@Test
 	public void getAttributes()
 	{
-		Iterator<AttributeMetaData> it = excelSheetReader.getEntityMetaData().getAttributes().iterator();
+		Iterator<Attribute> it = excelSheetReader.getEntityType().getAttributes().iterator();
 		assertTrue(it.hasNext());
 		assertEquals(it.next().getName(), "col1");
 		assertTrue(it.hasNext());
@@ -107,25 +110,25 @@ public class ExcelRepositoryTest
 	@Test
 	public void getDescription()
 	{
-		assertNull(excelSheetReader.getEntityMetaData().getDescription());
+		assertNull(excelSheetReader.getEntityType().getDescription());
 	}
 
 	@Test
 	public void getIdAttribute()
 	{
-		assertNull(excelSheetReader.getEntityMetaData().getIdAttribute());
+		assertNull(excelSheetReader.getEntityType().getIdAttribute());
 	}
 
 	@Test
 	public void getLabel()
 	{
-		assertEquals(excelSheetReader.getEntityMetaData().getLabel(), "test");
+		assertEquals(excelSheetReader.getEntityType().getLabel(), "test");
 	}
 
 	@Test
 	public void getLabelAttribute()
 	{
-		assertNull(excelSheetReader.getEntityMetaData().getLabelAttribute());
+		assertNull(excelSheetReader.getEntityType().getLabelAttribute());
 	}
 
 	@Test
@@ -171,7 +174,7 @@ public class ExcelRepositoryTest
 	@Test
 	public void attributesAndIterator() throws IOException
 	{
-		Iterator<AttributeMetaData> headerIt = excelSheetReader.getEntityMetaData().getAttributes().iterator();
+		Iterator<Attribute> headerIt = excelSheetReader.getEntityType().getAttributes().iterator();
 		assertTrue(headerIt.hasNext());
 		assertEquals(headerIt.next().getName(), "col1");
 		assertTrue(headerIt.hasNext());

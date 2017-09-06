@@ -1,252 +1,264 @@
-package org.molgenis.data.annotation.entity.impl;
+package org.molgenis.data.annotation.core.entity.impl.gavin;
 
-import org.molgenis.MolgenisFieldTypes;
-import org.molgenis.data.AttributeMetaData;
-import org.molgenis.data.DataService;
+import org.molgenis.data.AbstractMolgenisSpringTest;
 import org.molgenis.data.Entity;
-import org.molgenis.data.annotation.AnnotationService;
-import org.molgenis.data.annotation.RepositoryAnnotator;
-import org.molgenis.data.annotation.entity.impl.gavin.GavinAnnotator;
-import org.molgenis.data.annotation.resources.Resources;
-import org.molgenis.data.annotation.resources.impl.ResourcesImpl;
-import org.molgenis.data.annotator.websettings.GavinAnnotatorSettings;
-import org.molgenis.data.support.DefaultAttributeMetaData;
-import org.molgenis.data.support.DefaultEntityMetaData;
-import org.molgenis.data.support.EffectsMetaData;
-import org.molgenis.data.support.MapEntity;
-import org.molgenis.data.vcf.VcfRepository;
+import org.molgenis.data.annotation.config.EffectsTestConfig;
+import org.molgenis.data.annotation.core.RepositoryAnnotator;
+import org.molgenis.data.annotation.core.effects.EffectsMetaData;
+import org.molgenis.data.annotation.core.entity.AnnotatorConfig;
+import org.molgenis.data.annotation.core.entity.impl.CaddAnnotator;
+import org.molgenis.data.annotation.core.entity.impl.ExacAnnotator;
+import org.molgenis.data.annotation.core.query.GeneNameQueryCreator;
+import org.molgenis.data.annotation.core.resources.Resources;
+import org.molgenis.data.annotation.core.resources.impl.ResourcesImpl;
+import org.molgenis.data.annotation.web.AnnotationService;
+import org.molgenis.data.annotation.web.settings.GavinAnnotatorSettings;
+import org.molgenis.data.listeners.EntityListenersService;
+import org.molgenis.data.meta.EntityTypeDependencyResolver;
+import org.molgenis.data.meta.model.Attribute;
+import org.molgenis.data.meta.model.AttributeFactory;
+import org.molgenis.data.meta.model.EntityType;
+import org.molgenis.data.meta.model.EntityTypeFactory;
+import org.molgenis.data.support.DynamicEntity;
+import org.molgenis.data.vcf.config.VcfTestConfig;
+import org.molgenis.data.vcf.model.VcfAttributes;
+import org.molgenis.data.vcf.utils.VcfWriterUtils;
+import org.molgenis.util.GenericDependencyResolver;
 import org.molgenis.util.ResourceUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import static java.util.Collections.singletonList;
 import static org.mockito.Mockito.mock;
-import static org.molgenis.data.EntityMetaData.AttributeRole.ROLE_ID;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+import static org.mockito.Mockito.when;
+import static org.molgenis.data.annotation.core.entity.impl.gavin.GavinAnnotator.*;
+import static org.molgenis.data.meta.AttributeType.STRING;
+import static org.molgenis.data.meta.AttributeType.XREF;
+import static org.testng.Assert.*;
 
-@ContextConfiguration(classes =
-{ GavinAnnotatorTest.Config.class, GavinAnnotator.class })
-public class GavinAnnotatorTest extends AbstractTestNGSpringContextTests
+@ContextConfiguration(classes = { GavinAnnotatorTest.Config.class, GavinAnnotator.class })
+public class GavinAnnotatorTest extends AbstractMolgenisSpringTest
 {
+	private static final String BENIGN = "Benign";
+	private static final String CALIBRATED = "calibrated";
+
+	@Autowired
+	ApplicationContext context;
+
+	@Autowired
+	AttributeFactory attributeFactory;
+
+	@Autowired
+	EntityTypeFactory entityTypeFactory;
+
+	@Autowired
+	VcfAttributes vcfAttributes;
+
 	@Autowired
 	RepositoryAnnotator annotator;
-	private DefaultEntityMetaData emd;
-	private DefaultEntityMetaData entityMetaData;
+
+	@Autowired
+	EffectsMetaData effectsMetaData;
+
+	private EntityType emd;
+	private EntityType entityType;
 
 	@BeforeClass
 	public void beforeClass() throws IOException
 	{
-		emd = new DefaultEntityMetaData("gavin");
-		entityMetaData = new DefaultEntityMetaData("test_variant");
-		List<AttributeMetaData> refAttributesList = Arrays.asList(CaddAnnotator.CADD_SCALED_ATTR,
-				ExacAnnotator.EXAC_AF_ATTR, VcfRepository.ALT_META);
-		entityMetaData.addAllAttributeMetaData(refAttributesList);
-		AttributeMetaData refAttr = new DefaultAttributeMetaData("test_variant", MolgenisFieldTypes.FieldTypeEnum.XREF)
-				.setRefEntity(entityMetaData)
-				.setDescription("This annotator needs a references to an entity containing: "
-						+ StreamSupport.stream(refAttributesList.spliterator(), false).map(AttributeMetaData::getName)
+		AnnotatorConfig annotatorConfig = context.getBean(AnnotatorConfig.class);
+		annotatorConfig.init();
+		emd = entityTypeFactory.create("gavin");
+		entityType = entityTypeFactory.create("test_variant");
+		List<Attribute> refAttributesList = Arrays.asList(CaddAnnotator.createCaddScaledAttr(attributeFactory),
+				ExacAnnotator.getExacAFAttr(attributeFactory), vcfAttributes.getAltAttribute());
+		entityType.addAttributes(refAttributesList);
+		Attribute refAttr = attributeFactory.create()
+				.setName("test_variant")
+				.setDataType(XREF)
+				.setRefEntity(entityType)
+				.setDescription(
+						"This annotator needs a references to an entity containing: "
+								+ StreamSupport.stream(refAttributesList.spliterator(),
+								false)
+								.map(Attribute::getName)
 								.collect(Collectors.joining(", ")));
 
-		emd.addAllAttributeMetaData(Arrays.asList(EffectsMetaData.GENE_NAME_ATTR, EffectsMetaData.PUTATIVE_IMPACT_ATTR,
-				refAttr, VcfRepository.ALT_META));
+		emd.addAttributes(Arrays.asList(refAttr, vcfAttributes.getAltAttribute()));
 
-		entityMetaData.addAttributeMetaData(new DefaultAttributeMetaData("Identifier"), ROLE_ID);
-		emd.addAttributeMetaData(new DefaultAttributeMetaData("Identifier"), ROLE_ID);
+		Attribute idAttr = attributeFactory.create().setName("idAttribute").setAuto(true).setIdAttribute(true);
+		emd.addAttribute(idAttr);
+		emd.addAttributes(effectsMetaData.getOrderedAttributes());
+		emd.addAttribute(attributeFactory.create()
+				.setName(EffectsMetaData.VARIANT)
+				.setNillable(false)
+				.setDataType(XREF)
+				.setRefEntity(entityType));
+		Attribute classification = attributeFactory.create()
+				.setName(CLASSIFICATION)
+				.setDataType(STRING)
+				.setDescription(CLASSIFICATION)
+				.setLabel(CLASSIFICATION);
+		Attribute confidence = attributeFactory.create()
+				.setName(CONFIDENCE)
+				.setDataType(STRING)
+				.setDescription(CONFIDENCE)
+				.setLabel(CONFIDENCE);
+		Attribute reason = attributeFactory.create()
+				.setName(REASON)
+				.setDataType(STRING)
+				.setDescription(REASON)
+				.setLabel(REASON);
+		emd.addAttributes(Arrays.asList(classification, confidence, reason));
 
+		entityType.addAttribute(idAttr);
+	}
+
+	@Test
+	public void testGeneWithNullFields()
+	{
+		Entity variantEntity = getVariantEntity("A,T", "6,80", "0.00001,0.00001");
+		Entity effectEntity = getEffectEntity("T", "HIGH", "ABCD1", variantEntity);
+
+		Iterator<Entity> results = annotator.annotate(singletonList(effectEntity));
+		assertTrue(results.hasNext());
+		Entity resultEntity = results.next();
+		assertFalse(results.hasNext());
+
+		assertEquals(resultEntity.get(CLASSIFICATION), BENIGN);
+		assertEquals(resultEntity.get(CONFIDENCE), CALIBRATED);
+		assertEquals(resultEntity.get(REASON), "Variant MAF of 1.0E-5 is greater than 0.0.");
 	}
 
 	@Test
 	public void testAnnotateHighMafBenign()
 	{
-		Entity variant_entity = new MapEntity(entityMetaData);
+		Entity variant_entity = getVariantEntity("A,T", "1,2", "2,3");
+		Entity effect_entity = getEffectEntity("A", "HIGH", null, variant_entity);
 
-		variant_entity.set(VcfRepository.ALT, "A,T");
-		variant_entity.set(CaddAnnotator.CADD_SCALED, "1,2");
-		variant_entity.set(ExacAnnotator.EXAC_AF, "2,3");
-
-		Entity effect_entity = new MapEntity(emd);
-		effect_entity.set(EffectsMetaData.ALT, "A");
-		effect_entity.set(EffectsMetaData.PUTATIVE_IMPACT, "HIGH");
-		effect_entity.set(GavinAnnotator.VARIANT_ENTITY, variant_entity);
-
-		Iterator<Entity> results = annotator.annotate(Collections.singletonList(effect_entity));
+		Iterator<Entity> results = annotator.annotate(singletonList(effect_entity));
 		assertTrue(results.hasNext());
 		Entity resultEntity = results.next();
 		assertFalse(results.hasNext());
 
-		Entity expectedEntity = new MapEntity("expected");
-		expectedEntity.set(GavinAnnotator.CLASSIFICATION, "Benign");
-		expectedEntity.set(GavinAnnotator.CONFIDENCE, "genomewide");
-		expectedEntity.set(GavinAnnotator.REASON, "Variant MAF of 2.0 is not rare enough to generally be considered pathogenic.");
-
-		assertEquals(resultEntity.get(GavinAnnotator.CLASSIFICATION),
-				expectedEntity.get(GavinAnnotator.CLASSIFICATION));
-		assertEquals(resultEntity.get(GavinAnnotator.CONFIDENCE), expectedEntity.get(GavinAnnotator.CONFIDENCE));
-		assertEquals(resultEntity.get(GavinAnnotator.REASON), expectedEntity.get(GavinAnnotator.REASON));
-
+		assertEquals(resultEntity.get(CLASSIFICATION), "Benign");
+		assertEquals(resultEntity.get(CONFIDENCE), "genomewide");
+		assertEquals(resultEntity.get(REASON),
+				"Variant MAF of 2.0 is not rare enough to generally be considered pathogenic.");
 	}
 
 	@Test
 	public void testAnnotateLowCaddBenign()
 	{
-		Entity variant_entity = new MapEntity(entityMetaData);
+		Entity variant_entity = getVariantEntity("A,T", "1,2", "0.00001,0.00001");
+		Entity effect_entity = getEffectEntity("A", "HIGH", null, variant_entity);
 
-		variant_entity.set(VcfRepository.ALT, "A,T");
-		variant_entity.set(CaddAnnotator.CADD_SCALED, "1,2");
-		variant_entity.set(ExacAnnotator.EXAC_AF, "0.00001,0.00001");
-
-		Entity effect_entity = new MapEntity(emd);
-		effect_entity.set(EffectsMetaData.ALT, "A");
-		effect_entity.set(EffectsMetaData.PUTATIVE_IMPACT, "HIGH");
-		effect_entity.set(GavinAnnotator.VARIANT_ENTITY, variant_entity);
-
-		Iterator<Entity> results = annotator.annotate(Collections.singletonList(effect_entity));
+		Iterator<Entity> results = annotator.annotate(singletonList(effect_entity));
 		assertTrue(results.hasNext());
 		Entity resultEntity = results.next();
 		assertFalse(results.hasNext());
 
-		Entity expectedEntity = new MapEntity("expected");
-		expectedEntity.set(GavinAnnotator.CLASSIFICATION, "Benign");
-		expectedEntity.set(GavinAnnotator.CONFIDENCE, "genomewide");
-		expectedEntity.set(GavinAnnotator.REASON, "Variant CADD score of 1.0 is less than a global threshold of 15, although the variant MAF of 1.0E-5 is rare enough to be potentially pathogenic.");
-
-		assertEquals(resultEntity.get(GavinAnnotator.CLASSIFICATION),
-				expectedEntity.get(GavinAnnotator.CLASSIFICATION));
-		assertEquals(resultEntity.get(GavinAnnotator.CONFIDENCE), expectedEntity.get(GavinAnnotator.CONFIDENCE));
-		assertEquals(resultEntity.get(GavinAnnotator.REASON), expectedEntity.get(GavinAnnotator.REASON));
-
+		assertEquals(resultEntity.get(CLASSIFICATION), "Benign");
+		assertEquals(resultEntity.get(CONFIDENCE), "genomewide");
+		assertEquals(resultEntity.get(REASON),
+				"Variant CADD score of 1.0 is less than a global threshold of 15, although the variant MAF of 1.0E-5 is rare enough to be potentially pathogenic.");
 	}
 
 	@Test
 	public void testAnnotateNoCaddVOUS()
 	{
-		Entity variant_entity = new MapEntity(entityMetaData);
+		Entity variant_entity = getVariantEntity("A,T", null, "0.00001,0.00001");
+		Entity effect_entity = getEffectEntity("A", "HIGH", "TFR2", variant_entity);
 
-		variant_entity.set(VcfRepository.ALT, "A,T");
-		// variant_entity.set(CaddAnnotator.CADD_SCALED, "16,6");
-		variant_entity.set(ExacAnnotator.EXAC_AF, "0.00001,0.00001");
-
-		Entity effect_entity = new MapEntity(emd);
-		effect_entity.set(EffectsMetaData.ALT, "A");
-		effect_entity.set(EffectsMetaData.PUTATIVE_IMPACT, "HIGH");
-		effect_entity.set(EffectsMetaData.GENE_NAME, "TFR2");
-		effect_entity.set(GavinAnnotator.VARIANT_ENTITY, variant_entity);
-
-		Iterator<Entity> results = annotator.annotate(Collections.singletonList(effect_entity));
+		Iterator<Entity> results = annotator.annotate(singletonList(effect_entity));
 		assertTrue(results.hasNext());
 		Entity resultEntity = results.next();
 		assertFalse(results.hasNext());
 
-		Entity expectedEntity = new MapEntity("expected");
-		expectedEntity.set(GavinAnnotator.CLASSIFICATION, "VOUS");
-		expectedEntity.set(GavinAnnotator.CONFIDENCE, "genomewide");
-		expectedEntity.set(GavinAnnotator.REASON,
+		assertEquals(resultEntity.get(CLASSIFICATION), "VOUS");
+		assertEquals(resultEntity.get(CONFIDENCE), "genomewide");
+		assertEquals(resultEntity.get(REASON),
 				"Unable to classify variant as benign or pathogenic. The combination of HIGH impact, a CADD score of null and MAF of 1.0E-5 in TFR2 is inconclusive.");
-
-		assertEquals(resultEntity.get(GavinAnnotator.CLASSIFICATION),
-				expectedEntity.get(GavinAnnotator.CLASSIFICATION));
-		assertEquals(resultEntity.get(GavinAnnotator.CONFIDENCE), expectedEntity.get(GavinAnnotator.CONFIDENCE));
-		assertEquals(resultEntity.get(GavinAnnotator.REASON), expectedEntity.get(GavinAnnotator.REASON));
 
 	}
 
 	@Test
 	public void testAnnotateLowVariantCaddBenign()
 	{
-		Entity variant_entity = new MapEntity(entityMetaData);
+		Entity variant_entity = getVariantEntity("A,T", "6,80", "0.00001,0.00001");
+		Entity effect_entity = getEffectEntity("A", "HIGH", "TFR2", variant_entity);
 
-		variant_entity.set(VcfRepository.ALT, "A,T");
-		variant_entity.set(CaddAnnotator.CADD_SCALED, "6,80");
-		variant_entity.set(ExacAnnotator.EXAC_AF, "0.00001,0.00001");
-
-		Entity effect_entity = new MapEntity(emd);
-		effect_entity.set(EffectsMetaData.ALT, "A");
-		effect_entity.set(EffectsMetaData.PUTATIVE_IMPACT, "HIGH");
-		effect_entity.set(EffectsMetaData.GENE_NAME, "TFR2");
-		effect_entity.set(GavinAnnotator.VARIANT_ENTITY, variant_entity);
-
-		Iterator<Entity> results = annotator.annotate(Collections.singletonList(effect_entity));
+		Iterator<Entity> results = annotator.annotate(singletonList(effect_entity));
 		assertTrue(results.hasNext());
 		Entity resultEntity = results.next();
 		assertFalse(results.hasNext());
 
-		Entity expectedEntity = new MapEntity("expected");
-		expectedEntity.set(GavinAnnotator.CLASSIFICATION, "Benign");
-		expectedEntity.set(GavinAnnotator.CONFIDENCE, "calibrated");
-		expectedEntity.set(GavinAnnotator.REASON,
-				"Variant CADD score of 6.0 is less than 30.35 for this gene.");
-
-		assertEquals(resultEntity.get(GavinAnnotator.CLASSIFICATION),
-				expectedEntity.get(GavinAnnotator.CLASSIFICATION));
-		assertEquals(resultEntity.get(GavinAnnotator.CONFIDENCE), expectedEntity.get(GavinAnnotator.CONFIDENCE));
-		assertEquals(resultEntity.get(GavinAnnotator.REASON), expectedEntity.get(GavinAnnotator.REASON));
+		assertEquals(resultEntity.get(CLASSIFICATION), "Benign");
+		assertEquals(resultEntity.get(CONFIDENCE), "calibrated");
+		assertEquals(resultEntity.get(REASON),
+				"Variant CADD score of 6.0 is less than 13.329999999999998 for this gene.");
 	}
 
 	@Test
 	public void testAnnotateHighCaddPathogenic()
 	{
-		Entity variant_entity = new MapEntity(entityMetaData);
+		Entity variant_entity = getVariantEntity("A,T", "6,80", "0.00001,0.00001");
+		Entity effect_entity = getEffectEntity("T", "HIGH", "TFR2", variant_entity);
 
-		variant_entity.set(VcfRepository.ALT, "A,T");
-		variant_entity.set(CaddAnnotator.CADD_SCALED, "6,80");
-		variant_entity.set(ExacAnnotator.EXAC_AF, "0.00001,0.00001");
-
-		Entity effect_entity = new MapEntity(emd);
-		effect_entity.set(EffectsMetaData.ALT, "T");
-		effect_entity.set(EffectsMetaData.PUTATIVE_IMPACT, "HIGH");
-		effect_entity.set(EffectsMetaData.GENE_NAME, "TFR2");
-		effect_entity.set(GavinAnnotator.VARIANT_ENTITY, variant_entity);
-
-		Iterator<Entity> results = annotator.annotate(Collections.singletonList(effect_entity));
+		Iterator<Entity> results = annotator.annotate(singletonList(effect_entity));
 		assertTrue(results.hasNext());
 		Entity resultEntity = results.next();
 		assertFalse(results.hasNext());
 
-		Entity expectedEntity = new MapEntity("expected");
-		expectedEntity.set(GavinAnnotator.CLASSIFICATION, "Pathogenic");
-		expectedEntity.set(GavinAnnotator.CONFIDENCE, "calibrated");
-		expectedEntity.set(GavinAnnotator.REASON,
-				"Variant CADD score of 80.0 is greater than 30.35 for this gene.");
-
-		assertEquals(resultEntity.get(GavinAnnotator.CLASSIFICATION),
-				expectedEntity.get(GavinAnnotator.CLASSIFICATION));
-		assertEquals(resultEntity.get(GavinAnnotator.CONFIDENCE), expectedEntity.get(GavinAnnotator.CONFIDENCE));
-		assertEquals(resultEntity.get(GavinAnnotator.REASON), expectedEntity.get(GavinAnnotator.REASON));
+		assertEquals(resultEntity.get(CLASSIFICATION), "Pathogenic");
+		assertEquals(resultEntity.get(CONFIDENCE), "calibrated");
+		assertEquals(resultEntity.get(REASON), "Variant CADD score of 80.0 is greater than 30.35 for this gene.");
 	}
 
+	private Entity getEffectEntity(String alt, String putativeImpact, String geneName, Entity variantEntity)
+	{
+		Entity effectEntity = new DynamicEntity(emd);
+		effectEntity.set(EffectsMetaData.ALT, alt);
+		effectEntity.set(EffectsMetaData.PUTATIVE_IMPACT, putativeImpact);
+		effectEntity.set(EffectsMetaData.GENE_NAME, geneName);
+		effectEntity.set(VcfWriterUtils.VARIANT, variantEntity);
+		return effectEntity;
+	}
+
+	private Entity getVariantEntity(String alt, String caddScaled, String exacAF)
+	{
+		Entity variantEntity = new DynamicEntity(entityType);
+		variantEntity.set(VcfAttributes.ALT, alt);
+		variantEntity.set(CaddAnnotator.CADD_SCALED, caddScaled);
+		variantEntity.set(ExacAnnotator.EXAC_AF, exacAF);
+		return variantEntity;
+	}
+
+	@Configuration
+	@Import({ VcfTestConfig.class, EffectsTestConfig.class })
 	public static class Config
 	{
-		@Autowired
-		private DataService dataService;
-
 		@Bean
-		public Entity VariantClassificationAnnotatorSettings()
+		public GavinAnnotatorSettings gavinAnnotatorSettings()
 		{
-			Entity settings = new MapEntity();
-
-			settings.set(GavinAnnotatorSettings.Meta.VARIANT_FILE_LOCATION,
+			GavinAnnotatorSettings settings = mock(GavinAnnotatorSettings.class);
+			when(settings.getString(GavinAnnotatorSettings.Meta.VARIANT_FILE_LOCATION)).thenReturn(
 					ResourceUtils.getFile(getClass(), "/gavin/GAVIN_calibrations_r0.1.xlsx").getPath());
 
 			return settings;
-		}
-
-		@Bean
-		public DataService dataService()
-		{
-			return mock(DataService.class);
 		}
 
 		@Bean
@@ -259,6 +271,42 @@ public class GavinAnnotatorTest extends AbstractTestNGSpringContextTests
 		public Resources resources()
 		{
 			return new ResourcesImpl();
+		}
+
+		@Bean
+		public Entity caddAnnotatorSettings()
+		{
+			return mock(Entity.class);
+		}
+
+		@Bean
+		public Entity exacAnnotatorSettings()
+		{
+			return mock(Entity.class);
+		}
+
+		@Bean
+		public GeneNameQueryCreator geneNameQueryCreator()
+		{
+			return new GeneNameQueryCreator();
+		}
+
+		@Bean
+		public EntityListenersService entityListenersService()
+		{
+			return new EntityListenersService();
+		}
+
+		@Bean
+		public EntityTypeDependencyResolver entityTypeDependencyResolver()
+		{
+			return new EntityTypeDependencyResolver(genericDependencyResolver());
+		}
+
+		@Bean
+		public GenericDependencyResolver genericDependencyResolver()
+		{
+			return new GenericDependencyResolver();
 		}
 	}
 }

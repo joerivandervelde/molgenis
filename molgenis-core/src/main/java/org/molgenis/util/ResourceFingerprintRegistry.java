@@ -1,12 +1,12 @@
 package org.molgenis.util;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 import com.google.common.io.BaseEncoding;
+
+import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ResourceFingerprintRegistry
 {
@@ -14,7 +14,7 @@ public class ResourceFingerprintRegistry
 
 	public ResourceFingerprintRegistry()
 	{
-		resourceFingerprints = new ConcurrentHashMap<String, String>();
+		resourceFingerprints = new ConcurrentHashMap<>();
 	}
 
 	public String getFingerprint(String resourceName) throws IOException
@@ -35,8 +35,9 @@ public class ResourceFingerprintRegistry
 
 	private String createFingerprint(Class<?> contextClass, String resourceName) throws IOException
 	{
-		byte[] bytes = contextClass != null ? ResourceUtils.getBytes(contextClass, resourceName) : ResourceUtils
-				.getBytes(resourceName);
+		byte[] bytes =
+				contextClass != null ? ResourceUtils.getBytes(contextClass, resourceName) : ResourceUtils.getBytes(
+						resourceName);
 		HashCode crc32 = Hashing.crc32().hashBytes(bytes);
 		return BaseEncoding.base64Url().omitPadding().encode(crc32.asBytes());
 	}

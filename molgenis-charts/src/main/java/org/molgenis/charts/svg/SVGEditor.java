@@ -1,28 +1,17 @@
 package org.molgenis.charts.svg;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
-import java.util.Iterator;
+import org.molgenis.charts.charttypes.HeatMapChart;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.namespace.QName;
-import javax.xml.stream.FactoryConfigurationError;
-import javax.xml.stream.XMLEventFactory;
-import javax.xml.stream.XMLEventReader;
-import javax.xml.stream.XMLEventWriter;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLOutputFactory;
-import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.*;
 import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.EndElement;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.molgenis.charts.charttypes.HeatMapChart;
+import java.io.*;
+import java.util.Iterator;
 
 public class SVGEditor
 {
@@ -40,13 +29,9 @@ public class SVGEditor
 
 	/**
 	 * Creates a new instance of SVGEditor.
-	 * 
-	 * @throws FactoryConfigurationError
-	 * @throws XMLStreamException
-	 * @throws FileNotFoundException
 	 */
-	public SVGEditor(File inFile, File outFile) throws FileNotFoundException, XMLStreamException,
-			FactoryConfigurationError
+	public SVGEditor(File inFile, File outFile)
+			throws FileNotFoundException, XMLStreamException, FactoryConfigurationError
 	{
 		this.inFile = inFile;
 		this.outFile = outFile;
@@ -55,14 +40,10 @@ public class SVGEditor
 	/**
 	 * Annotates a block of values of a heatmap.plus SVG file by giving them an id and row/column attributes. A
 	 * heatmap.plus can contain up to three 'blocks': row annotations, column annotations and the matrix.
-	 * 
-	 * @param nRow
-	 *            number of rows of this block
-	 * @param nCol
-	 *            number of columns of this block
-	 * @param blockId
-	 *            value of the id attribute to give elements in this block
-	 * @throws XMLStreamException
+	 *
+	 * @param nRow    number of rows of this block
+	 * @param nCol    number of columns of this block
+	 * @param blockId value of the id attribute to give elements in this block
 	 */
 	private void annotateHeatMapBlock(int nRow, int nCol, String blockId, XMLEventWriter writer, XMLEventReader reader)
 			throws XMLStreamException
@@ -107,14 +88,9 @@ public class SVGEditor
 	 * Can annotate SVG heatmap.plus charts made by R. Reads and writes using StAX, adding row and col attributes to
 	 * <path> elements corresponding to data points in the heatmap. All indexes can be calculated using nRow, nCol,
 	 * nRowAnnotations and nColAnnotations.
-	 * 
-	 * @param chart
-	 * @throws FactoryConfigurationError
-	 * @throws XMLStreamException
-	 * @throws FileNotFoundException
 	 */
-	public void annotateHeatMap(HeatMapChart chart) throws XMLStreamException, FactoryConfigurationError,
-			FileNotFoundException
+	public void annotateHeatMap(HeatMapChart chart)
+			throws XMLStreamException, FactoryConfigurationError, FileNotFoundException
 	{
 		XMLEventReader reader = XMLInputFactory.newInstance().createXMLEventReader(new FileInputStream(inFile));
 

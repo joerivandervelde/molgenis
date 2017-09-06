@@ -1,21 +1,6 @@
 package org.molgenis.charts;
 
-import static org.molgenis.charts.ChartController.URI;
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Collections;
-import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
-import javax.xml.stream.FactoryConfigurationError;
-import javax.xml.stream.XMLStreamException;
-
+import freemarker.template.TemplateException;
 import org.molgenis.charts.AbstractChart.MolgenisChartType;
 import org.molgenis.charts.charttypes.HeatMapChart;
 import org.molgenis.charts.data.DataMatrix;
@@ -23,8 +8,8 @@ import org.molgenis.charts.highcharts.basic.Options;
 import org.molgenis.charts.requests.BoxPlotChartRequest;
 import org.molgenis.charts.requests.HeatMapRequest;
 import org.molgenis.charts.requests.XYDataChartRequest;
+import org.molgenis.data.Entity;
 import org.molgenis.data.Query;
-import org.molgenis.data.QueryRule;
 import org.molgenis.file.FileStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,15 +18,21 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.FileCopyUtils;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.*;
 
-import freemarker.template.TemplateException;
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
+import javax.xml.stream.FactoryConfigurationError;
+import javax.xml.stream.XMLStreamException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Collections;
+import java.util.Map;
+
+import static org.molgenis.charts.ChartController.URI;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @Controller
 @RequestMapping(URI)
@@ -60,8 +51,8 @@ public class ChartController
 			ChartVisualizationServiceFactory chartVisualizationServiceFactory, FileStore fileStore)
 	{
 		if (chartDataService == null) throw new IllegalArgumentException("chartDataService is null");
-		if (chartVisualizationServiceFactory == null) throw new IllegalArgumentException(
-				"chartVisualizationServiceFactory is null");
+		if (chartVisualizationServiceFactory == null)
+			throw new IllegalArgumentException("chartVisualizationServiceFactory is null");
 		if (fileStore == null) throw new IllegalArgumentException("fileStore is null");
 
 		this.chartDataService = chartDataService;
@@ -69,20 +60,13 @@ public class ChartController
 		this.fileStore = fileStore;
 	}
 
-	@RequestMapping("/test")
-	public String test(HttpServletRequest request, Model model)
-	{
-		model.addAttribute("queryString", request.getQueryString());
-		return "test"; // TODO
-	}
-
 	@RequestMapping(value = "/xydatachart", method = RequestMethod.POST, consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
 	@ResponseBody
 	public Options renderXYDataChart(@Valid @RequestBody XYDataChartRequest request, Model model)
 	{
-		Query query = request.getQuery();
+		Query<Entity> query = request.getQuery();
 		XYDataChart xYDataChart = chartDataService.getXYDataChart(request.getEntity(), request.getX(), request.getY(),
-				request.getSplit(), query != null ? query.getRules() : Collections.<QueryRule> emptyList());
+				request.getSplit(), query != null ? query.getRules() : Collections.emptyList());
 
 		xYDataChart.setTitle(request.getTitle());
 		xYDataChart.setHeight(request.getHeight());
@@ -91,8 +75,8 @@ public class ChartController
 		xYDataChart.setxAxisLabel(request.getxAxisLabel());
 		xYDataChart.setyAxisLabel(request.getyAxisLabel());
 
-		ChartVisualizationService service = chartVisualizationServiceFactory.getVisualizationService(MolgenisChartType
-				.valueOf(request.getType()));
+		ChartVisualizationService service = chartVisualizationServiceFactory.getVisualizationService(
+				MolgenisChartType.valueOf(request.getType()));
 
 		return (Options) service.renderChart(xYDataChart, model);
 	}
@@ -101,32 +85,23 @@ public class ChartController
 	@ResponseBody
 	public Options renderPlotBoxChart(@Valid @RequestBody BoxPlotChartRequest request, Model model)
 	{
-		Query query = request.getQuery();
+		Query<Entity> query = request.getQuery();
 		BoxPlotChart chart = chartDataService.getBoxPlotChart(request.getEntity(), request.getObservableFeature(),
-				query != null ? query.getRules() : Collections.<QueryRule> emptyList(), request.getSplit(),
-				request.getScale());
+				query != null ? query.getRules() : Collections.emptyList(), request.getSplit(), request.getScale());
 
 		chart.setHeight(request.getHeight());
 		chart.setWidth(request.getWidth());
 		chart.setTitle(request.getTitle());
 
-		ChartVisualizationService service = chartVisualizationServiceFactory
-				.getVisualizationService(MolgenisChartType.BOXPLOT_CHART);
+		ChartVisualizationService service = chartVisualizationServiceFactory.getVisualizationService(
+				MolgenisChartType.BOXPLOT_CHART);
 		return (Options) service.renderChart(chart, model);
 	}
 
 	/**
 	 * Gets a file from the filestore.
-	 * 
+	 * <p>
 	 * User can only view his own files he created with the charts module
-	 * 
-	 * 
-	 * @param out
-	 * @param name
-	 * @param extension
-	 * @param fileNames
-	 * @param response
-	 * @throws IOException
 	 */
 	@RequestMapping("/get/{name}.{extension}")
 	public void getFile(OutputStream out, @PathVariable("name") String name,
@@ -147,23 +122,15 @@ public class ChartController
 
 	/**
 	 * Renders a heatmap with r
-	 * 
+	 * <p>
 	 * Returns a piece of javascript that can be retrieved by an html page with an ajax request.
-	 * 
+	 * <p>
 	 * The page must have an element with id named 'container'. The svg image will be added to this container element.
-	 * 
-	 * @param request
-	 * @param model
-	 * @return
-	 * @throws IOException
-	 * @throws TemplateException
-	 * @throws FactoryConfigurationError
-	 * @throws XMLStreamException
 	 */
 	@RequestMapping(value = "/heatmap", method = RequestMethod.POST, consumes = APPLICATION_JSON_VALUE)
 	@ResponseBody
-	public String renderHeatMap(@Valid @RequestBody HeatMapRequest request, Model model) throws IOException,
-			TemplateException, XMLStreamException, FactoryConfigurationError
+	public String renderHeatMap(@Valid @RequestBody HeatMapRequest request, Model model)
+			throws IOException, TemplateException, XMLStreamException, FactoryConfigurationError
 	{
 		DataMatrix matrix = chartDataService.getDataMatrix(request.getEntity(), request.getX(), request.getY(),
 				request.getQueryRules());
@@ -176,8 +143,8 @@ public class ChartController
 		chart.setyLabel(request.getyLabel());
 		chart.setScale(request.getScale());
 
-		ChartVisualizationService service = chartVisualizationServiceFactory
-				.getVisualizationService(MolgenisChartType.HEAT_MAP);
+		ChartVisualizationService service = chartVisualizationServiceFactory.getVisualizationService(
+				MolgenisChartType.HEAT_MAP);
 
 		return (String) service.renderChart(chart, model);
 	}

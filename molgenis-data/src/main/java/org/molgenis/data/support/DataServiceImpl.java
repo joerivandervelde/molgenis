@@ -1,266 +1,208 @@
 package org.molgenis.data.support;
 
-import static org.molgenis.security.core.utils.SecurityUtils.currentUserHasRole;
-import static org.molgenis.security.core.utils.SecurityUtils.getCurrentUsername;
+import org.molgenis.data.*;
+import org.molgenis.data.aggregation.AggregateQuery;
+import org.molgenis.data.aggregation.AggregateResult;
+import org.molgenis.data.meta.MetaDataService;
+import org.molgenis.data.meta.model.EntityType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Iterator;
 import java.util.Set;
-import java.util.TreeSet;
-import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Stream;
 
-import org.molgenis.data.AggregateQuery;
-import org.molgenis.data.AggregateResult;
-import org.molgenis.data.DataService;
-import org.molgenis.data.Entity;
-import org.molgenis.data.EntityListener;
-import org.molgenis.data.EntityMetaData;
-import org.molgenis.data.Fetch;
-import org.molgenis.data.MolgenisDataException;
-import org.molgenis.data.Query;
-import org.molgenis.data.Repository;
-import org.molgenis.data.RepositoryCapability;
-import org.molgenis.data.RepositoryDecoratorFactory;
-import org.molgenis.data.UnknownEntityException;
-import org.molgenis.data.meta.MetaDataService;
-import org.molgenis.util.EntityUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.transaction.annotation.Transactional;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Implementation of the DataService interface
  */
-
+@Component
 public class DataServiceImpl implements DataService
 {
 	private static final Logger LOG = LoggerFactory.getLogger(DataServiceImpl.class);
 
-	private final ConcurrentMap<String, Repository> repositories;
-	private final Set<String> repositoryNames;
 	private MetaDataService metaDataService;
-	private final RepositoryDecoratorFactory repositoryDecoratorFactory;
 
-	public DataServiceImpl()
+	public void setMetaDataService(MetaDataService metaDataService)
 	{
-		this(new NonDecoratingRepositoryDecoratorFactory());
-	}
-
-	public DataServiceImpl(RepositoryDecoratorFactory repositoryDecoratorFactory)
-	{
-		this.repositories = Maps.newConcurrentMap();
-		this.repositoryNames = new TreeSet<String>();
-		this.repositoryDecoratorFactory = repositoryDecoratorFactory;
-	}
-
-	/**
-	 * For testing purposes
-	 */
-	public synchronized void resetRepositories()
-	{
-		repositories.clear();
-		repositoryNames.clear();
+		this.metaDataService = requireNonNull(metaDataService);
 	}
 
 	@Override
-	public void setMeta(MetaDataService metaDataService)
+	public EntityType getEntityType(String entityTypeId)
 	{
-		this.metaDataService = metaDataService;
-	}
-
-	public synchronized void addRepository(Repository newRepository)
-	{
-		String repositoryName = newRepository.getName();
-		if (repositories.containsKey(repositoryName.toLowerCase()))
-		{
-			throw new MolgenisDataException("Entity [" + repositoryName + "] already registered.");
-		}
-		if (LOG.isDebugEnabled()) LOG.debug("Adding repository [" + repositoryName + "]");
-		repositoryNames.add(repositoryName);
-
-		Repository decoratedRepo = repositoryDecoratorFactory.createDecoratedRepository(newRepository);
-		repositories.put(repositoryName.toLowerCase(), decoratedRepo);
-	}
-
-	public synchronized void removeRepository(String repositoryName)
-	{
-		if (null == repositoryName)
-		{
-			throw new MolgenisDataException("repositoryName may not be null");
-		}
-
-		if (!repositories.containsKey(repositoryName.toLowerCase()))
-		{
-			throw new MolgenisDataException("Repository [" + repositoryName + "] doesn't exists");
-		}
-		else
-		{
-			if (LOG.isDebugEnabled()) LOG.debug("Removing repository [" + repositoryName + "]");
-			repositoryNames.remove(repositoryName);
-			repositories.remove(repositoryName.toLowerCase());
-		}
+		return metaDataService.getEntityType(entityTypeId);
 	}
 
 	@Override
-	public EntityMetaData getEntityMetaData(String entityName)
+	public synchronized Stream<String> getEntityTypeIds()
 	{
-		Repository repository = getRepository(entityName);
-		return repository.getEntityMetaData();
+		return metaDataService.getEntityTypes().map(EntityType::getId);
 	}
 
 	@Override
-	public synchronized Stream<String> getEntityNames()
+	public boolean hasRepository(String entityTypeId)
 	{
-		return Lists.newArrayList(repositoryNames).stream().filter(entityName -> currentUserHasRole("ROLE_SU",
-				"ROLE_SYSTEM", "ROLE_ENTITY_COUNT_" + entityName.toUpperCase()));
+		return metaDataService.hasRepository(entityTypeId);
 	}
 
 	@Override
-	public boolean hasRepository(String entityName)
+	public long count(String entityTypeId)
 	{
-		return repositories.containsKey(entityName.toLowerCase());
+		return getRepository(entityTypeId).count();
 	}
 
 	@Override
-	public long count(String entityName, Query q)
+	public long count(String entityTypeId, Query<Entity> q)
 	{
-		return getRepository(entityName).count(q);
+		return getRepository(entityTypeId).count(q);
 	}
 
 	@Override
-	public Stream<Entity> findAll(String entityName)
+	public Stream<Entity> findAll(String entityTypeId)
 	{
-		return findAll(entityName, new QueryImpl());
+		return findAll(entityTypeId, query(entityTypeId));
 	}
 
 	@Override
-	public Stream<Entity> findAll(String entityName, Query q)
+	public Stream<Entity> findAll(String entityTypeId, Query<Entity> q)
 	{
-		return getRepository(entityName).findAll(q);
+		return getRepository(entityTypeId).findAll(q);
 	}
 
 	@Override
-	public Entity findOne(String entityName, Object id)
+	public Entity findOneById(String entityTypeId, Object id)
 	{
-		return getRepository(entityName).findOne(id);
+		return getRepository(entityTypeId).findOneById(id);
 	}
 
 	@Override
-	public Entity findOne(String entityName, Query q)
+	public Entity findOne(String entityTypeId, Query<Entity> q)
 	{
-		return getRepository(entityName).findOne(q);
+		return getRepository(entityTypeId).findOne(q);
 	}
 
 	@Override
 	@Transactional
-	public void add(String entityName, Entity entity)
+	public void add(String entityTypeId, Entity entity)
 	{
-		getRepository(entityName).add(entity);
+		getRepository(entityTypeId).add(entity);
 	}
 
 	@Override
 	@Transactional
-	public void add(String entityName, Stream<? extends Entity> entities)
+	@SuppressWarnings("unchecked")
+	public <E extends Entity> void add(String entityTypeId, Stream<E> entities)
 	{
-		getRepository(entityName).add(entities);
+		getRepository(entityTypeId).add((Stream<Entity>) entities);
 	}
 
 	@Override
 	@Transactional
-	public void update(String entityName, Entity entity)
+	public void update(String entityTypeId, Entity entity)
 	{
-		getRepository(entityName).update(entity);
+		getRepository(entityTypeId).update(entity);
 	}
 
 	@Override
 	@Transactional
-	public void update(String entityName, Stream<? extends Entity> entities)
+	@SuppressWarnings("unchecked")
+	public <E extends Entity> void update(String entityTypeId, Stream<E> entities)
 	{
-		getRepository(entityName).update(entities);
+		getRepository(entityTypeId).update((Stream<Entity>) entities);
 	}
 
 	@Override
 	@Transactional
-	public void delete(String entityName, Entity entity)
+	public void delete(String entityTypeId, Entity entity)
 	{
-		getRepository(entityName).delete(entity);
+		getRepository(entityTypeId).delete(entity);
 	}
 
 	@Override
 	@Transactional
-	public void delete(String entityName, Stream<? extends Entity> entities)
+	@SuppressWarnings("unchecked")
+	public <E extends Entity> void delete(String entityTypeId, Stream<E> entities)
 	{
-		getRepository(entityName).delete(entities);
+		getRepository(entityTypeId).delete((Stream<Entity>) entities);
 	}
 
 	@Override
 	@Transactional
-	public void delete(String entityName, Object id)
+	public void deleteById(String entityTypeId, Object id)
 	{
-		getRepository(entityName).deleteById(id);
+		getRepository(entityTypeId).deleteById(id);
 	}
 
 	@Override
 	@Transactional
-	public void deleteAll(String entityName)
+	public void deleteAll(String entityTypeId, Stream<Object> ids)
 	{
-		getRepository(entityName).deleteAll();
-		LOG.info("All entities of repository [{}] deleted by user [{}]", entityName, getCurrentUsername());
+		getRepository(entityTypeId).deleteAll(ids);
 	}
 
 	@Override
-	public Repository getRepository(String entityName)
+	@Transactional
+	public void deleteAll(String entityTypeId)
 	{
-		Repository repository = repositories.get(entityName.toLowerCase());
-		if (repository == null) throw new UnknownEntityException("Unknown entity [" + entityName + "]");
-
-		return repository;
+		getRepository(entityTypeId).deleteAll();
 	}
 
 	@Override
-	public Query query(String entityName)
+	public Repository<Entity> getRepository(String entityTypeId)
 	{
-		return new QueryImpl(getRepository(entityName));
+		return metaDataService.getRepository(entityTypeId);
+	}
+
+	@SuppressWarnings("unchecked")
+	public <E extends Entity> Repository<E> getRepository(String entityTypeId, Class<E> entityClass)
+	{
+		return (Repository<E>) getRepository(entityTypeId);
 	}
 
 	@Override
-	public <E extends Entity> Stream<E> findAll(String entityName, Query q, Class<E> clazz)
+	public Query<Entity> query(String entityTypeId)
 	{
-		Stream<Entity> entities = getRepository(entityName).findAll(q);
-		return entities.map(entity -> {
-			return EntityUtils.convert(entity, clazz, this);
-		});
+		return new QueryImpl<>(getRepository(entityTypeId));
 	}
 
 	@Override
-	public <E extends Entity> E findOne(String entityName, Object id, Class<E> clazz)
+	public <E extends Entity> Query<E> query(String entityTypeId, Class<E> entityClass)
 	{
-		Entity entity = getRepository(entityName).findOne(id);
-		if (entity == null) return null;
-		return EntityUtils.convert(entity, clazz, this);
+		return new QueryImpl<>(getRepository(entityTypeId, entityClass));
 	}
 
 	@Override
-	public <E extends Entity> E findOne(String entityName, Query q, Class<E> clazz)
+	public <E extends Entity> Stream<E> findAll(String entityTypeId, Query<E> q, Class<E> clazz)
 	{
-		Entity entity = getRepository(entityName).findOne(q);
-		if (entity == null) return null;
-		return EntityUtils.convert(entity, clazz, this);
+		return getRepository(entityTypeId, clazz).findAll(q);
 	}
 
 	@Override
-	public <E extends Entity> Stream<E> findAll(String entityName, Class<E> clazz)
+	public <E extends Entity> E findOneById(String entityTypeId, Object id, Class<E> clazz)
 	{
-		return findAll(entityName, new QueryImpl(), clazz);
+		return getRepository(entityTypeId, clazz).findOneById(id);
 	}
 
 	@Override
-	public AggregateResult aggregate(String entityName, AggregateQuery aggregateQuery)
+	public <E extends Entity> E findOne(String entityTypeId, Query<E> q, Class<E> clazz)
 	{
-		return getRepository(entityName).aggregate(aggregateQuery);
+		return getRepository(entityTypeId, clazz).findOne(q);
+	}
+
+	@Override
+	public <E extends Entity> Stream<E> findAll(String entityTypeId, Class<E> clazz)
+	{
+		return findAll(entityTypeId, query(entityTypeId, clazz), clazz);
+	}
+
+	@Override
+	public AggregateResult aggregate(String entityTypeId, AggregateQuery aggregateQuery)
+	{
+		return getRepository(entityTypeId).aggregate(aggregateQuery);
 	}
 
 	@Override
@@ -270,24 +212,9 @@ public class DataServiceImpl implements DataService
 	}
 
 	@Override
-	public synchronized Iterator<Repository> iterator()
+	public synchronized Iterator<Repository<Entity>> iterator()
 	{
-		return Lists.newArrayList(repositories.values()).iterator();
-	}
-
-	@Override
-	public Stream<Entity> stream(String entityName, Fetch fetch)
-	{
-		return getRepository(entityName).stream(fetch);
-	}
-
-	@Override
-	public <E extends Entity> Stream<E> stream(String entityName, Fetch fetch, Class<E> clazz)
-	{
-		Stream<Entity> entities = getRepository(entityName).stream(fetch);
-		return entities.map(entity -> {
-			return EntityUtils.convert(entity, clazz, this);
-		});
+		return metaDataService.getRepositories().iterator();
 	}
 
 	@Override
@@ -297,89 +224,38 @@ public class DataServiceImpl implements DataService
 	}
 
 	@Override
-	public Entity findOne(String entityName, Object id, Fetch fetch)
+	public Entity findOneById(String entityTypeId, Object id, Fetch fetch)
 	{
-		return getRepository(entityName).findOne(id, fetch);
+		return getRepository(entityTypeId).findOneById(id, fetch);
 	}
 
 	@Override
-	public <E extends Entity> E findOne(String entityName, Object id, Fetch fetch, Class<E> clazz)
+	public <E extends Entity> E findOneById(String entityTypeId, Object id, Fetch fetch, Class<E> clazz)
 	{
-		Entity entity = getRepository(entityName).findOne(id, fetch);
-		if (entity == null) return null;
-		return EntityUtils.convert(entity, clazz, this);
+		return getRepository(entityTypeId, clazz).findOneById(id, fetch);
 	}
 
 	@Override
-	public void addEntityListener(String entityName, EntityListener entityListener)
+	public Stream<Entity> findAll(String entityTypeId, Stream<Object> ids)
 	{
-		getRepository(entityName).addEntityListener(entityListener);
+		return getRepository(entityTypeId).findAll(ids);
 	}
 
 	@Override
-	public void removeEntityListener(String entityName, EntityListener entityListener)
+	public <E extends Entity> Stream<E> findAll(String entityTypeId, Stream<Object> ids, Class<E> clazz)
 	{
-		getRepository(entityName).removeEntityListener(entityListener);
+		return getRepository(entityTypeId, clazz).findAll(ids);
 	}
 
 	@Override
-	public Stream<Entity> findAll(String entityName, Stream<Object> ids)
+	public Stream<Entity> findAll(String entityTypeId, Stream<Object> ids, Fetch fetch)
 	{
-		return getRepository(entityName).findAll(ids);
+		return getRepository(entityTypeId).findAll(ids, fetch);
 	}
 
 	@Override
-	public <E extends Entity> Stream<E> findAll(String entityName, Stream<Object> ids, Class<E> clazz)
+	public <E extends Entity> Stream<E> findAll(String entityTypeId, Stream<Object> ids, Fetch fetch, Class<E> clazz)
 	{
-		Stream<Entity> entities = getRepository(entityName).findAll(ids);
-		return entities.map(entity -> {
-			return EntityUtils.convert(entity, clazz, this);
-		});
-	}
-
-	@Override
-	public Stream<Entity> findAll(String entityName, Stream<Object> ids, Fetch fetch)
-	{
-		return getRepository(entityName).findAll(ids, fetch);
-	}
-
-	@Override
-	public <E extends Entity> Stream<E> findAll(String entityName, Stream<Object> ids, Fetch fetch, Class<E> clazz)
-	{
-		Stream<Entity> entities = getRepository(entityName).findAll(ids, fetch);
-		return entities.map(entity -> {
-			return EntityUtils.convert(entity, clazz, this);
-		});
-	}
-
-	@Override
-	public Repository copyRepository(Repository repository, String newRepositoryId, String newRepositoryLabel)
-	{
-		return copyRepository(repository, newRepositoryId, newRepositoryLabel, new QueryImpl());
-	}
-
-	@Override
-	public Repository copyRepository(Repository repository, String newRepositoryId, String newRepositoryLabel,
-			Query query)
-	{
-		LOG.info("Creating a copy of " + repository.getName() + " repository, with ID: " + newRepositoryId
-				+ ", and label: " + newRepositoryLabel);
-		DefaultEntityMetaData emd = new DefaultEntityMetaData(newRepositoryId, repository.getEntityMetaData());
-		emd.setLabel(newRepositoryLabel);
-		Repository repositoryCopy = metaDataService.addEntityMeta(emd);
-		try
-		{
-
-			repositoryCopy.add(repository.findAll(query));
-			return repositoryCopy;
-		}
-		catch (RuntimeException e)
-		{
-			if (repositoryCopy != null)
-			{
-				metaDataService.deleteEntityMeta(emd.getName());
-			}
-			throw e;
-		}
+		return getRepository(entityTypeId, clazz).findAll(ids, fetch);
 	}
 }

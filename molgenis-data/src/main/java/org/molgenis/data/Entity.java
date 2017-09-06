@@ -1,8 +1,10 @@
 package org.molgenis.data;
 
+import org.molgenis.data.meta.model.EntityType;
+
 import java.io.Serializable;
-import java.sql.Timestamp;
-import java.util.List;
+import java.time.Instant;
+import java.time.LocalDate;
 
 /**
  * Entity is a data record which can contain a hash of attribute values. Attribute names are unique. Synonyms are
@@ -11,22 +13,38 @@ import java.util.List;
  */
 public interface Entity extends Serializable
 {
-	EntityMetaData getEntityMetaData();
+	/**
+	 * Returns entity meta data
+	 *
+	 * @return entity meta data, never null
+	 */
+	EntityType getEntityType();
 
 	/**
 	 * Get all attribute names
+	 * <p>
+	 * TODO remove, use getEntityType to retrieve entity meta data
 	 */
 	Iterable<String> getAttributeNames();
 
 	/**
 	 * Optional unique id to identify this Entity. Otherwise return null
+	 * <p>
+	 * // TODO getIdValue should return id of type of entity (requires generic on Entity)
 	 */
 	Object getIdValue();
 
 	/**
+	 * Sets the identifier value of this entity. The class type of the id is based on the id attribute data type.
+	 *
+	 * @param id identifier value
+	 */
+	void setIdValue(Object id);
+
+	/**
 	 * Optional human readable label to recognize this Entity. Otherwise return null
 	 */
-	String getLabelValue();
+	Object getLabelValue();
 
 	/**
 	 * Get attribute value
@@ -59,19 +77,14 @@ public interface Entity extends Serializable
 	Double getDouble(String attributeName);
 
 	/**
-	 * Retrieves the value of the designated column as {@link java.sql.Date}.
+	 * Retrieves the value of the designated column as {@link java.time.Instant}.
 	 */
-	java.sql.Date getDate(String attributeName);
+	Instant getInstant(String attributeName);
 
 	/**
-	 * Retrieves the value of the designated column as {@link java.util.Date}.
+	 * Retrieves the value of the designated column as {@link java.time.LocalDate}.
 	 */
-	java.util.Date getUtilDate(String attributeName);
-
-	/**
-	 * Retrieves the value of the designated column as {@link java.sql.Timestamp}.
-	 */
-	Timestamp getTimestamp(String attributeName);
+	LocalDate getLocalDate(String attributeName);
 
 	/**
 	 * Retrieves the value of the designated column as entity
@@ -94,22 +107,14 @@ public interface Entity extends Serializable
 	<E extends Entity> Iterable<E> getEntities(String attributeName, Class<E> clazz);
 
 	/**
-	 * Retrieves the value of the designated column as List<String>.
-	 */
-	List<String> getList(String attributeName);
-
-	/**
-	 * Retrieves the value of the designated column as List<Integer>
-	 */
-	List<Integer> getIntList(String attributeName);
-
-	/**
 	 * Change attribute value
 	 */
 	void set(String attributeName, Object value);
 
 	/**
 	 * Copy attribute values from another entity
+	 * <p>
+	 * TODO remove method, move to utility class
 	 */
 	void set(Entity values);
 }

@@ -1,15 +1,14 @@
 package org.molgenis.data.support;
 
-import static java.util.Objects.requireNonNull;
-
-import java.sql.Date;
-import java.sql.Timestamp;
-import java.util.List;
-
 import org.molgenis.data.Entity;
 import org.molgenis.data.EntityManager;
-import org.molgenis.data.EntityMetaData;
 import org.molgenis.data.Fetch;
+import org.molgenis.data.meta.model.EntityType;
+
+import java.time.Instant;
+import java.time.LocalDate;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Entity with partially loaded attributes based on a fetch. Requesting attributes not included in the fetch are
@@ -30,10 +29,9 @@ public class PartialEntity implements Entity
 		this.entityManager = requireNonNull(entityManager);
 	}
 
-	@Override
-	public EntityMetaData getEntityMetaData()
+	public EntityType getEntityType()
 	{
-		return decoratedEntity.getEntityMetaData();
+		return decoratedEntity.getEntityType();
 	}
 
 	@Override
@@ -49,7 +47,13 @@ public class PartialEntity implements Entity
 	}
 
 	@Override
-	public String getLabelValue()
+	public void setIdValue(Object id)
+	{
+		decoratedEntity.setIdValue(id);
+	}
+
+	@Override
+	public Object getLabelValue()
 	{
 		return decoratedEntity.getLabelValue();
 	}
@@ -63,7 +67,7 @@ public class PartialEntity implements Entity
 		}
 		else
 		{
-			return entityManager.getReference(getEntityMetaData(), getIdValue()).get(attributeName);
+			return entityManager.getReference(getEntityType(), getIdValue()).get(attributeName);
 		}
 	}
 
@@ -76,7 +80,7 @@ public class PartialEntity implements Entity
 		}
 		else
 		{
-			return entityManager.getReference(getEntityMetaData(), getIdValue()).getString(attributeName);
+			return entityManager.getReference(getEntityType(), getIdValue()).getString(attributeName);
 		}
 	}
 
@@ -90,7 +94,7 @@ public class PartialEntity implements Entity
 		}
 		else
 		{
-			return entityManager.getReference(getEntityMetaData(), getIdValue()).getInt(attributeName);
+			return entityManager.getReference(getEntityType(), getIdValue()).getInt(attributeName);
 		}
 	}
 
@@ -103,7 +107,7 @@ public class PartialEntity implements Entity
 		}
 		else
 		{
-			return entityManager.getReference(getEntityMetaData(), getIdValue()).getLong(attributeName);
+			return entityManager.getReference(getEntityType(), getIdValue()).getLong(attributeName);
 		}
 	}
 
@@ -116,7 +120,7 @@ public class PartialEntity implements Entity
 		}
 		else
 		{
-			return entityManager.getReference(getEntityMetaData(), getIdValue()).getBoolean(attributeName);
+			return entityManager.getReference(getEntityType(), getIdValue()).getBoolean(attributeName);
 		}
 	}
 
@@ -129,46 +133,33 @@ public class PartialEntity implements Entity
 		}
 		else
 		{
-			return entityManager.getReference(getEntityMetaData(), getIdValue()).getDouble(attributeName);
+			return entityManager.getReference(getEntityType(), getIdValue()).getDouble(attributeName);
 		}
 	}
 
 	@Override
-	public Date getDate(String attributeName)
+	public Instant getInstant(String attributeName)
 	{
 		if (fetch.hasField(attributeName))
 		{
-			return decoratedEntity.getDate(attributeName);
+			return decoratedEntity.getInstant(attributeName);
 		}
 		else
 		{
-			return entityManager.getReference(getEntityMetaData(), getIdValue()).getDate(attributeName);
+			return entityManager.getReference(getEntityType(), getIdValue()).getInstant(attributeName);
 		}
 	}
 
 	@Override
-	public java.util.Date getUtilDate(String attributeName)
+	public LocalDate getLocalDate(String attributeName)
 	{
 		if (fetch.hasField(attributeName))
 		{
-			return decoratedEntity.getUtilDate(attributeName);
+			return decoratedEntity.getLocalDate(attributeName);
 		}
 		else
 		{
-			return entityManager.getReference(getEntityMetaData(), getIdValue()).getUtilDate(attributeName);
-		}
-	}
-
-	@Override
-	public Timestamp getTimestamp(String attributeName)
-	{
-		if (fetch.hasField(attributeName))
-		{
-			return decoratedEntity.getTimestamp(attributeName);
-		}
-		else
-		{
-			return entityManager.getReference(getEntityMetaData(), getIdValue()).getTimestamp(attributeName);
+			return entityManager.getReference(getEntityType(), getIdValue()).getLocalDate(attributeName);
 		}
 	}
 
@@ -181,7 +172,7 @@ public class PartialEntity implements Entity
 		}
 		else
 		{
-			return entityManager.getReference(getEntityMetaData(), getIdValue()).getEntity(attributeName);
+			return entityManager.getReference(getEntityType(), getIdValue()).getEntity(attributeName);
 		}
 	}
 
@@ -194,7 +185,7 @@ public class PartialEntity implements Entity
 		}
 		else
 		{
-			return entityManager.getReference(getEntityMetaData(), getIdValue()).getEntity(attributeName, clazz);
+			return entityManager.getReference(getEntityType(), getIdValue()).getEntity(attributeName, clazz);
 		}
 	}
 
@@ -207,7 +198,7 @@ public class PartialEntity implements Entity
 		}
 		else
 		{
-			return entityManager.getReference(getEntityMetaData(), getIdValue()).getEntities(attributeName);
+			return entityManager.getReference(getEntityType(), getIdValue()).getEntities(attributeName);
 		}
 	}
 
@@ -220,33 +211,7 @@ public class PartialEntity implements Entity
 		}
 		else
 		{
-			return entityManager.getReference(getEntityMetaData(), getIdValue()).getEntities(attributeName, clazz);
-		}
-	}
-
-	@Override
-	public List<String> getList(String attributeName)
-	{
-		if (fetch.hasField(attributeName))
-		{
-			return decoratedEntity.getList(attributeName);
-		}
-		else
-		{
-			return entityManager.getReference(getEntityMetaData(), getIdValue()).getList(attributeName);
-		}
-	}
-
-	@Override
-	public List<Integer> getIntList(String attributeName)
-	{
-		if (fetch.hasField(attributeName))
-		{
-			return decoratedEntity.getIntList(attributeName);
-		}
-		else
-		{
-			return entityManager.getReference(getEntityMetaData(), getIdValue()).getIntList(attributeName);
+			return entityManager.getReference(getEntityType(), getIdValue()).getEntities(attributeName, clazz);
 		}
 	}
 

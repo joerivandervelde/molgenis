@@ -16,15 +16,6 @@
 
 package org.molgenis.wikipathways.client;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URLEncoder;
-import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Consts;
@@ -41,12 +32,21 @@ import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 import org.molgenis.wikipathways.utils.Utils;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URLEncoder;
+import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * connects to the new WikiPathways REST webservice
- * 
- * @author msk
  *
+ * @author msk
  */
+@SuppressWarnings("unchecked")
 public class WikiPathwaysRESTBindingStub implements WikiPathwaysPortType
 {
 
@@ -140,26 +140,26 @@ public class WikiPathwaysRESTBindingStub implements WikiPathwaysPortType
 	{
 		try
 		{
-			String url = baseUrl + "/findPathwaysByXref";
+			StringBuilder url = new StringBuilder(baseUrl + "/findPathwaysByXref");
 			int count = 0;
 			for (String i : ids)
 			{
 				if (count == 0)
 				{
-					url = url + "?ids=" + i;
+					url.append("?ids=").append(i);
 					count++;
 				}
 				else
 				{
-					url = url + "&ids=" + i;
+					url.append("&ids=").append(i);
 				}
 			}
 			for (String c : codes)
 			{
-				url = url + "&codes=" + c;
+				url.append("&codes=").append(c);
 			}
 
-			Document jdomDocument = Utils.connect(url, client);
+			Document jdomDocument = Utils.connect(url.toString(), client);
 			Element root = jdomDocument.getRootElement();
 			List<Element> list = root.getChildren("result", WSNamespaces.NS1);
 			WSSearchResult[] res = new WSSearchResult[list.size()];
@@ -181,17 +181,18 @@ public class WikiPathwaysRESTBindingStub implements WikiPathwaysPortType
 	{
 		try
 		{
-			String url = baseUrl + "/getColoredPathway?pwId=" + pwId + "&revision=" + revision;
+			StringBuilder url = new StringBuilder(
+					baseUrl + "/getColoredPathway?pwId=" + pwId + "&revision=" + revision);
 			for (String g : graphId)
 			{
-				url = url + "&graphId=" + g;
+				url.append("&graphId=").append(g);
 			}
 			for (String c : color)
 			{
-				url = url + "&color=" + c;
+				url.append("&color=").append(c);
 			}
-			url = url + "&fileType=" + fileType;
-			Document jdomDocument = Utils.connect(url, client);
+			url.append("&fileType=").append(fileType);
+			Document jdomDocument = Utils.connect(url.toString(), client);
 			Element data = jdomDocument.getRootElement().getChild("data", WSNamespaces.NS1);
 			return Base64.decodeBase64(data.getValue());
 		}
@@ -603,9 +604,10 @@ public class WikiPathwaysRESTBindingStub implements WikiPathwaysPortType
 	{
 		try
 		{
-			String url = baseUrl + "/saveCurationTag?pwId=" + pwId + "&tagName=" + tagName + "&text="
-					+ URLEncoder.encode(tagText, "UTF-8") + "&revision=" + revision + "&auth=" + auth.getKey()
-					+ "&username=" + auth.getUser();
+			String url =
+					baseUrl + "/saveCurationTag?pwId=" + pwId + "&tagName=" + tagName + "&text=" + URLEncoder.encode(
+							tagText, "UTF-8") + "&revision=" + revision + "&auth=" + auth.getKey() + "&username=" + auth
+							.getUser();
 			Document jdomDocument = Utils.connect(url, client);
 			String success = jdomDocument.getRootElement().getChild("success", WSNamespaces.NS1).getValue();
 			if (success.equals("1"))
@@ -625,8 +627,9 @@ public class WikiPathwaysRESTBindingStub implements WikiPathwaysPortType
 	{
 		try
 		{
-			String url = baseUrl + "/saveOntologyTag?pwId=" + pwId + "&term=" + URLEncoder.encode(term, "UTF-8")
-					+ "&termId=" + termId + "&auth=" + auth.getKey() + "&user=" + auth.getUser();
+			String url =
+					baseUrl + "/saveOntologyTag?pwId=" + pwId + "&term=" + URLEncoder.encode(term, "UTF-8") + "&termId="
+							+ termId + "&auth=" + auth.getKey() + "&user=" + auth.getUser();
 			Document jdomDocument = Utils.connect(url, client);
 			String success = jdomDocument.getRootElement().getChild("success", WSNamespaces.NS1).getValue();
 			if (success.equals("1"))
@@ -668,7 +671,7 @@ public class WikiPathwaysRESTBindingStub implements WikiPathwaysPortType
 	{
 		try
 		{
-			Map<String, String> map = new HashMap<String, String>();
+			Map<String, String> map = new HashMap<>();
 			map.put("pwId", pwId);
 			map.put("description", description);
 			map.put("gpml", gpml);
@@ -696,7 +699,7 @@ public class WikiPathwaysRESTBindingStub implements WikiPathwaysPortType
 	{
 		try
 		{
-			Map<String, String> map = new HashMap<String, String>();
+			Map<String, String> map = new HashMap<>();
 			map.put("gpml", gpml);
 			map.put("auth", auth.getKey());
 			map.put("username", auth.getUser());
@@ -705,7 +708,7 @@ public class WikiPathwaysRESTBindingStub implements WikiPathwaysPortType
 
 			HttpPost httpost = new HttpPost(url);
 			// Adding all form parameters in a List of type NameValuePair
-			List<NameValuePair> nvps = new ArrayList<NameValuePair>();
+			List<NameValuePair> nvps = new ArrayList<>();
 			for (String key : map.keySet())
 			{
 				nvps.add(new BasicNameValuePair(key, map.get(key)));

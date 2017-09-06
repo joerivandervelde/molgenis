@@ -1,10 +1,5 @@
 package org.molgenis.app;
 
-import static org.molgenis.security.core.utils.SecurityUtils.getPluginReadAuthority;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.molgenis.security.MolgenisRoleHierarchy;
 import org.molgenis.security.MolgenisWebAppSecurityConfig;
 import org.molgenis.ui.security.MolgenisAccessDecisionVoter;
@@ -23,6 +18,11 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.web.access.expression.WebExpressionVoter;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.molgenis.security.core.utils.SecurityUtils.getPluginReadAuthority;
+
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
@@ -39,25 +39,18 @@ public class WebAppSecurityConfig extends MolgenisWebAppSecurityConfig
 	protected void configureUrlAuthorization(
 			ExpressionUrlAuthorizationConfigurer<HttpSecurity>.ExpressionInterceptUrlRegistry expressionInterceptUrlRegistry)
 	{
-		List<AccessDecisionVoter<?>> listOfVoters = new ArrayList<AccessDecisionVoter<?>>();
+		List<AccessDecisionVoter<?>> listOfVoters = new ArrayList<>();
 		listOfVoters.add(new WebExpressionVoter());
 		listOfVoters.add(new MolgenisAccessDecisionVoter());
 		expressionInterceptUrlRegistry.accessDecisionManager(new AffirmativeBased(listOfVoters));
 
 		expressionInterceptUrlRegistry.antMatchers("/").permitAll()
-		// DAS datasource uses the database, unauthenticated users can
-		// not see any data
-				.antMatchers("/das/**").permitAll()
 
-				.antMatchers("/myDas/**").permitAll()
+									  .antMatchers("/fdp/**").permitAll()
 
-				.antMatchers("/annotators/**").authenticated()
+									  .antMatchers("/annotators/**").authenticated()
 
-				.antMatchers("/omim/**").authenticated()
-
-				.antMatchers("/phenotips/**").authenticated()
-
-				.antMatchers("/charts/**").authenticated();
+									  .antMatchers("/charts/**").authenticated();
 	}
 
 	@Override

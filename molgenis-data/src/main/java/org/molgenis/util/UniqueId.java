@@ -1,13 +1,12 @@
 package org.molgenis.util;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 import com.eaio.uuid.UUIDGen;
+
+import java.nio.ByteBuffer;
 
 /**
  * Copied from https://github.com/mumrah/flake-java/blob/master/src/uniq/UniqueId.java
- * 
+ * <p>
  * See also http://boundary.com/blog/2012/01/12/flake-a-decentralized-k-ordered-unique-id-generator-in-erlang/
  */
 public class UniqueId
@@ -15,18 +14,11 @@ public class UniqueId
 
 	// Get the MAC address (i.e., the "node" from a UUID1)
 	private final long clockSeqAndNode = UUIDGen.getClockSeqAndNode();
-	private final byte[] node = new byte[]
-	{ (byte) ((clockSeqAndNode >> 40) & 0xff), (byte) ((clockSeqAndNode >> 32) & 0xff),
-			(byte) ((clockSeqAndNode >> 24) & 0xff), (byte) ((clockSeqAndNode >> 16) & 0xff),
-			(byte) ((clockSeqAndNode >> 8) & 0xff), (byte) ((clockSeqAndNode >> 0) & 0xff), };
-	private final ThreadLocal<ByteBuffer> tlbb = new ThreadLocal<ByteBuffer>()
-	{
-		@Override
-		public ByteBuffer initialValue()
-		{
-			return ByteBuffer.allocate(16);
-		}
-	};
+	private final byte[] node = new byte[] { (byte) ((clockSeqAndNode >> 40) & 0xff),
+			(byte) ((clockSeqAndNode >> 32) & 0xff), (byte) ((clockSeqAndNode >> 24) & 0xff),
+			(byte) ((clockSeqAndNode >> 16) & 0xff), (byte) ((clockSeqAndNode >> 8) & 0xff),
+			(byte) ((clockSeqAndNode) & 0xff), };
+	private final ThreadLocal<ByteBuffer> tlbb = ThreadLocal.withInitial(() -> ByteBuffer.allocate(16));
 
 	private volatile int seq;
 	private volatile long lastTimestamp;
@@ -57,29 +49,6 @@ public class UniqueId
 			bb.put(node);
 			bb.putShort((short) seq);
 			return bb.array();
-		}
-	}
-
-	public String getStringId()
-	{
-		byte[] ba = getId();
-		ByteBuffer bb = ByteBuffer.wrap(ba);
-		long ts = bb.getLong();
-		int node_0 = bb.getInt();
-		short node_1 = bb.getShort();
-		short seq = bb.getShort();
-		return String.format("%016d-%s%s-%04d", ts, Integer.toHexString(node_0), Integer.toHexString(node_1), seq);
-	}
-
-	public static void main(String[] args) throws IOException
-	{
-		UniqueId uid = new UniqueId();
-		int n = Integer.parseInt(args[0]);
-
-		for (int i = 0; i < n; i++)
-		{
-			System.out.write(uid.getId());
-			// System.out.println(uid.getStringId());
 		}
 	}
 }

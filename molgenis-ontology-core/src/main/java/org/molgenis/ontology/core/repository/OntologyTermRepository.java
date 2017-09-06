@@ -1,26 +1,10 @@
 package org.molgenis.ontology.core.repository;
 
-import static org.molgenis.ontology.core.meta.OntologyTermMetaData.ENTITY_NAME;
-import static org.molgenis.ontology.core.meta.OntologyTermMetaData.ONTOLOGY;
-import static org.molgenis.ontology.core.meta.OntologyTermMetaData.ONTOLOGY_TERM_IRI;
-import static org.molgenis.ontology.core.meta.OntologyTermMetaData.ONTOLOGY_TERM_NAME;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
+import com.google.common.collect.FluentIterable;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
-import org.elasticsearch.common.collect.Iterables;
-import org.elasticsearch.common.collect.Lists;
-import org.molgenis.data.DataService;
-import org.molgenis.data.Entity;
-import org.molgenis.data.MolgenisDataAccessException;
-import org.molgenis.data.Query;
-import org.molgenis.data.QueryRule;
+import org.molgenis.data.*;
 import org.molgenis.data.QueryRule.Operator;
 import org.molgenis.data.support.QueryImpl;
 import org.molgenis.ontology.core.meta.OntologyMetaData;
@@ -31,9 +15,11 @@ import org.molgenis.ontology.core.model.Ontology;
 import org.molgenis.ontology.core.model.OntologyTerm;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.google.common.collect.FluentIterable;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
+import static org.molgenis.ontology.core.meta.OntologyTermMetaData.*;
 
 /**
  * Maps {@link OntologyTermMetaData} {@link Entity} <-> {@link OntologyTerm}
@@ -48,59 +34,37 @@ public class OntologyTermRepository
 		this.dataService = requireNonNull(dataService);
 	}
 
-	/**
-	 * FIXME write docs
-	 * 
-	 * @param term
-	 * @param pageSize
-	 * @return
-	 */
 	public List<OntologyTerm> findOntologyTerms(String term, int pageSize)
 	{
 		Iterable<Entity> ontologyTermEntities;
 
 		// #1 find exact match
-		Query termNameQuery = new QueryImpl().eq(OntologyTermMetaData.ONTOLOGY_TERM_NAME, term).pageSize(pageSize);
-		ontologyTermEntities = new Iterable<Entity>()
-		{
-			@Override
-			public Iterator<Entity> iterator()
-			{
-				return dataService.findAll(ENTITY_NAME, termNameQuery).iterator();
-			}
-		};
+		Query<Entity> termNameQuery = new QueryImpl<>().eq(OntologyTermMetaData.ONTOLOGY_TERM_NAME, term)
+													   .pageSize(pageSize);
+		ontologyTermEntities = () -> dataService.findAll(ONTOLOGY_TERM, termNameQuery).iterator();
 
 		if (!ontologyTermEntities.iterator().hasNext())
 		{
-			Query termsQuery = new QueryImpl().search(term).pageSize(pageSize);
-			ontologyTermEntities = new Iterable<Entity>()
-			{
-				@Override
-				public Iterator<Entity> iterator()
-				{
-					return dataService.findAll(ENTITY_NAME, termsQuery).iterator();
-				}
-			};
+			Query<Entity> termsQuery = new QueryImpl<>().search(term).pageSize(pageSize);
+			ontologyTermEntities = () -> dataService.findAll(ONTOLOGY_TERM, termsQuery).iterator();
 		}
 		return Lists.newArrayList(Iterables.transform(ontologyTermEntities, OntologyTermRepository::toOntologyTerm));
 	}
 
 	/**
 	 * Finds exact {@link OntologyTerm}s within {@link Ontology}s.
-	 * 
-	 * @param ontologyIds
-	 *            IDs of the {@link Ontology}s to search in
-	 * @param terms
-	 *            {@link List} of search terms. the {@link OntologyTerm} must match at least one of these terms
-	 * @param pageSize
-	 *            max number of results
+	 *
+	 * @param ontologyIds IDs of the {@link Ontology}s to search in
+	 * @param terms       {@link List} of search terms. the {@link OntologyTerm} must match at least one of these terms
+	 * @param pageSize    max number of results
 	 * @return {@link List} of {@link OntologyTerm}s
 	 */
 	public List<OntologyTerm> findExcatOntologyTerms(List<String> ontologyIds, Set<String> terms, int pageSize)
 	{
 		List<OntologyTerm> findOntologyTerms = findOntologyTerms(ontologyIds, terms, pageSize);
-		return findOntologyTerms.stream().filter(ontologyTerm -> isOntologyTermExactMatch(terms, ontologyTerm))
-				.collect(Collectors.toList());
+		return findOntologyTerms.stream()
+								.filter(ontologyTerm -> isOntologyTermExactMatch(terms, ontologyTerm))
+								.collect(Collectors.toList());
 	}
 
 	private boolean isOntologyTermExactMatch(Set<String> terms, OntologyTerm ontologyTerm)
@@ -122,18 +86,15 @@ public class OntologyTermRepository
 
 	/**
 	 * Finds {@link OntologyTerm}s within {@link Ontology}s.
-	 * 
-	 * @param ontologyIds
-	 *            IDs of the {@link Ontology}s to search in
-	 * @param terms
-	 *            {@link List} of search terms. the {@link OntologyTerm} must match at least one of these terms
-	 * @param pageSize
-	 *            max number of results
+	 *
+	 * @param ontologyIds IDs of the {@link Ontology}s to search in
+	 * @param terms       {@link List} of search terms. the {@link OntologyTerm} must match at least one of these terms
+	 * @param pageSize    max number of results
 	 * @return {@link List} of {@link OntologyTerm}s
 	 */
 	public List<OntologyTerm> findOntologyTerms(List<String> ontologyIds, Set<String> terms, int pageSize)
 	{
-		List<QueryRule> rules = new ArrayList<QueryRule>();
+		List<QueryRule> rules = new ArrayList<>();
 		for (String term : terms)
 		{
 			if (rules.size() > 0)
@@ -146,40 +107,25 @@ public class OntologyTermRepository
 				new QueryRule(rules));
 
 		final List<QueryRule> finalRules = rules;
-		Iterable<Entity> termEntities = new Iterable<Entity>()
-		{
-			@Override
-			public Iterator<Entity> iterator()
-			{
-				return dataService.findAll(ENTITY_NAME, new QueryImpl(finalRules).pageSize(pageSize)).iterator();
-			}
-		};
+		Iterable<Entity> termEntities = () -> dataService.findAll(ONTOLOGY_TERM,
+				new QueryImpl<>(finalRules).pageSize(pageSize)).iterator();
 
 		return Lists.newArrayList(Iterables.transform(termEntities, OntologyTermRepository::toOntologyTerm));
 	}
 
 	public List<OntologyTerm> getAllOntologyTerms(String ontologyId)
 	{
-		Entity ontologyEntity = dataService.findOne(OntologyMetaData.ENTITY_NAME,
-				new QueryImpl().eq(OntologyMetaData.ONTOLOGY_IRI, ontologyId));
+		Entity ontologyEntity = dataService.findOne(OntologyMetaData.ONTOLOGY,
+				new QueryImpl<>().eq(OntologyMetaData.ONTOLOGY_IRI, ontologyId));
 
 		if (ontologyEntity != null)
 		{
-			Iterable<Entity> ontologyTermEntities = new Iterable<Entity>()
-			{
+			Iterable<Entity> ontologyTermEntities = () -> dataService.findAll(OntologyTermMetaData.ONTOLOGY_TERM,
+					new QueryImpl<>().eq(OntologyTermMetaData.ONTOLOGY, ontologyEntity).pageSize(Integer.MAX_VALUE))
+																	 .iterator();
 
-				@Override
-				public Iterator<Entity> iterator()
-				{
-					return dataService
-							.findAll(OntologyTermMetaData.ENTITY_NAME, new QueryImpl()
-									.eq(OntologyTermMetaData.ONTOLOGY, ontologyEntity).pageSize(Integer.MAX_VALUE))
-							.iterator();
-				}
-			};
-
-			return Lists
-					.newArrayList(Iterables.transform(ontologyTermEntities, OntologyTermRepository::toOntologyTerm));
+			return Lists.newArrayList(
+					Iterables.transform(ontologyTermEntities, OntologyTermRepository::toOntologyTerm));
 		}
 
 		return Collections.emptyList();
@@ -187,9 +133,8 @@ public class OntologyTermRepository
 
 	/**
 	 * Retrieves an {@link OntologyTerm} for one or more IRIs
-	 * 
-	 * @param iris
-	 *            Array of {@link OntologyTerm} IRIs
+	 *
+	 * @param iris Array of {@link OntologyTerm} IRIs
 	 * @return combined {@link OntologyTerm} for the iris.
 	 */
 	public OntologyTerm getOntologyTerm(String[] iris)
@@ -198,7 +143,7 @@ public class OntologyTermRepository
 		for (String iri : iris)
 		{
 			OntologyTerm ontologyTerm = toOntologyTerm(
-					dataService.findOne(ENTITY_NAME, QueryImpl.EQ(ONTOLOGY_TERM_IRI, iri)));
+					dataService.findOne(ONTOLOGY_TERM, QueryImpl.EQ(ONTOLOGY_TERM_IRI, iri)));
 			if (ontologyTerm == null)
 			{
 				return null;
@@ -211,10 +156,7 @@ public class OntologyTermRepository
 	/**
 	 * Calculate the distance between any two ontology terms in the ontology tree structure by calculating the
 	 * difference in nodePaths.
-	 * 
-	 * @param ontologyTerm1
-	 * @param ontologyTerm2
-	 * 
+	 *
 	 * @return the distance between two ontology terms
 	 */
 	public int getOntologyTermDistance(OntologyTerm ontologyTerm1, OntologyTerm ontologyTerm2)
@@ -237,15 +179,15 @@ public class OntologyTermRepository
 
 	private String getOntologyTermNodePath(OntologyTerm ontologyTerm)
 	{
-		Entity ontologyTermEntity = dataService.findOne(ENTITY_NAME,
-				new QueryImpl().eq(ONTOLOGY_TERM_IRI, ontologyTerm.getIRI()));
+		Entity ontologyTermEntity = dataService.findOne(ONTOLOGY_TERM,
+				new QueryImpl<>().eq(ONTOLOGY_TERM_IRI, ontologyTerm.getIRI()));
 
-		Iterable<Entity> ontologyTermNodePathEntities = ontologyTermEntity
-				.getEntities(OntologyTermMetaData.ONTOLOGY_TERM_NODE_PATH);
+		Iterable<Entity> ontologyTermNodePathEntities = ontologyTermEntity.getEntities(
+				OntologyTermMetaData.ONTOLOGY_TERM_NODE_PATH);
 
 		for (Entity ontologyTermNodePathEntity : ontologyTermNodePathEntities)
 		{
-			return ontologyTermNodePathEntity.getString(OntologyTermNodePathMetaData.ONTOLOGY_TERM_NODE_PATH);
+			return ontologyTermNodePathEntity.getString(OntologyTermNodePathMetaData.NODE_PATH);
 		}
 
 		return null;
@@ -254,9 +196,7 @@ public class OntologyTermRepository
 	/**
 	 * Calculate the distance between nodePaths, e.g. 0[0].1[1].2[2], 0[0].2[1].2[2]. The distance is the non-overlap
 	 * part of the strings
-	 * 
-	 * @param nodePath1
-	 * @param nodePath2
+	 *
 	 * @return distance
 	 */
 	public int calculateNodePathDistance(String nodePath1, String nodePath2)
@@ -276,62 +216,47 @@ public class OntologyTermRepository
 
 	/**
 	 * Retrieve all descendant ontology terms
-	 * 
-	 * @param ontologyTerm
+	 *
 	 * @return a list of {@link OntologyTerm}
 	 */
 	public List<OntologyTerm> getChildren(OntologyTerm ontologyTerm)
 	{
-		Iterable<Entity> ontologyTermEntities = new Iterable<Entity>()
-		{
-			@Override
-			public Iterator<Entity> iterator()
-			{
-				return dataService.findAll(ENTITY_NAME, QueryImpl.EQ(ONTOLOGY_TERM_IRI, ontologyTerm.getIRI()))
-						.iterator();
-			}
-		};
+		Iterable<Entity> ontologyTermEntities = () -> dataService.findAll(ONTOLOGY_TERM,
+				QueryImpl.EQ(ONTOLOGY_TERM_IRI, ontologyTerm.getIRI())).iterator();
 
-		List<OntologyTerm> children = new ArrayList<OntologyTerm>();
+		List<OntologyTerm> children = new ArrayList<>();
 		for (Entity ontologyTermEntity : ontologyTermEntities)
 		{
 			Entity ontologyEntity = ontologyTermEntity.getEntity(OntologyTermMetaData.ONTOLOGY);
 			ontologyTermEntity.getEntities(OntologyTermMetaData.ONTOLOGY_TERM_NODE_PATH)
-					.forEach(ontologyTermNodePathEntity -> children
-							.addAll(getChildOntologyTermsByNodePath(ontologyEntity, ontologyTermNodePathEntity)));
+							  .forEach(ontologyTermNodePathEntity -> children.addAll(
+									  getChildOntologyTermsByNodePath(ontologyEntity, ontologyTermNodePathEntity)));
 		}
 		return children;
 	}
 
 	public List<OntologyTerm> getChildOntologyTermsByNodePath(Entity ontologyEntity, Entity nodePathEntity)
 	{
-		String nodePath = nodePathEntity.getString(OntologyTermNodePathMetaData.ONTOLOGY_TERM_NODE_PATH);
+		String nodePath = nodePathEntity.getString(OntologyTermNodePathMetaData.NODE_PATH);
 
-		Iterable<Entity> relatedOntologyTermEntities = new Iterable<Entity>()
-		{
-
-			@Override
-			public Iterator<Entity> iterator()
-			{
-				return dataService.findAll(OntologyTermMetaData.ENTITY_NAME,
-						new QueryImpl(new QueryRule(OntologyTermMetaData.ONTOLOGY_TERM_NODE_PATH, Operator.FUZZY_MATCH,
-								"\"" + nodePath + "\"")).and().eq(OntologyTermMetaData.ONTOLOGY, ontologyEntity))
-						.iterator();
-
-			}
-		};
+		Iterable<Entity> relatedOntologyTermEntities = () -> dataService.findAll(OntologyTermMetaData.ONTOLOGY_TERM,
+				new QueryImpl<>(new QueryRule(OntologyTermMetaData.ONTOLOGY_TERM_NODE_PATH, Operator.FUZZY_MATCH,
+						"\"" + nodePath + "\"")).and().eq(OntologyTermMetaData.ONTOLOGY, ontologyEntity)).iterator();
 		Iterable<Entity> childOntologyTermEntities = FluentIterable.from(relatedOntologyTermEntities)
-				.filter(entity -> qualifiedNodePath(nodePath, entity)).toList();
+																   .filter(entity -> qualifiedNodePath(nodePath,
+																		   entity))
+																   .toList();
 
-		return Lists
-				.newArrayList(Iterables.transform(childOntologyTermEntities, OntologyTermRepository::toOntologyTerm));
+		return Lists.newArrayList(
+				Iterables.transform(childOntologyTermEntities, OntologyTermRepository::toOntologyTerm));
 	}
 
 	private boolean qualifiedNodePath(String nodePath, Entity entity)
 	{
 		Iterable<Entity> nodePathEntities = entity.getEntities(OntologyTermMetaData.ONTOLOGY_TERM_NODE_PATH);
-		return Lists.newArrayList(nodePathEntities).stream().anyMatch(nodePathEntity -> {
-			String childNodePath = nodePathEntity.getString(OntologyTermNodePathMetaData.ONTOLOGY_TERM_NODE_PATH);
+		return Lists.newArrayList(nodePathEntities).stream().anyMatch(nodePathEntity ->
+		{
+			String childNodePath = nodePathEntity.getString(OntologyTermNodePathMetaData.NODE_PATH);
 			return !StringUtils.equals(nodePath, childNodePath) && childNodePath.startsWith(nodePath);
 		});
 	}
@@ -344,12 +269,12 @@ public class OntologyTermRepository
 		}
 
 		// Collect synonyms if there are any
-		List<String> synonyms = new ArrayList<String>();
+		List<String> synonyms = new ArrayList<>();
 		Iterable<Entity> ontologyTermSynonymEntities = entity.getEntities(OntologyTermMetaData.ONTOLOGY_TERM_SYNONYM);
 		if (ontologyTermSynonymEntities != null)
 		{
-			ontologyTermSynonymEntities.forEach(synonymEntity -> synonyms
-					.add(synonymEntity.getString(OntologyTermSynonymMetaData.ONTOLOGY_TERM_SYNONYM)));
+			ontologyTermSynonymEntities.forEach(synonymEntity -> synonyms.add(
+					synonymEntity.getString(OntologyTermSynonymMetaData.ONTOLOGY_TERM_SYNONYM_ATTR)));
 		}
 		if (!synonyms.contains(entity.getString(ONTOLOGY_TERM_NAME)))
 		{

@@ -1,26 +1,13 @@
 package org.molgenis.security.account;
 
-import static java.util.Objects.requireNonNull;
-import static org.molgenis.security.account.AccountController.URI;
-import static org.molgenis.security.user.UserAccountService.MIN_PASSWORD_LENGTH;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.Map;
-
-import javax.naming.NoPermissionException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-
-import org.molgenis.auth.MolgenisUser;
+import org.molgenis.auth.User;
+import org.molgenis.auth.UserFactory;
 import org.molgenis.data.MolgenisDataAccessException;
 import org.molgenis.data.MolgenisDataException;
-import org.molgenis.data.settings.AppSettings;
 import org.molgenis.security.captcha.CaptchaException;
 import org.molgenis.security.captcha.CaptchaRequest;
 import org.molgenis.security.captcha.CaptchaService;
+import org.molgenis.security.settings.AuthenticationSettings;
 import org.molgenis.security.user.MolgenisUserException;
 import org.molgenis.util.CountryCodes;
 import org.molgenis.util.ErrorMessageResponse;
@@ -36,15 +23,22 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.BindException;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import javax.naming.NoPermissionException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
+
+import static java.util.Objects.requireNonNull;
+import static org.molgenis.security.account.AccountController.URI;
+import static org.molgenis.security.user.UserAccountService.MIN_PASSWORD_LENGTH;
 
 @Controller
 @RequestMapping(URI)
@@ -62,16 +56,18 @@ public class AccountController
 	private final AccountService accountService;
 	private final CaptchaService captchaService;
 	private final RedirectStrategy redirectStrategy;
-	private final AppSettings appSettings;
+	private final AuthenticationSettings authenticationSettings;
+	private final UserFactory userFactory;
 
 	@Autowired
 	public AccountController(AccountService accountService, CaptchaService captchaService,
-			RedirectStrategy redirectStrategy, AppSettings appSettings)
+			RedirectStrategy redirectStrategy, AuthenticationSettings authenticationSettings, UserFactory userFactory)
 	{
 		this.accountService = requireNonNull(accountService);
 		this.captchaService = requireNonNull(captchaService);
 		this.redirectStrategy = requireNonNull(redirectStrategy);
-		this.appSettings = requireNonNull(appSettings);
+		this.authenticationSettings = requireNonNull(authenticationSettings);
+		this.userFactory = requireNonNull(userFactory);
 	}
 
 	@RequestMapping(value = "/login", method = RequestMethod.GET)
@@ -99,7 +95,7 @@ public class AccountController
 	public ModelAndView getChangePasswordForm()
 	{
 		ModelAndView model = new ModelAndView("view-change-password");
-				model.addObject("min_password_length", MIN_PASSWORD_LENGTH);
+		model.addObject("min_password_length", MIN_PASSWORD_LENGTH);
 		return model;
 	}
 
@@ -131,7 +127,7 @@ public class AccountController
 	public Map<String, String> registerUser(@Valid @ModelAttribute RegisterRequest registerRequest,
 			@Valid @ModelAttribute CaptchaRequest captchaRequest, HttpServletRequest request) throws Exception
 	{
-		if (appSettings.getSignUp())
+		if (authenticationSettings.getSignUp())
 		{
 			if (!registerRequest.getPassword().equals(registerRequest.getConfirmPassword()))
 			{
@@ -141,12 +137,14 @@ public class AccountController
 			{
 				throw new CaptchaException("invalid captcha answer");
 			}
-			MolgenisUser molgenisUser = toMolgenisUser(registerRequest);
+			User user = toUser(registerRequest);
 			String activationUri = null;
 			if (StringUtils.isEmpty(request.getHeader("X-Forwarded-Host")))
 			{
-				activationUri = ServletUriComponentsBuilder.fromCurrentRequest().replacePath(URI + "/activate").build()
-						.toUriString();
+				activationUri = ServletUriComponentsBuilder.fromCurrentRequest()
+														   .replacePath(URI + "/activate")
+														   .build()
+														   .toUriString();
 			}
 			else
 			{
@@ -154,9 +152,9 @@ public class AccountController
 				if (scheme == null) scheme = request.getScheme();
 				activationUri = scheme + "://" + request.getHeader("X-Forwarded-Host") + URI + "/activate";
 			}
-			accountService.createUser(molgenisUser, activationUri);
+			accountService.createUser(user, activationUri);
 
-			String successMessage = appSettings.getSignUpModeration() ? REGISTRATION_SUCCESS_MESSAGE_ADMIN : REGISTRATION_SUCCESS_MESSAGE_USER;
+			String successMessage = authenticationSettings.getSignUpModeration() ? REGISTRATION_SUCCESS_MESSAGE_ADMIN : REGISTRATION_SUCCESS_MESSAGE_USER;
 			captchaService.removeCaptcha();
 			return Collections.singletonMap("message", successMessage);
 		}
@@ -173,6 +171,10 @@ public class AccountController
 		{
 			accountService.activateUser(activationCode);
 			model.addAttribute("successMessage", "Your account has been activated, you can now sign in.");
+		}
+		catch (MolgenisUserException e)
+		{
+			model.addAttribute("warningMessage", e.getMessage());
 		}
 		catch (RuntimeException e)
 		{
@@ -246,9 +248,9 @@ public class AccountController
 		return new ErrorMessageResponse(Collections.singletonList(new ErrorMessage(e.getMessage())));
 	}
 
-	private MolgenisUser toMolgenisUser(RegisterRequest request)
+	private User toUser(RegisterRequest request)
 	{
-		MolgenisUser user = new MolgenisUser();
+		User user = userFactory.create();
 		user.setUsername(request.getUsername());
 		user.setPassword(request.getPassword());
 		user.setEmail(request.getEmail());

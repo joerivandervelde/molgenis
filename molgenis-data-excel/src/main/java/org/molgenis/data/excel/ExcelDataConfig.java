@@ -1,11 +1,10 @@
 package org.molgenis.data.excel;
 
-import javax.annotation.PostConstruct;
-
 import org.molgenis.data.FileRepositoryCollectionFactory;
-import org.molgenis.data.support.GenericImporterExtensions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+
+import javax.annotation.PostConstruct;
 
 @Configuration
 public class ExcelDataConfig
@@ -21,7 +20,7 @@ public class ExcelDataConfig
 	public void registerExcelRepositorySource()
 	{
 		fileRepositoryCollectionFactory.addFileRepositoryCollectionClass(ExcelRepositoryCollection.class,
-				GenericImporterExtensions.getExcel());
+				ExcelFileExtensions.getExcel());
 	}
 
 }

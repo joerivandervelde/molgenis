@@ -1,21 +1,21 @@
 package org.molgenis.data.rest.v2;
 
-import static java.util.Objects.requireNonNull;
+import org.molgenis.data.DataService;
+import org.molgenis.data.Fetch;
+import org.molgenis.data.i18n.LanguageService;
+import org.molgenis.data.meta.model.EntityType;
+import org.molgenis.data.rest.EntityPager;
+import org.molgenis.security.core.PermissionService;
 
 import java.util.List;
 import java.util.Map;
 
-import org.molgenis.data.DataService;
-import org.molgenis.data.EntityMetaData;
-import org.molgenis.data.Fetch;
-import org.molgenis.data.i18n.LanguageService;
-import org.molgenis.data.rest.EntityPager;
-import org.molgenis.security.core.MolgenisPermissionService;
+import static java.util.Objects.requireNonNull;
 
 class EntityCollectionResponseV2
 {
 	private final String href;
-	private final EntityMetaDataResponseV2 meta;
+	private final EntityTypeResponseV2 meta;
 	private final Integer start;
 	private final Integer num;
 	private final Long total;
@@ -36,11 +36,11 @@ class EntityCollectionResponseV2
 	}
 
 	public EntityCollectionResponseV2(EntityPager entityPager, List<Map<String, Object>> items, Fetch fetch,
-			String href, EntityMetaData meta, MolgenisPermissionService permissionService, DataService dataService,
+			String href, EntityType meta, PermissionService permissionService, DataService dataService,
 			LanguageService languageService, String prevHref, String nextHref)
 	{
 		this.href = href;
-		this.meta = new EntityMetaDataResponseV2(meta, fetch, permissionService, dataService, languageService);
+		this.meta = new EntityTypeResponseV2(meta, fetch, permissionService, dataService, languageService);
 		this.start = entityPager.getStart();
 		this.num = entityPager.getNum();
 		this.total = entityPager.getTotal();
@@ -54,7 +54,7 @@ class EntityCollectionResponseV2
 		return href;
 	}
 
-	public EntityMetaDataResponseV2 getMeta()
+	public EntityTypeResponseV2 getMeta()
 	{
 		return meta;
 	}

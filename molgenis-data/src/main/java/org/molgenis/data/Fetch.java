@@ -1,16 +1,14 @@
 package org.molgenis.data;
 
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import org.molgenis.data.meta.model.Attribute;
+
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 /**
  * {@link Fetch} that defines which entity attributes to retrieve. For attributes referring to entities a Fetch can be
  * supplied that defines which entity attributes to retrieve for the referred entity.
- * 
+ * <p>
  * A null Fetch means that all attributes should be retrieved.
  */
 public class Fetch implements Iterable<Entry<String, Fetch>>
@@ -28,9 +26,8 @@ public class Fetch implements Iterable<Entry<String, Fetch>>
 	/**
 	 * Updates this Fetch, adding a single field. If the field is a reference, the reference will be fetched with a null
 	 * Fetch, which means that all attributes will be fetched.
-	 * 
-	 * @param field
-	 *            the name of the field to fetch
+	 *
+	 * @param field the name of the field to fetch
 	 * @return this Fetch, updated
 	 */
 	public Fetch field(String field)
@@ -41,11 +38,9 @@ public class Fetch implements Iterable<Entry<String, Fetch>>
 	/**
 	 * Updates this fetch, adding a single field. If the field is a reference, the reference will be fetched with the
 	 * Fetch that is provided.
-	 * 
-	 * @param field
-	 *            the name of the field to fetch
-	 * @param fetch
-	 *            the fetch to use for this field, if the field is a reference
+	 *
+	 * @param field the name of the field to fetch
+	 * @param fetch the fetch to use for this field, if the field is a reference
 	 * @return this Fetch, updated
 	 */
 	public Fetch field(String field, Fetch fetch)
@@ -56,9 +51,8 @@ public class Fetch implements Iterable<Entry<String, Fetch>>
 
 	/**
 	 * Retrieves the Fetch for a particular field
-	 * 
-	 * @param field
-	 *            the field for which the Fetch is retrieved
+	 *
+	 * @param field the field for which the Fetch is retrieved
 	 * @return the Fetch for this field, or null if none was provided
 	 */
 	public Fetch getFetch(String field)
@@ -68,20 +62,16 @@ public class Fetch implements Iterable<Entry<String, Fetch>>
 
 	/**
 	 * Retrieves the Fetch for an attribute
-	 * 
-	 * @param attr
-	 * @return
 	 */
-	public Fetch getFetch(AttributeMetaData attr)
+	public Fetch getFetch(Attribute attr)
 	{
 		return getFetch(attr.getName());
 	}
 
 	/**
 	 * Indicates if a field is included in this Fetch.
-	 * 
-	 * @param field
-	 *            the field that is queried
+	 *
+	 * @param field the field that is queried
 	 * @return true if the field is included in this Fetch, otherwise false
 	 */
 	public boolean hasField(String field)
@@ -91,19 +81,18 @@ public class Fetch implements Iterable<Entry<String, Fetch>>
 
 	/**
 	 * Indicates if a field is included in this Fetch
-	 * 
-	 * @param attr
-	 *            {@link AttributeMetaData} for the field
+	 *
+	 * @param attr {@link Attribute} for the field
 	 * @return true if the field is included in this Fetch, otherwise false
 	 */
-	public boolean hasField(AttributeMetaData attr)
+	public boolean hasField(Attribute attr)
 	{
 		return hasField(attr.getName());
 	}
 
 	/**
 	 * Retrieves the fields included in this Fetch
-	 * 
+	 *
 	 * @return {@link Set} containing the names of all fields included in this Fetch
 	 */
 	public Set<String> getFields()
@@ -114,7 +103,7 @@ public class Fetch implements Iterable<Entry<String, Fetch>>
 	/**
 	 * Iterates over all fields in this fetch. The key is the field name, the value is the {@link Fetch} for that field,
 	 * or null if no Fetch is provided for that field.
-	 * 
+	 *
 	 * @return {@link Iterator} over all {@link Entry}s in this fetch.
 	 */
 	@Override
@@ -158,7 +147,7 @@ public class Fetch implements Iterable<Entry<String, Fetch>>
 	private void toStringRec(StringBuilder builder, Fetch fetch)
 	{
 		builder.append('(');
-		for (Iterator<Map.Entry<String, Fetch>> it = fetch.iterator(); it.hasNext();)
+		for (Iterator<Map.Entry<String, Fetch>> it = fetch.iterator(); it.hasNext(); )
 		{
 			Entry<String, Fetch> entry = it.next();
 			builder.append(entry.getKey());

@@ -1,26 +1,25 @@
 package org.molgenis.data.excel;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
-
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Row;
 import org.molgenis.data.Entity;
 import org.molgenis.data.MolgenisDataException;
+import org.molgenis.data.meta.model.EntityType;
 import org.molgenis.data.processor.CellProcessor;
 import org.molgenis.data.processor.LowerCaseProcessor;
-import org.molgenis.data.support.DefaultEntityMetaData;
-import org.molgenis.data.support.MapEntity;
+import org.molgenis.data.support.DynamicEntity;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import java.time.ZoneId;
+import java.util.*;
+
+import static org.apache.poi.ss.usermodel.CellType.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.testng.Assert.*;
 
 public class ExcelEntityTest
 {
@@ -33,24 +32,23 @@ public class ExcelEntityTest
 	@BeforeMethod
 	public void beforeMethod()
 	{
-		cellProcessors = new ArrayList<CellProcessor>();
+		cellProcessors = new ArrayList<>();
 		row = mock(Row.class);
 
 		cell = mock(Cell.class);
 		when(row.getCell(0)).thenReturn(cell);
 
 		cellProcessors.add(new LowerCaseProcessor());
-		colNamesMap = new LinkedHashMap<String, Integer>();
+		colNamesMap = new LinkedHashMap<>();
 		colNamesMap.put("attr1", 0);
 
-		excelEntity = new ExcelEntity(row, colNamesMap, cellProcessors,
-				new DefaultEntityMetaData("Entity1", ExcelEntity.class));
+		excelEntity = new ExcelEntity(row, colNamesMap, cellProcessors, mock(EntityType.class));
 	}
 
 	@Test
 	public void getStringType()
 	{
-		when(cell.getCellType()).thenReturn(Cell.CELL_TYPE_STRING);
+		when(cell.getCellTypeEnum()).thenReturn(STRING);
 		when(cell.getStringCellValue()).thenReturn("XXX");
 
 		Object val = excelEntity.get("attr1");
@@ -61,7 +59,7 @@ public class ExcelEntityTest
 	@Test
 	public void getBlankType()
 	{
-		when(cell.getCellType()).thenReturn(Cell.CELL_TYPE_BLANK);
+		when(cell.getCellTypeEnum()).thenReturn(BLANK);
 		Object val = excelEntity.get("attr1");
 		assertNull(val);
 	}
@@ -69,7 +67,7 @@ public class ExcelEntityTest
 	@Test
 	public void getIntegerType()
 	{
-		when(cell.getCellType()).thenReturn(Cell.CELL_TYPE_NUMERIC);
+		when(cell.getCellTypeEnum()).thenReturn(NUMERIC);
 		when(cell.getNumericCellValue()).thenReturn(1d);
 
 		Object val = excelEntity.get("attr1");
@@ -80,7 +78,7 @@ public class ExcelEntityTest
 	@Test
 	public void getDoubleType()
 	{
-		when(cell.getCellType()).thenReturn(Cell.CELL_TYPE_NUMERIC);
+		when(cell.getCellTypeEnum()).thenReturn(NUMERIC);
 		when(cell.getNumericCellValue()).thenReturn(1.8d);
 
 		Object val = excelEntity.get("attr1");
@@ -89,9 +87,30 @@ public class ExcelEntityTest
 	}
 
 	@Test
+	public void getNumericDateType()
+	{
+		double dateDouble = 35917.0;
+		TimeZone utcTimeZone = TimeZone.getTimeZone(ZoneId.of("UTC"));
+		Date javaDate = DateUtil.getJavaDate(dateDouble, utcTimeZone);
+
+		when(cell.getCellTypeEnum()).thenReturn(NUMERIC);
+		when(cell.getNumericCellValue()).thenReturn(dateDouble);
+		when(cell.getDateCellValue()).thenReturn(javaDate);
+		CellStyle cellStyle = mock(CellStyle.class);
+		when(cell.getCellStyle()).thenReturn(cellStyle);
+		short dataFormat = 0x0e;
+		when(cellStyle.getDataFormat()).thenReturn(dataFormat);
+
+		Object val = excelEntity.get("attr1");
+
+		assertNotNull(val);
+		assertEquals(val, "1998-05-02t00:00");
+	}
+
+	@Test
 	public void getBooleanType()
 	{
-		when(cell.getCellType()).thenReturn(Cell.CELL_TYPE_BOOLEAN);
+		when(cell.getCellTypeEnum()).thenReturn(BOOLEAN);
 		when(cell.getBooleanCellValue()).thenReturn(true);
 
 		Object val = excelEntity.get("attr1");
@@ -102,7 +121,7 @@ public class ExcelEntityTest
 	@Test(expectedExceptions = MolgenisDataException.class)
 	public void getErrorType()
 	{
-		when(cell.getCellType()).thenReturn(Cell.CELL_TYPE_ERROR);
+		when(cell.getCellTypeEnum()).thenReturn(ERROR);
 		excelEntity.get("attr1");
 	}
 
@@ -116,7 +135,14 @@ public class ExcelEntityTest
 	@Test
 	public void setEntity()
 	{
-		Entity entity = new MapEntity();
+		Entity entity = new DynamicEntity(mock(EntityType.class))
+		{
+			@Override
+			protected void validateValueType(String attrName, Object value)
+			{
+				// noop
+			}
+		};
 		entity.set("attr1", "test1");
 		entity.set("attr2", "test2");
 

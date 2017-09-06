@@ -1,15 +1,12 @@
 package org.molgenis.migrate.version;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Properties;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.*;
+import java.util.Properties;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Some utilities for the migration steps that need to access molgenis-server.properties
@@ -48,7 +45,7 @@ public class MigrationUtils
 	public static Properties getMolgenisServerProperties()
 	{
 		try (InputStreamReader in = new InputStreamReader(new FileInputStream(getMolgenisServerPropertiesFile()),
-				StandardCharsets.UTF_8))
+				UTF_8))
 		{
 			Properties p = new Properties();
 			p.load(in);
@@ -69,8 +66,8 @@ public class MigrationUtils
 			String molgenisHomeDir = System.getProperty(MOLGENIS_HOME_KEY);
 			if (molgenisHomeDir == null)
 			{
-				throw new IllegalArgumentException(String.format("missing required java system property '%s'",
-						MOLGENIS_HOME_KEY));
+				throw new IllegalArgumentException(
+						String.format("missing required java system property '%s'", MOLGENIS_HOME_KEY));
 			}
 			propertiesFile = new File(molgenisHomeDir, "molgenis-server.properties");
 		}

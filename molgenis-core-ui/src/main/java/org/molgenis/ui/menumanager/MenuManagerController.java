@@ -1,63 +1,52 @@
 package org.molgenis.ui.menumanager;
 
-import static org.molgenis.ui.menumanager.MenuManagerController.URI;
-import static org.springframework.http.HttpStatus.OK;
-import static org.springframework.web.bind.annotation.RequestMethod.GET;
-import static org.springframework.web.bind.annotation.RequestMethod.POST;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.TreeTraverser;
+import org.molgenis.data.plugin.model.Plugin;
+import org.molgenis.data.settings.AppSettings;
+import org.molgenis.file.FileStore;
+import org.molgenis.ui.menu.Menu;
+import org.molgenis.util.FileUploadUtils;
+import org.molgenis.web.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.Part;
+import javax.validation.Valid;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import javax.servlet.http.Part;
-import javax.validation.Valid;
-
-import org.molgenis.data.settings.AppSettings;
-import org.molgenis.file.FileStore;
-import org.molgenis.framework.ui.MolgenisPlugin;
-import org.molgenis.ui.MolgenisPluginController;
-import org.molgenis.ui.MolgenisUi;
-import org.molgenis.ui.MolgenisUiMenu;
-import org.molgenis.ui.MolgenisUiMenuItem;
-import org.molgenis.ui.MolgenisUiMenuItemType;
-import org.molgenis.ui.menu.Menu;
-import org.molgenis.util.FileUploadUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
-
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.TreeTraverser;
+import static org.molgenis.ui.menumanager.MenuManagerController.URI;
+import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.web.bind.annotation.RequestMethod.GET;
+import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 /**
  * Plugin to view and modify the app UI menu
  */
 @Controller
 @RequestMapping(URI)
-public class MenuManagerController extends MolgenisPluginController
+public class MenuManagerController extends PluginController
 {
 	public static final String ID = "menumanager";
-	public static final String URI = MolgenisPluginController.PLUGIN_URI_PREFIX + ID;
+	public static final String URI = PluginController.PLUGIN_URI_PREFIX + ID;
 
 	private final MenuManagerService menuManagerService;
 	private final FileStore fileStore;
-	private final MolgenisUi molgenisUi;
+	private final Ui molgenisUi;
 	private final AppSettings appSettings;
 
 	private static final String ERRORMESSAGE_LOGO = "The logo needs to be an image file like png or jpg.";
 
 	@Autowired
-	public MenuManagerController(MenuManagerService menuManagerService, FileStore fileStore, MolgenisUi molgenisUi,
+	public MenuManagerController(MenuManagerService menuManagerService, FileStore fileStore, Ui molgenisUi,
 			AppSettings appSettings)
 	{
 		super(URI);
@@ -74,36 +63,23 @@ public class MenuManagerController extends MolgenisPluginController
 	@RequestMapping(method = GET)
 	public String init(Model model)
 	{
-		List<MolgenisUiMenuItem> menus = new TreeTraverser<MolgenisUiMenuItem>()
+		List<UiMenuItem> menus = new TreeTraverser<UiMenuItem>()
 		{
 			@Override
-			public Iterable<MolgenisUiMenuItem> children(MolgenisUiMenuItem root)
+			public Iterable<UiMenuItem> children(UiMenuItem root)
 			{
-				if (root.getType() == MolgenisUiMenuItemType.MENU)
+				if (root.getType() == UiMenuItemType.MENU)
 				{
-					MolgenisUiMenu menu = (MolgenisUiMenu) root;
-					return Iterables.filter(menu.getItems(), new Predicate<MolgenisUiMenuItem>()
-					{
-						@Override
-						public boolean apply(MolgenisUiMenuItem molgenisUiMenuItem)
-						{
-							return molgenisUiMenuItem.getType() == MolgenisUiMenuItemType.MENU;
-						}
-					});
+					UiMenu menu = (UiMenu) root;
+					return Iterables.filter(menu.getItems(),
+							molgenisUiMenuItem -> molgenisUiMenuItem.getType() == UiMenuItemType.MENU);
 				}
 				else return Collections.emptyList();
 			}
 		}.preOrderTraversal(molgenisUi.getMenu()).toList();
 
-		List<MolgenisPlugin> plugins = Lists.newArrayList(menuManagerService.getPlugins());
-		Collections.sort(plugins, new Comparator<MolgenisPlugin>()
-		{
-			@Override
-			public int compare(MolgenisPlugin molgenisPlugin1, MolgenisPlugin molgenisPlugin2)
-			{
-				return molgenisPlugin1.getId().compareTo(molgenisPlugin2.getId());
-			}
-		});
+		List<Plugin> plugins = Lists.newArrayList(menuManagerService.getPlugins());
+		plugins.sort(Comparator.comparing(Plugin::getId));
 
 		model.addAttribute("menus", menus);
 		model.addAttribute("plugins", plugins);
@@ -126,11 +102,6 @@ public class MenuManagerController extends MolgenisPluginController
 
 	/**
 	 * Upload a new molgenis logo
-	 * 
-	 * @param part
-	 * @param model
-	 * @return model
-	 * @throws IOException
 	 */
 	@PreAuthorize("hasAnyRole('ROLE_SU')")
 	@RequestMapping(value = "/upload-logo", method = RequestMethod.POST)

@@ -1,13 +1,13 @@
 package org.molgenis.js.magma;
 
-import static java.util.Objects.requireNonNull;
-
-import java.util.Map;
-
 import org.molgenis.script.Script;
 import org.molgenis.script.ScriptRunner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.Map;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Runs a JavaScript using the Magma API with the given inputs and returns one output
@@ -15,12 +15,20 @@ import org.springframework.stereotype.Service;
 @Service
 public class JsMagmaScriptRunner implements ScriptRunner
 {
+	public static final String NAME = "JavaScript (Magma)";
+
 	private final JsMagmaScriptExecutor jsScriptExecutor;
 
 	@Autowired
 	public JsMagmaScriptRunner(JsMagmaScriptExecutor jsMagmaScriptExecutor)
 	{
 		this.jsScriptExecutor = requireNonNull(jsMagmaScriptExecutor);
+	}
+
+	@Override
+	public String getName()
+	{
+		return NAME;
 	}
 
 	@Override

@@ -1,98 +1,81 @@
 package org.molgenis.data.vcf.importer;
 
 import com.google.common.collect.Lists;
-import org.molgenis.data.AttributeMetaData;
-import org.molgenis.data.DataService;
-import org.molgenis.data.DatabaseAction;
-import org.molgenis.data.Entity;
-import org.molgenis.data.EntityMetaData;
-import org.molgenis.data.MolgenisDataException;
-import org.molgenis.data.Repository;
-import org.molgenis.data.RepositoryCollection;
-import org.molgenis.data.elasticsearch.ElasticsearchRepositoryCollection;
+import org.molgenis.data.*;
+import org.molgenis.data.importer.EntitiesValidationReport;
 import org.molgenis.data.importer.EntitiesValidationReportImpl;
+import org.molgenis.data.importer.EntityImportReport;
 import org.molgenis.data.importer.ImportService;
+import org.molgenis.data.meta.DefaultPackage;
 import org.molgenis.data.meta.MetaDataService;
-import org.molgenis.data.support.DefaultEntityMetaData;
-import org.molgenis.data.support.GenericImporterExtensions;
-import org.molgenis.data.vcf.VcfRepository;
-import org.molgenis.framework.db.EntitiesValidationReport;
-import org.molgenis.framework.db.EntityImportReport;
+import org.molgenis.data.meta.model.Attribute;
+import org.molgenis.data.meta.model.EntityType;
+import org.molgenis.data.meta.model.Package;
+import org.molgenis.data.vcf.VcfFileExtensions;
+import org.molgenis.data.vcf.model.VcfAttributes;
 import org.molgenis.security.permission.PermissionSystemService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.StreamSupport;
 
 import static java.util.Objects.requireNonNull;
+import static org.molgenis.security.core.runas.RunAsSystemAspect.runAsSystem;
 
 @Service
 public class VcfImporterService implements ImportService
 {
 	private static final Logger LOG = LoggerFactory.getLogger(VcfImporterService.class);
 	private static final int BATCH_SIZE = 10000;
-	private static final String BACKEND = ElasticsearchRepositoryCollection.NAME;
 
 	private final DataService dataService;
 	private final PermissionSystemService permissionSystemService;
+	private final MetaDataService metaDataService;
+	private final DefaultPackage defaultPackage;
 
 	@Autowired
-	public VcfImporterService(DataService dataService, PermissionSystemService permissionSystemService)
+	public VcfImporterService(DataService dataService, PermissionSystemService permissionSystemService,
+			MetaDataService metaDataService, DefaultPackage defaultPackage)
 
 	{
 		this.dataService = requireNonNull(dataService);
+		this.metaDataService = requireNonNull(metaDataService);
 		this.permissionSystemService = requireNonNull(permissionSystemService);
+		this.defaultPackage = requireNonNull(defaultPackage);
 	}
 
+	@Transactional
 	@Override
-	public EntityImportReport doImport(RepositoryCollection source, DatabaseAction databaseAction,
-			String defaultPackage)
+	public EntityImportReport doImport(RepositoryCollection source, DatabaseAction databaseAction, String packageId)
 	{
 		if (databaseAction != DatabaseAction.ADD) throw new IllegalArgumentException("Only ADD is supported");
 
-		List<EntityMetaData> addedEntities = Lists.newArrayList();
+		List<EntityType> addedEntities = Lists.newArrayList();
 		EntityImportReport report;
-		try
+
+		Iterator<String> it = source.getEntityTypeIds().iterator();
+		if (it.hasNext())
 		{
-			Iterator<String> it = source.getEntityNames().iterator();
-			if (it.hasNext())
+			try (Repository<Entity> repo = source.getRepository(it.next()))
 			{
-				try (Repository repo = source.getRepository(it.next());)
-				{
-					report = importVcf(repo, addedEntities);
-				}
+				report = importVcf(repo, addedEntities, packageId);
 			}
-			else
+			catch (IOException e)
 			{
-				report = new EntityImportReport();
+				LOG.error("", e);
+				throw new MolgenisDataException(e);
 			}
 		}
-		catch (Exception e)
+		else
 		{
-			LOG.error("Exception importing vcf", e);
-
-			// Remove created repositories
-			try
-			{
-				dataService.getMeta().delete(addedEntities);
-			}
-			catch (Exception e1)
-			{
-				LOG.error("Exception rollback changes", e1);
-			}
-
-			throw new MolgenisDataException(e);
+			report = new EntityImportReport();
 		}
 		return report;
 	}
@@ -101,34 +84,34 @@ public class VcfImporterService implements ImportService
 	public EntitiesValidationReport validateImport(File file, RepositoryCollection source)
 	{
 		EntitiesValidationReport report = new EntitiesValidationReportImpl();
-		Iterator<String> it = source.getEntityNames().iterator();
+		Iterator<String> it = source.getEntityTypeIds().iterator();
 		if (it.hasNext())
 		{
-			String entityName = it.next();
-			EntityMetaData emd = source.getRepository(entityName).getEntityMetaData();
+			String entityTypeId = it.next();
+			EntityType emd = source.getRepository(entityTypeId).getEntityType();
 
 			// Vcf entity
-			boolean entityExists = dataService.hasRepository(entityName);
-			report.getSheetsImportable().put(entityName, !entityExists);
+			boolean entityExists = runAsSystem(() -> dataService.hasRepository(entityTypeId));
+			report.getSheetsImportable().put(entityTypeId, !entityExists);
 
 			// Available Attributes
 			List<String> availableAttributeNames = Lists.newArrayList();
-			for (AttributeMetaData attr : emd.getAtomicAttributes())
+			for (Attribute attr : emd.getAtomicAttributes())
 			{
 				availableAttributeNames.add(attr.getName());
 			}
-			report.getFieldsImportable().put(entityName, availableAttributeNames);
+			report.getFieldsImportable().put(entityTypeId, availableAttributeNames);
 
 			// Sample entity
-			AttributeMetaData sampleAttribute = emd.getAttribute(VcfRepository.SAMPLES);
+			Attribute sampleAttribute = emd.getAttribute(VcfAttributes.SAMPLES);
 			if (sampleAttribute != null)
 			{
-				String sampleEntityName = sampleAttribute.getRefEntity().getName();
-				boolean sampleEntityExists = dataService.hasRepository(sampleEntityName);
+				String sampleEntityName = sampleAttribute.getRefEntity().getId();
+				boolean sampleEntityExists = runAsSystem(() -> dataService.hasRepository(sampleEntityName));
 				report.getSheetsImportable().put(sampleEntityName, !sampleEntityExists);
 
 				List<String> availableSampleAttributeNames = Lists.newArrayList();
-				for (AttributeMetaData attr : sampleAttribute.getRefEntity().getAtomicAttributes())
+				for (Attribute attr : sampleAttribute.getRefEntity().getAtomicAttributes())
 				{
 					availableSampleAttributeNames.add(attr.getName());
 				}
@@ -143,7 +126,7 @@ public class VcfImporterService implements ImportService
 	@Override
 	public boolean canImport(File file, RepositoryCollection source)
 	{
-		for (String extension : GenericImporterExtensions.getVCF())
+		for (String extension : getSupportedFileExtensions())
 		{
 			if (file.getName().toLowerCase().endsWith(extension))
 			{
@@ -154,40 +137,48 @@ public class VcfImporterService implements ImportService
 		return false;
 	}
 
-	private EntityImportReport importVcf(Repository inRepository, List<EntityMetaData> addedEntities) throws IOException
+	private EntityImportReport importVcf(Repository<Entity> inRepository, List<EntityType> addedEntities,
+			String packageId) throws IOException
 	{
 		EntityImportReport report = new EntityImportReport();
-		Repository sampleRepository = null;
-		String entityName = inRepository.getName();
+		Repository<Entity> sampleRepository;
+		String entityTypeId = inRepository.getName();
 
-		if (dataService.hasRepository(entityName))
+		if (runAsSystem(() -> dataService.hasRepository(entityTypeId)))
 		{
-			throw new MolgenisDataException("Can't overwrite existing " + entityName);
+			throw new MolgenisDataException("Can't overwrite existing " + entityTypeId);
 		}
 
-		DefaultEntityMetaData entityMetaData = new DefaultEntityMetaData(inRepository.getEntityMetaData());
-		entityMetaData.setBackend(BACKEND);
+		EntityType entityType = inRepository.getEntityType();
+		entityType.setBackend(metaDataService.getDefaultBackend().getName());
 
-		AttributeMetaData sampleAttribute = entityMetaData.getAttribute(VcfRepository.SAMPLES);
+		Package package_ = dataService.getMeta().getPackage(packageId);
+		if (package_ == null) package_ = defaultPackage;
+		entityType.setPackage(package_);
+
+		Attribute sampleAttribute = entityType.getAttribute(VcfAttributes.SAMPLES);
 		if (sampleAttribute != null)
 		{
-			DefaultEntityMetaData samplesEntityMetaData = new DefaultEntityMetaData(sampleAttribute.getRefEntity());
-			samplesEntityMetaData.setBackend(BACKEND);
-			sampleRepository = dataService.getMeta().addEntityMeta(samplesEntityMetaData);
-			permissionSystemService.giveUserEntityPermissions(SecurityContextHolder.getContext(),
-					Collections.singletonList(samplesEntityMetaData.getName()));
+			EntityType samplesEntityType = sampleAttribute.getRefEntity();
+			samplesEntityType.setBackend(metaDataService.getDefaultBackend().getName());
+			samplesEntityType.setPackage(package_);
+			sampleRepository = runAsSystem(() -> dataService.getMeta().createRepository(samplesEntityType));
+			permissionSystemService.giveUserWriteMetaPermissions(samplesEntityType);
 			addedEntities.add(sampleAttribute.getRefEntity());
+		}
+		else
+		{
+			sampleRepository = null;
 		}
 
 		Iterator<Entity> inIterator = inRepository.iterator();
 		int sampleEntityCount = 0;
 		List<Entity> sampleEntities = new ArrayList<>();
-		try (Repository outRepository = dataService.getMeta().addEntityMeta(entityMetaData))
+		try (Repository<Entity> outRepository = runAsSystem(() -> dataService.getMeta().createRepository(entityType)))
 		{
-			permissionSystemService.giveUserEntityPermissions(SecurityContextHolder.getContext(),
-					Collections.singletonList(entityMetaData.getName()));
+			permissionSystemService.giveUserWriteMetaPermissions(entityType);
 
-			addedEntities.add(entityMetaData);
+			addedEntities.add(entityType);
 
 			if (sampleRepository != null)
 			{
@@ -195,13 +186,12 @@ public class VcfImporterService implements ImportService
 				{
 					Entity entity = inIterator.next();
 
-					Iterable<Entity> samples = entity.getEntities(VcfRepository.SAMPLES);
+					Iterable<Entity> samples = entity.getEntities(VcfAttributes.SAMPLES);
 					if (samples != null)
 					{
-						Iterator<Entity> sampleIterator = samples.iterator();
-						while (sampleIterator.hasNext())
+						for (Entity sample : samples)
 						{
-							sampleEntities.add(sampleIterator.next());
+							sampleEntities.add(sample);
 
 							if (sampleEntities.size() == BATCH_SIZE)
 							{
@@ -216,11 +206,9 @@ public class VcfImporterService implements ImportService
 
 				if (!sampleEntities.isEmpty())
 				{
-					sampleRepository.add(sampleEntities.stream());
+					runAsSystem(() -> sampleRepository.add(sampleEntities.stream()));
 					sampleEntityCount += sampleEntities.size();
 				}
-
-				sampleRepository.flush();
 
 				report.addNewEntity(sampleRepository.getName());
 				if (sampleEntityCount > 0)
@@ -230,17 +218,18 @@ public class VcfImporterService implements ImportService
 			}
 
 			AtomicInteger vcfEntityCount = new AtomicInteger();
-			outRepository.add(inRepository.stream().filter(entity -> {
+			runAsSystem(() -> outRepository.add(StreamSupport.stream(inRepository.spliterator(), false).filter(entity ->
+			{
 				vcfEntityCount.incrementAndGet();
 				return true;
-			}));
+			})));
 			if (vcfEntityCount.get() > 0)
 			{
-				report.addEntityCount(entityName, vcfEntityCount.get());
+				report.addEntityCount(entityTypeId, vcfEntityCount.get());
 			}
 		}
 
-		report.addNewEntity(entityName);
+		report.addNewEntity(entityTypeId);
 
 		return report;
 	}
@@ -266,13 +255,13 @@ public class VcfImporterService implements ImportService
 	@Override
 	public Set<String> getSupportedFileExtensions()
 	{
-		return GenericImporterExtensions.getVCF();
+		return VcfFileExtensions.getVCF();
 	}
 
 	@Override
-	public LinkedHashMap<String, Boolean> integrationTestMetaData(MetaDataService metaDataService,
+	public LinkedHashMap<String, Boolean> determineImportableEntities(MetaDataService metaDataService,
 			RepositoryCollection repositoryCollection, String defaultPackage)
 	{
-		return metaDataService.integrationTestMetaData(repositoryCollection);
+		return metaDataService.determineImportableEntities(repositoryCollection);
 	}
 }

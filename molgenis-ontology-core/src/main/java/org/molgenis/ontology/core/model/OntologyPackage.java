@@ -1,17 +1,33 @@
 package org.molgenis.ontology.core.model;
 
-import org.molgenis.data.Package;
-import org.molgenis.data.meta.PackageImpl;
+import org.molgenis.data.meta.SystemPackage;
+import org.molgenis.data.meta.model.PackageMetadata;
+import org.molgenis.data.system.model.RootSystemPackage;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
-public class OntologyPackage
+import static java.util.Objects.requireNonNull;
+import static org.molgenis.data.system.model.RootSystemPackage.PACKAGE_SYSTEM;
+
+@Component
+public class OntologyPackage extends SystemPackage
 {
-	private static Package ontologyPackage = null;
-	public final static String PACKAGE_NAME = "Ontology";
+	public static final String SIMPLE_NAME = "ont";
+	public static final String PACKAGE_ONTOLOGY = PACKAGE_SYSTEM + PACKAGE_SEPARATOR + SIMPLE_NAME;
 
-	public static Package getPackageInstance()
+	private final RootSystemPackage rootSystemPackage;
+
+	@Autowired
+	public OntologyPackage(PackageMetadata packageMetadata, RootSystemPackage rootSystemPackage)
 	{
-		if (ontologyPackage == null) ontologyPackage = new PackageImpl(PACKAGE_NAME,
-				"This is a pacakge for storing ontology related model", null);
-		return ontologyPackage;
+		super(PACKAGE_ONTOLOGY, packageMetadata);
+		this.rootSystemPackage = requireNonNull(rootSystemPackage);
+	}
+
+	@Override
+	protected void init()
+	{
+		setLabel("Ontology");
+		setParent(rootSystemPackage);
 	}
 }

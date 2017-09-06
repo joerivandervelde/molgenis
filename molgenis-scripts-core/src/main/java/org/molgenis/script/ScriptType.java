@@ -1,25 +1,41 @@
 package org.molgenis.script;
 
-import org.molgenis.data.DataService;
-import org.molgenis.data.EntityMetaData;
-import org.molgenis.data.support.DefaultEntity;
+import org.molgenis.data.Entity;
+import org.molgenis.data.meta.model.EntityType;
+import org.molgenis.data.support.StaticEntity;
 
-public class ScriptType extends DefaultEntity
+import static org.molgenis.script.ScriptTypeMetaData.NAME;
+
+/**
+ * Script type entity
+ */
+public class ScriptType extends StaticEntity
 {
-	private static final long serialVersionUID = -762140082046982877L;
-	public static final String ENTITY_NAME = "ScriptType";
-	public static final String NAME = "name";
-	public static final EntityMetaData META_DATA = new ScriptTypeMetaData();
-
-	public ScriptType(String name, DataService dataService)
+	public ScriptType(Entity entity)
 	{
-		this(dataService);
-		setName(name);
+		super(entity);
 	}
 
-	public ScriptType(DataService dataService)
+	/**
+	 * Constructs a script type with the given meta data
+	 *
+	 * @param entityType script type meta data
+	 */
+	public ScriptType(EntityType entityType)
 	{
-		super(META_DATA, dataService);
+		super(entityType);
+	}
+
+	/**
+	 * Constructs a script type with the given type name and meta data
+	 *
+	 * @param name       script type name
+	 * @param entityType script type meta data
+	 */
+	public ScriptType(String name, EntityType entityType)
+	{
+		super(entityType);
+		setName(name);
 	}
 
 	public void setName(String name)
@@ -31,11 +47,4 @@ public class ScriptType extends DefaultEntity
 	{
 		return getString(NAME);
 	}
-
-	@Override
-	public EntityMetaData getEntityMetaData()
-	{
-		return META_DATA;
-	}
-
 }

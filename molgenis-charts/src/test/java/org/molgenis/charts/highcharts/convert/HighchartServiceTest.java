@@ -1,19 +1,5 @@
 package org.molgenis.charts.highcharts.convert;
 
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.List;
-
-import org.molgenis.MolgenisFieldTypes.FieldTypeEnum;
 import org.molgenis.charts.AbstractChart.MolgenisChartType;
 import org.molgenis.charts.BoxPlotChart;
 import org.molgenis.charts.MolgenisAxisType;
@@ -21,14 +7,10 @@ import org.molgenis.charts.XYDataChart;
 import org.molgenis.charts.data.BoxPlotSerie;
 import org.molgenis.charts.data.XYData;
 import org.molgenis.charts.data.XYDataSerie;
-import org.molgenis.charts.highcharts.basic.AxisAlign;
-import org.molgenis.charts.highcharts.basic.AxisType;
-import org.molgenis.charts.highcharts.basic.ChartAlign;
-import org.molgenis.charts.highcharts.basic.ChartType;
-import org.molgenis.charts.highcharts.basic.Options;
-import org.molgenis.charts.highcharts.basic.SeriesType;
+import org.molgenis.charts.highcharts.basic.*;
 import org.molgenis.charts.highcharts.chart.Chart;
 import org.molgenis.charts.highcharts.stockchart.StockChart;
+import org.molgenis.data.meta.AttributeType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,6 +18,15 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.springframework.ui.Model;
 import org.testng.annotations.Test;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.testng.Assert.*;
 
 @ContextConfiguration
 public class HighchartServiceTest extends AbstractTestNGSpringContextTests
@@ -48,7 +39,7 @@ public class HighchartServiceTest extends AbstractTestNGSpringContextTests
 		{
 			return new HighchartService();
 		}
-		
+
 		@Bean
 		public HighchartSeriesUtil highchartSeriesUtil()
 		{
@@ -58,40 +49,43 @@ public class HighchartServiceTest extends AbstractTestNGSpringContextTests
 
 	@Autowired
 	private HighchartService highchartService;
-	
+
 	@Autowired
 	private HighchartService highchartSeriesUtil;
-	
+
 	@Test
-	public void renderChartInternalScatterPlot() {
+	public void renderChartInternalScatterPlot()
+	{
 		XYDataChart xYDataChart = mock(XYDataChart.class);
 		doReturn(MolgenisChartType.SCATTER_CHART).when(xYDataChart).getType();
 		doReturn(MolgenisAxisType.LINEAR).when(xYDataChart).getxAxisType();
 		doReturn(MolgenisAxisType.LINEAR).when(xYDataChart).getyAxisType();
 		assertNotNull(highchartService.renderChartInternal(xYDataChart, null));
 	}
-	
+
 	@Test
-	public void renderChartInternalBoxplot() {
+	public void renderChartInternalBoxplot()
+	{
 		BoxPlotChart boxPlotChart = mock(BoxPlotChart.class);
 		doReturn(MolgenisChartType.BOXPLOT_CHART).when(boxPlotChart).getType();
 		assertNotNull(highchartService.renderChartInternal(boxPlotChart, null));
 	}
-	
+
 	@Test
-	public void renderChartInternalNull() {
+	public void renderChartInternalNull()
+	{
 		XYDataChart xYDataChart = mock(XYDataChart.class);
 		doReturn(MolgenisChartType.HEAT_MAP).when(xYDataChart).getType();
 		assertNull(highchartService.renderChartInternal(xYDataChart, null));
 	}
-	
+
 	@Test
 	public void createScatterPlotChart()
 	{
-		List<XYDataSerie> data = new ArrayList<XYDataSerie>();
+		List<XYDataSerie> data = new ArrayList<>();
 		XYDataSerie serieOne = new XYDataSerie();
-		serieOne.setAttributeXFieldTypeEnum(FieldTypeEnum.INT);
-		serieOne.setAttributeXFieldTypeEnum(FieldTypeEnum.DECIMAL);
+		serieOne.setAttributeXFieldTypeEnum(AttributeType.INT);
+		serieOne.setAttributeXFieldTypeEnum(AttributeType.DECIMAL);
 		XYData xYDataOne = new XYData(Integer.valueOf("1"), Double.valueOf("1.1"));
 		XYData xYDataTwo = new XYData(Integer.valueOf("2"), Double.valueOf("2.2"));
 		XYData xYDataThree = new XYData(Integer.valueOf("3"), Double.valueOf("3.3"));
@@ -121,7 +115,7 @@ public class HighchartServiceTest extends AbstractTestNGSpringContextTests
 		assertEquals(options.getxAxis().get(0).getOrdinal(), Boolean.valueOf(false));
 		assertEquals(options.getxAxis().get(0).getTitle().getText(), "xlabel");
 		assertEquals(options.getxAxis().get(0).getTitle().getAlign(), AxisAlign.MIDDLE.toString());
-		
+
 		// yAxis
 		assertNotNull(options.getyAxis());
 		assertFalse(options.getyAxis().isEmpty());
@@ -148,29 +142,24 @@ public class HighchartServiceTest extends AbstractTestNGSpringContextTests
 		assertNotNull(options.getSeries());
 		assertFalse(options.getSeries().isEmpty());
 		assertEquals(options.getSeries().get(0).getType(), SeriesType.SCATTER.toString());
-		assertEquals(options.getSeries().get(0).getData().get(0), Arrays.<Object> asList(Integer.valueOf("1"), Double.valueOf("1.1")));
-		assertEquals(options.getSeries().get(0).getData().get(1), Arrays.<Object> asList(Integer.valueOf("2"), Double.valueOf("2.2")));
-		assertEquals(options.getSeries().get(0).getData().get(2), Arrays.<Object> asList(Integer.valueOf("3"), Double.valueOf("3.3")));
+		assertEquals(options.getSeries().get(0).getData().get(0),
+				Arrays.<Object>asList(Integer.valueOf("1"), Double.valueOf("1.1")));
+		assertEquals(options.getSeries().get(0).getData().get(1),
+				Arrays.<Object>asList(Integer.valueOf("2"), Double.valueOf("2.2")));
+		assertEquals(options.getSeries().get(0).getData().get(2),
+				Arrays.<Object>asList(Integer.valueOf("3"), Double.valueOf("3.3")));
 	}
 
 	@Test
 	public void createScatterPlotStockChart()
 	{
-		List<XYDataSerie> data = new ArrayList<XYDataSerie>();
+		List<XYDataSerie> data = new ArrayList<>();
 		XYDataSerie serieOne = new XYDataSerie();
-		serieOne.setAttributeXFieldTypeEnum(FieldTypeEnum.DATE);
-		serieOne.setAttributeYFieldTypeEnum(FieldTypeEnum.DECIMAL);
+		serieOne.setAttributeXFieldTypeEnum(AttributeType.DATE);
+		serieOne.setAttributeYFieldTypeEnum(AttributeType.DECIMAL);
 
-		Calendar calOne = Calendar.getInstance();
-		calOne.clear();
-		calOne.set(2014, 1, 21);
-
-		Calendar calTwo = Calendar.getInstance();
-		calTwo.clear();
-		calTwo.set(2014, 1, 22);
-
-		XYData xYDataOne = new XYData(calOne.getTime(), Double.valueOf("1.1"));
-		XYData xYDataTwo = new XYData(calTwo.getTime(), Double.valueOf("2.2"));
+		XYData xYDataOne = new XYData(LocalDate.of(2014, 2, 21), Double.valueOf("1.1"));
+		XYData xYDataTwo = new XYData(LocalDate.of(2014, 2, 22), Double.valueOf("2.2"));
 		serieOne.addData(xYDataOne);
 		serieOne.addData(xYDataTwo);
 		data.add(serieOne);
@@ -223,8 +212,10 @@ public class HighchartServiceTest extends AbstractTestNGSpringContextTests
 		assertNotNull(options.getSeries());
 		assertFalse(options.getSeries().isEmpty());
 		assertEquals(options.getSeries().get(0).getType(), SeriesType.LINE.toString());
-		assertEquals(options.getSeries().get(0).getData().get(0), Arrays.<Object> asList(1392940800000l, Double.valueOf("1.1")));
-		assertEquals(options.getSeries().get(0).getData().get(1), Arrays.<Object> asList(1393027200000l, Double.valueOf("2.2")));
+		assertEquals(options.getSeries().get(0).getData().get(0),
+				Arrays.<Object>asList(1392940800000L, Double.valueOf("1.1")));
+		assertEquals(options.getSeries().get(0).getData().get(1),
+				Arrays.<Object>asList(1393027200000L, Double.valueOf("2.2")));
 	}
 
 	@Test
@@ -232,13 +223,13 @@ public class HighchartServiceTest extends AbstractTestNGSpringContextTests
 	{
 		BoxPlotChart boxPlotChart = new BoxPlotChart();
 
-		List<BoxPlotSerie> boxPlotSeries = new ArrayList<BoxPlotSerie>();
+		List<BoxPlotSerie> boxPlotSeries = new ArrayList<>();
 		BoxPlotSerie boxPlotSerie = new BoxPlotSerie();
-		boxPlotSerie.addData(new Double[]{ 20.5, 50.5, 100.5, 200.5, 400.5 });
+		boxPlotSerie.addData(new Double[] { 20.5, 50.5, 100.5, 200.5, 400.5 });
 		boxPlotSeries.add(boxPlotSerie);
 		boxPlotChart.setBoxPlotSeries(boxPlotSeries);
 
-		List<XYDataSerie> xYDataSeries = new ArrayList<XYDataSerie>();
+		List<XYDataSerie> xYDataSeries = new ArrayList<>();
 		XYDataSerie xYDataSerie = new XYDataSerie();
 		XYData xYDataOne = new XYData(Double.valueOf("0"), Double.valueOf("10"));
 		XYData xYDataTwo = new XYData(Double.valueOf("0"), Double.valueOf("500"));
@@ -301,7 +292,9 @@ public class HighchartServiceTest extends AbstractTestNGSpringContextTests
 		assertEquals(options.getSeries().get(0).getData().get(0), new Double[] { 20.5, 50.5, 100.5, 200.5, 400.5 });
 
 		assertEquals(options.getSeries().get(1).getType(), SeriesType.SCATTER.toString());
-		assertEquals(options.getSeries().get(1).getData().get(0), Arrays.<Object> asList(Double.valueOf("0"), Double.valueOf("10")));
-		assertEquals(options.getSeries().get(1).getData().get(1), Arrays.<Object> asList(Double.valueOf("0"), Double.valueOf("500")));
+		assertEquals(options.getSeries().get(1).getData().get(0),
+				Arrays.<Object>asList(Double.valueOf("0"), Double.valueOf("10")));
+		assertEquals(options.getSeries().get(1).getData().get(1),
+				Arrays.<Object>asList(Double.valueOf("0"), Double.valueOf("500")));
 	}
 }

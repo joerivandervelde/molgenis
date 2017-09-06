@@ -1,46 +1,46 @@
 package org.molgenis.data.rest;
 
-import java.util.Map;
-
+import cz.jirutka.rsql.parser.RSQLParserException;
 import org.molgenis.data.DataConverter;
-import org.molgenis.data.EntityMetaData;
+import org.molgenis.data.Entity;
 import org.molgenis.data.Query;
 import org.molgenis.data.QueryRule;
+import org.molgenis.data.meta.model.EntityType;
 import org.molgenis.data.rsql.MolgenisRSQL;
 import org.molgenis.data.support.QueryImpl;
 
-import cz.jirutka.rsql.parser.RSQLParserException;
+import java.util.Map;
 
 /**
  * Creates a Query object from a http request. Used by the RestController method that returns csv.
- * 
+ * <p>
  * Parameters:
- * 
+ * <p>
  * q: the query
- * 
+ * <p>
  * attributes: the attributes to return, if not specified returns all attributes
- * 
+ * <p>
  * start: the index of the first row, default 0
- * 
+ * <p>
  * num: the number of results to return, default 100, max 100000
- * 
- * 
+ * <p>
+ * <p>
  * Example: /api/v1/csv/person?q=firstName==Piet&attributes=firstName,lastName&start=10&num=100
  */
 public class QueryStringParser
 {
-	private final EntityMetaData entityMetaData;
+	private final EntityType entityType;
 	private final MolgenisRSQL molgenisRSQL;
 
-	public QueryStringParser(EntityMetaData entityMetaData, MolgenisRSQL molgenisRSQL)
+	public QueryStringParser(EntityType entityType, MolgenisRSQL molgenisRSQL)
 	{
-		this.entityMetaData = entityMetaData;
+		this.entityType = entityType;
 		this.molgenisRSQL = molgenisRSQL;
 	}
 
-	public Query parseQueryString(Map<String, String[]> parameterMap) throws RSQLParserException
+	public Query<Entity> parseQueryString(Map<String, String[]> parameterMap) throws RSQLParserException
 	{
-		QueryImpl q = new QueryImpl();
+		QueryImpl<Entity> q = new QueryImpl<>();
 
 		for (Map.Entry<String, String[]> entry : parameterMap.entrySet())
 		{
@@ -59,7 +59,7 @@ public class QueryStringParser
 				}
 				else if (paramName.equalsIgnoreCase("q"))
 				{
-					Query query = molgenisRSQL.createQuery(paramValues[0], entityMetaData);
+					Query<Entity> query = molgenisRSQL.createQuery(paramValues[0], entityType);
 					for (QueryRule rule : query.getRules())
 					{
 						q.addRule(rule);

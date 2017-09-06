@@ -1,49 +1,44 @@
 package org.molgenis.security.freemarker;
 
+import freemarker.core.Environment;
+import freemarker.template.*;
+import org.molgenis.data.DataConverter;
+import org.molgenis.security.core.Permission;
+import org.molgenis.security.core.PermissionService;
+
 import java.io.IOException;
 import java.util.Map;
 
-import org.molgenis.data.DataConverter;
-import org.molgenis.security.core.MolgenisPermissionService;
-import org.molgenis.security.core.Permission;
-
-import freemarker.core.Environment;
-import freemarker.template.TemplateDirectiveBody;
-import freemarker.template.TemplateDirectiveModel;
-import freemarker.template.TemplateException;
-import freemarker.template.TemplateModel;
-import freemarker.template.TemplateModelException;
-
 public abstract class PermissionDirective implements TemplateDirectiveModel
 {
-	private final MolgenisPermissionService molgenisPermissionService;
+	private final PermissionService permissionService;
 
-	public PermissionDirective(MolgenisPermissionService molgenisPermissionService)
+	public PermissionDirective(PermissionService permissionService)
 	{
-		this.molgenisPermissionService = molgenisPermissionService;
+		this.permissionService = permissionService;
 	}
 
 	@Override
 	public void execute(Environment env, @SuppressWarnings("rawtypes") Map params, TemplateModel[] loopVars,
 			TemplateDirectiveBody body) throws TemplateException, IOException
 	{
-		String entityName = DataConverter.toString(params.get("entityName"));
+		String entityTypeId = DataConverter.toString(params.get("entityTypeId"));
 		String plugin = DataConverter.toString(params.get("plugin"));
 		String permission = DataConverter.toString(params.get("permission"));
 
 		if (permission == null) throw new TemplateModelException("Missing 'permission' parameter");
-		if ((entityName == null) && (plugin == null)) throw new TemplateModelException(
-				"Missing 'entityName' and/or 'plugin' parameter");
+		if ((entityTypeId == null) && (plugin == null))
+			throw new TemplateModelException("Missing 'entityTypeId' and/or 'plugin' parameter");
 
 		boolean hasPermission = true;
-		if (entityName != null)
+		if (entityTypeId != null)
 		{
-			hasPermission = molgenisPermissionService.hasPermissionOnEntity(entityName, Permission.valueOf(permission));
+			hasPermission = permissionService.hasPermissionOnEntityType(entityTypeId, Permission.valueOf(permission));
 		}
 
 		if ((plugin != null) && hasPermission)
 		{
-			hasPermission = molgenisPermissionService.hasPermissionOnPlugin(plugin, Permission.valueOf(permission));
+			hasPermission = permissionService.hasPermissionOnPlugin(plugin, Permission.valueOf(permission));
 		}
 
 		execute(hasPermission, env, body);

@@ -1,16 +1,17 @@
 package org.molgenis.security.core.utils;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-import javax.servlet.http.HttpServletRequest;
-
 import org.molgenis.security.core.Permission;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import static org.molgenis.security.core.runas.SystemSecurityToken.ROLE_SYSTEM;
 
 public class SecurityUtils
 {
@@ -54,9 +55,6 @@ public class SecurityUtils
 
 	/**
 	 * Returns whether the current user has at least one of the given roles
-	 * 
-	 * @param roles
-	 * @return
 	 */
 	public static boolean currentUserHasRole(String... roles)
 	{
@@ -66,65 +64,58 @@ public class SecurityUtils
 		if (authentication != null)
 		{
 			Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+			if (authorities == null) throw new IllegalStateException("No user currently logged in");
+
 			for (String role : roles)
 			{
 				for (GrantedAuthority grantedAuthority : authorities)
 				{
 					if (role.equals(grantedAuthority.getAuthority())) return true;
 				}
-
 			}
 		}
 		return false;
 	}
 
 	/**
+	 * Returns whether the current user is a superuser or the system user.
+	 */
+	public static boolean currentUserIsSuOrSystem()
+	{
+		return currentUserIsSu() || currentUserIsSystem();
+	}
+
+	/**
 	 * Returns whether the current user is a super user
-	 * 
-	 * @return
 	 */
 	public static boolean currentUserIsSu()
 	{
-		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-		if (authentication == null) return false;
+		return currentUserHasRole(AUTHORITY_SU);
+	}
 
-		Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-		if (authorities == null) throw new IllegalStateException("No current user logged in");
-
-		for (GrantedAuthority authority : authorities)
-		{
-			if (authority.getAuthority().equals(AUTHORITY_SU)) return true;
-		}
-
-		return false;
+	/**
+	 * Returns whether the current user is the system user.
+	 */
+	public static boolean currentUserIsSystem()
+	{
+		return currentUserHasRole(ROLE_SYSTEM);
 	}
 
 	/**
 	 * Returns whether the current user is authenticated and not the anonymous user
-	 * 
-	 * @return
 	 */
 	public static boolean currentUserIsAuthenticated()
 	{
-		String username;
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-		if (authentication == null) return false;
-
-		Object principal = authentication.getPrincipal();
-		if (principal instanceof UserDetails) username = ((UserDetails) principal).getUsername();
-		else username = principal.toString();
-		return authentication.isAuthenticated() && !username.equals(ANONYMOUS_USERNAME);
+		return authentication != null && authentication.isAuthenticated() && !currentUserHasRole(AUTHORITY_ANONYMOUS);
 	}
 
 	/**
 	 * Returns the default (su, read, write) roles related to a plugin
-	 * 
-	 * @param pluginId
-	 * @return
 	 */
 	public static String[] defaultPluginAuthorities(String... pluginIds)
 	{
-		List<String> pluginAuthorities = new ArrayList<String>();
+		List<String> pluginAuthorities = new ArrayList<>();
 		pluginAuthorities.add(AUTHORITY_SU);
 		if (pluginIds != null)
 		{
@@ -134,33 +125,28 @@ public class SecurityUtils
 				pluginAuthorities.add(getPluginWriteAuthority(pluginId));
 			}
 		}
-		return pluginAuthorities.toArray(new String[]
-		{});
+		return pluginAuthorities.toArray(new String[] {});
 	}
 
 	public static String getPluginReadAuthority(String pluginId)
 	{
-		return AUTHORITY_PLUGIN_READ_PREFIX + pluginId.toUpperCase();
+		return AUTHORITY_PLUGIN_READ_PREFIX + pluginId;
 	}
 
 	public static String getPluginWriteAuthority(String pluginId)
 	{
-		return AUTHORITY_PLUGIN_WRITE_PREFIX + pluginId.toUpperCase();
+		return AUTHORITY_PLUGIN_WRITE_PREFIX + pluginId;
 	}
 
 	/**
 	 * Get all possible authorities (roles) for an entity
-	 * 
-	 * @param entityName
-	 * @return
 	 */
-	public static List<String> getEntityAuthorities(String entityName)
+	public static List<String> getEntityAuthorities(String entityTypeId)
 	{
 		List<String> authorities = new ArrayList<>();
 		for (Permission permission : Permission.values())
 		{
-			String authority = String.format("%s%s_%s", AUTHORITY_ENTITY_PREFIX, permission.name(),
-					entityName.toUpperCase());
+			String authority = String.format("%s%s_%s", AUTHORITY_ENTITY_PREFIX, permission.name(), entityTypeId);
 			authorities.add(authority);
 		}
 
@@ -169,9 +155,7 @@ public class SecurityUtils
 
 	/**
 	 * Checks if client session is expired (by checking the requested sessionId).
-	 * 
-	 * 
-	 * @param request
+	 *
 	 * @return true if session is expired
 	 */
 	public static boolean isSessionExpired(HttpServletRequest request)

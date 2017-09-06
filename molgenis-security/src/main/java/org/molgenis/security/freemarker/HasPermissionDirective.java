@@ -1,23 +1,22 @@
 package org.molgenis.security.freemarker;
 
-import java.io.IOException;
-
-import org.molgenis.security.core.MolgenisPermissionService;
-
 import freemarker.core.Environment;
 import freemarker.template.TemplateDirectiveBody;
 import freemarker.template.TemplateException;
+import org.molgenis.security.core.PermissionService;
+
+import java.io.IOException;
 
 /**
  * Directive that prints the body of the tag if the current user has permission on entity
- * 
- * usage: <@hasPermission entityName='celiacsprue' permission="WRITE">write permission</@hasPermission>
+ * <p>
+ * usage: <@hasPermission entityTypeId='celiacsprue' permission="WRITE">write permission</@hasPermission>
  */
 public class HasPermissionDirective extends PermissionDirective
 {
-	public HasPermissionDirective(MolgenisPermissionService molgenisPermissionService)
+	public HasPermissionDirective(PermissionService permissionService)
 	{
-		super(molgenisPermissionService);
+		super(permissionService);
 	}
 
 	@Override

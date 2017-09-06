@@ -1,15 +1,13 @@
 package org.molgenis.ui.menu;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+import org.molgenis.web.UiMenu;
+import org.testng.annotations.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.molgenis.ui.MolgenisUiMenu;
-import org.testng.annotations.Test;
+import static org.testng.Assert.*;
 
 public class MenuItemToMolgenisUiMenuAdapterTest
 {
@@ -72,7 +70,7 @@ public class MenuItemToMolgenisUiMenuAdapterTest
 		menu.setType(MenuItemType.MENU);
 		menu.setItems(Collections.singletonList(subMenu));
 
-		List<MolgenisUiMenu> breadcrumb = new MenuItemToMolgenisUiMenuAdapter(menu, menu).getBreadcrumb();
+		List<UiMenu> breadcrumb = new MenuItemToMolgenisUiMenuAdapter(menu, menu).getBreadcrumb();
 		assertEquals(breadcrumb.size(), 1);
 		assertEquals(breadcrumb.get(0).getId(), menuId);
 	}
@@ -91,7 +89,7 @@ public class MenuItemToMolgenisUiMenuAdapterTest
 		menu.setType(MenuItemType.MENU);
 		menu.setItems(Collections.singletonList(subMenu));
 
-		List<MolgenisUiMenu> breadcrumb = new MenuItemToMolgenisUiMenuAdapter(subMenu, menu).getBreadcrumb();
+		List<UiMenu> breadcrumb = new MenuItemToMolgenisUiMenuAdapter(subMenu, menu).getBreadcrumb();
 		assertEquals(breadcrumb.size(), 2);
 		assertEquals(breadcrumb.get(0).getId(), menuId);
 		assertEquals(breadcrumb.get(1).getId(), subMenuId);
@@ -117,7 +115,7 @@ public class MenuItemToMolgenisUiMenuAdapterTest
 		menu.setType(MenuItemType.MENU);
 		menu.setItems(Collections.singletonList(subMenu));
 
-		List<MolgenisUiMenu> breadcrumb = new MenuItemToMolgenisUiMenuAdapter(subSubMenu, menu).getBreadcrumb();
+		List<UiMenu> breadcrumb = new MenuItemToMolgenisUiMenuAdapter(subSubMenu, menu).getBreadcrumb();
 		assertEquals(breadcrumb.size(), 3);
 		assertEquals(breadcrumb.get(0).getId(), menuId);
 		assertEquals(breadcrumb.get(1).getId(), subMenuId);

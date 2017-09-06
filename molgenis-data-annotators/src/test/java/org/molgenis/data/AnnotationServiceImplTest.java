@@ -1,29 +1,39 @@
 package org.molgenis.data;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-
-import org.molgenis.data.annotation.AnnotationService;
-import org.molgenis.data.annotation.RepositoryAnnotator;
-import org.molgenis.data.support.AnnotationServiceImpl;
-import org.molgenis.data.support.DataServiceImpl;
-import org.molgenis.data.support.DefaultEntityMetaData;
+import org.molgenis.data.annotation.core.RepositoryAnnotator;
+import org.molgenis.data.annotation.web.AnnotationService;
+import org.molgenis.data.annotation.web.AnnotationServiceImpl;
+import org.molgenis.data.meta.MetaDataService;
+import org.molgenis.data.meta.model.AttributeFactory;
+import org.molgenis.data.meta.model.EntityType;
+import org.molgenis.data.meta.model.EntityTypeFactory;
+import org.molgenis.data.vcf.config.VcfTestConfig;
+import org.molgenis.data.vcf.model.VcfAttributes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.annotations.Test;
 
-@ContextConfiguration(classes =
-{ AnnotationServiceImplTest.Config.class })
-public class AnnotationServiceImplTest extends AbstractTestNGSpringContextTests
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.testng.Assert.*;
+
+@ContextConfiguration(classes = { AnnotationServiceImplTest.Config.class })
+public class AnnotationServiceImplTest extends AbstractMolgenisSpringTest
 {
 	@Autowired
+	AttributeFactory attributeFactory;
+
+	@Autowired
+	EntityTypeFactory entityTypeFactory;
+
+	@Autowired
+	VcfAttributes vcfAttributes;
+
+	@Autowired
 	private AnnotationServiceImpl annotationService;
-	private final EntityMetaData metaData = new DefaultEntityMetaData("test");
 
 	@Test
 	public void getAllAnnotators()
@@ -42,23 +52,25 @@ public class AnnotationServiceImplTest extends AbstractTestNGSpringContextTests
 	@Test
 	public void get()
 	{
-		assertEquals(annotationService.getAnnotatorsByMetaData(metaData).size(), 2);
-		assertTrue(annotationService.getAnnotatorsByMetaData(metaData).contains(
-				annotationService.getAnnotatorByName("annotator2")));
-		assertTrue(annotationService.getAnnotatorsByMetaData(metaData).contains(
-				annotationService.getAnnotatorByName("annotator3")));
+		assertEquals(annotationService.getAnnotatorsByMetaData(Config.metaData).size(), 2);
+		assertTrue(annotationService.getAnnotatorsByMetaData(Config.metaData)
+									.contains(annotationService.getAnnotatorByName("annotator2")));
+		assertTrue(annotationService.getAnnotatorsByMetaData(Config.metaData)
+									.contains(annotationService.getAnnotatorByName("annotator3")));
 	}
 
-	public static class Config
+	@Configuration
+	@Import({ VcfTestConfig.class })
+	static class Config
 	{
-		private final EntityMetaData metaData = new DefaultEntityMetaData("test");
+		public static EntityType metaData = mock(EntityType.class);
 
 		@Bean
 		public RepositoryAnnotator annotator1()
 		{
 			RepositoryAnnotator annotator = mock(RepositoryAnnotator.class);
 			when(annotator.getSimpleName()).thenReturn("annotator1");
-			when(annotator.canAnnotate(metaData)).thenReturn("no");
+			when(annotator.canAnnotate(metaData)).thenReturn("no way, this entity is unsuitable!");
 			return annotator;
 		}
 
@@ -87,9 +99,9 @@ public class AnnotationServiceImplTest extends AbstractTestNGSpringContextTests
 		}
 
 		@Bean
-		public DataService dataService()
+		public MetaDataService metaDataService()
 		{
-			return new DataServiceImpl();
+			return mock(MetaDataService.class);
 		}
 	}
 }

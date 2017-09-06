@@ -1,25 +1,25 @@
 package org.molgenis.security.token;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-
-import java.util.Arrays;
-import java.util.Date;
-
-import org.apache.commons.lang3.time.DateUtils;
-import org.molgenis.auth.MolgenisToken;
-import org.molgenis.auth.MolgenisUser;
+import org.mockito.ArgumentCaptor;
+import org.molgenis.auth.Token;
+import org.molgenis.auth.TokenFactory;
+import org.molgenis.auth.User;
 import org.molgenis.data.DataService;
-import org.molgenis.data.support.QueryImpl;
+import org.molgenis.data.Query;
 import org.molgenis.security.core.token.UnknownTokenException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import static java.util.Collections.singletonList;
+import static org.mockito.Mockito.*;
+import static org.molgenis.auth.TokenMetaData.TOKEN;
+import static org.molgenis.auth.TokenMetaData.TOKEN_ATTR;
+import static org.molgenis.auth.UserMetaData.USER;
+import static org.molgenis.auth.UserMetaData.USERNAME;
+import static org.testng.Assert.assertEquals;
 
 public class DataServiceTokenServiceTest
 {
@@ -34,23 +34,28 @@ public class DataServiceTokenServiceTest
 		tokenGenerator = mock(TokenGenerator.class);
 		dataService = mock(DataService.class);
 		userDetailsService = mock(UserDetailsService.class);
-		tokenService = new DataServiceTokenService(tokenGenerator, dataService, userDetailsService);
+		TokenFactory tokenFactory = mock(TokenFactory.class);
+		when(tokenFactory.create()).thenAnswer(invocation -> mock(Token.class));
+		tokenService = new DataServiceTokenService(tokenGenerator, dataService, userDetailsService, tokenFactory);
 	}
 
 	@Test
 	public void findUserByToken()
 	{
-		MolgenisToken molgenisToken = new MolgenisToken();
-		molgenisToken.setToken("token");
-		MolgenisUser user = new MolgenisUser();
-		user.setUsername("admin");
-		molgenisToken.setMolgenisUser(user);
+		User user = mock(User.class);
+		when(user.getUsername()).thenReturn("admin");
+		Token token = mock(Token.class);
+		when(token.getToken()).thenReturn("token");
+		when(token.getUser()).thenReturn(user);
 
-		when(
-				dataService.findOne(MolgenisToken.ENTITY_NAME, new QueryImpl().eq(MolgenisToken.TOKEN, "token"),
-						MolgenisToken.class)).thenReturn(molgenisToken);
+		@SuppressWarnings("unchecked")
+		Query<Token> q = mock(Query.class);
+		when(q.eq(TOKEN_ATTR, "token")).thenReturn(q);
+		when(q.findOne()).thenReturn(token);
+		when(dataService.query(TOKEN, Token.class)).thenReturn(q);
 
-		UserDetails userDetails = new User("admin", "admin", Arrays.asList(new SimpleGrantedAuthority("admin")));
+		UserDetails userDetails = new org.springframework.security.core.userdetails.User("admin", "admin",
+				singletonList(new SimpleGrantedAuthority("admin")));
 		when(userDetailsService.loadUserByUsername("admin")).thenReturn(userDetails);
 
 		assertEquals(tokenService.findUserByToken("token"), userDetails);
@@ -59,13 +64,15 @@ public class DataServiceTokenServiceTest
 	@Test(expectedExceptions = UnknownTokenException.class)
 	public void findUserByTokenExpired()
 	{
-		MolgenisToken molgenisToken = new MolgenisToken();
-		molgenisToken.setToken("token");
-		molgenisToken.setExpirationDate(DateUtils.addDays(new Date(), -1));
+		Token token = mock(Token.class);
+		when(token.getToken()).thenReturn("token");
+		when(token.isExpired()).thenReturn(true);
 
-		when(
-				dataService.findOne(MolgenisToken.ENTITY_NAME, new QueryImpl().eq(MolgenisToken.TOKEN, "token"),
-						MolgenisToken.class)).thenReturn(molgenisToken);
+		@SuppressWarnings("unchecked")
+		Query<Token> q = mock(Query.class);
+		when(q.eq(TOKEN_ATTR, "token")).thenReturn(q);
+		when(q.findOne()).thenReturn(token);
+		when(dataService.query(TOKEN, Token.class)).thenReturn(q);
 
 		tokenService.findUserByToken("token");
 	}
@@ -73,31 +80,36 @@ public class DataServiceTokenServiceTest
 	@Test
 	public void generateAndStoreToken()
 	{
-		MolgenisUser user = new MolgenisUser();
+		User user = mock(User.class);
 
-		when(
-				dataService.findOne(MolgenisUser.ENTITY_NAME, new QueryImpl().eq(MolgenisUser.USERNAME, "admin"),
-						MolgenisUser.class)).thenReturn(user);
+		@SuppressWarnings("unchecked")
+		Query<User> q = mock(Query.class);
+		when(q.eq(USERNAME, "admin")).thenReturn(q);
+		when(q.findOne()).thenReturn(user);
+		when(dataService.query(USER, User.class)).thenReturn(q);
 
 		when(tokenGenerator.generateToken()).thenReturn("token");
 		assertEquals(tokenService.generateAndStoreToken("admin", "description"), "token");
 
-		MolgenisToken molgenisToken = new MolgenisToken();
-		molgenisToken.setToken("token");
-		verify(dataService).add(MolgenisToken.ENTITY_NAME, molgenisToken);
+		ArgumentCaptor<Token> argumentCaptor = ArgumentCaptor.forClass(Token.class);
+		verify(dataService).add(eq(TOKEN), argumentCaptor.capture());
+		Token token = argumentCaptor.getValue();
+		verify(token).setToken("token");
 	}
 
 	@Test
 	public void removeToken()
 	{
-		MolgenisToken molgenisToken = new MolgenisToken();
-		molgenisToken.setToken("token");
+		Token token = mock(Token.class);
+		when(token.getToken()).thenReturn("token");
 
-		when(
-				dataService.findOne(MolgenisToken.ENTITY_NAME, new QueryImpl().eq(MolgenisToken.TOKEN, "token"),
-						MolgenisToken.class)).thenReturn(molgenisToken);
+		@SuppressWarnings("unchecked")
+		Query<Token> q = mock(Query.class);
+		when(q.eq(TOKEN_ATTR, "token")).thenReturn(q);
+		when(q.findOne()).thenReturn(token);
+		when(dataService.query(TOKEN, Token.class)).thenReturn(q);
 
 		tokenService.removeToken("token");
-		verify(dataService).delete(MolgenisToken.ENTITY_NAME, molgenisToken);
+		verify(dataService).delete(TOKEN, token);
 	}
 }

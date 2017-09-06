@@ -1,34 +1,31 @@
 package org.molgenis.data.excel;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Iterator;
-import java.util.List;
-import java.util.stream.Collectors;
-
+import com.google.common.collect.Lists;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
-import org.molgenis.data.AttributeMetaData;
-import org.molgenis.data.EntityMetaData;
+import org.molgenis.data.Entity;
 import org.molgenis.data.MolgenisInvalidFormatException;
 import org.molgenis.data.Repository;
+import org.molgenis.data.meta.model.Attribute;
+import org.molgenis.data.meta.model.AttributeFactory;
+import org.molgenis.data.meta.model.EntityType;
+import org.molgenis.data.meta.model.EntityTypeFactory;
 import org.molgenis.data.processor.CellProcessor;
 import org.molgenis.data.processor.TrimProcessor;
 import org.molgenis.data.support.AbstractWritable.AttributeWriteMode;
-import org.molgenis.data.support.DefaultAttributeMetaData;
 import org.molgenis.data.support.FileRepositoryCollection;
-import org.molgenis.data.support.GenericImporterExtensions;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import com.google.common.collect.Lists;
+import java.io.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Read an excel file and iterate through the sheets.
- * 
+ * <p>
  * A sheet is exposed as a {@link org.molgenis.data.Repository} with the sheetname as the Repository name
  */
 public class ExcelRepositoryCollection extends FileRepositoryCollection
@@ -38,21 +35,24 @@ public class ExcelRepositoryCollection extends FileRepositoryCollection
 	private final String name;
 	private final Workbook workbook;
 
+	private EntityTypeFactory entityTypeFactory;
+	private AttributeFactory attributeFactory;
+
 	public ExcelRepositoryCollection(File file) throws IOException, MolgenisInvalidFormatException
 	{
 		this(file, new TrimProcessor());
 	}
 
-	public ExcelRepositoryCollection(File file, CellProcessor... cellProcessors) throws IOException,
-			MolgenisInvalidFormatException
+	public ExcelRepositoryCollection(File file, CellProcessor... cellProcessors)
+			throws IOException, MolgenisInvalidFormatException
 	{
 		this(file.getName(), new FileInputStream(file), cellProcessors);
 	}
 
-	public ExcelRepositoryCollection(String name, InputStream in, CellProcessor... cellProcessors) throws IOException,
-			MolgenisInvalidFormatException
+	public ExcelRepositoryCollection(String name, InputStream in, CellProcessor... cellProcessors)
+			throws IOException, MolgenisInvalidFormatException
 	{
-		super(GenericImporterExtensions.getExcel(), cellProcessors);
+		super(ExcelFileExtensions.getExcel(), cellProcessors);
 		this.name = name;
 		try
 		{
@@ -65,7 +65,13 @@ public class ExcelRepositoryCollection extends FileRepositoryCollection
 	}
 
 	@Override
-	public Iterable<String> getEntityNames()
+	public void init() throws IOException
+	{
+		// no operation
+	}
+
+	@Override
+	public Iterable<String> getEntityTypeIds()
 	{
 		int count = getNumberOfSheets();
 		List<String> sheetNames = Lists.newArrayListWithCapacity(count);
@@ -79,7 +85,7 @@ public class ExcelRepositoryCollection extends FileRepositoryCollection
 	}
 
 	@Override
-	public Repository getRepository(String name)
+	public Repository<Entity> getRepository(String name)
 	{
 		Sheet poiSheet = workbook.getSheet(name);
 		if (poiSheet == null)
@@ -87,7 +93,7 @@ public class ExcelRepositoryCollection extends FileRepositoryCollection
 			return null;
 		}
 
-		return new ExcelRepository(name, poiSheet, cellProcessors);
+		return new ExcelRepository(name, poiSheet, entityTypeFactory, attributeFactory, cellProcessors);
 	}
 
 	public int getNumberOfSheets()
@@ -108,22 +114,25 @@ public class ExcelRepositoryCollection extends FileRepositoryCollection
 			return null;
 		}
 
-		return new ExcelRepository(name, poiSheet, cellProcessors);
+		return new ExcelRepository(name, poiSheet, entityTypeFactory, attributeFactory, cellProcessors);
 	}
 
-	public ExcelSheetWriter createWritable(String entityName, List<AttributeMetaData> attributes,
+	public ExcelSheetWriter createWritable(String entityTypeId, List<Attribute> attributes,
 			AttributeWriteMode attributeWriteMode)
 	{
-		Sheet sheet = workbook.createSheet(entityName);
+		Sheet sheet = workbook.createSheet(entityTypeId);
 		return new ExcelSheetWriter(sheet, attributes, attributeWriteMode, cellProcessors);
 	}
 
-	public ExcelSheetWriter createWritable(String entityName, List<String> attributeNames)
+	public ExcelSheetWriter createWritable(String entityTypeId, List<String> attributeNames)
 	{
-		List<AttributeMetaData> attributes = attributeNames != null ? attributeNames.stream()
-				.<AttributeMetaData> map(attr -> new DefaultAttributeMetaData(attr)).collect(Collectors.toList()) : null;
+		List<Attribute> attributes = attributeNames != null ? attributeNames.stream()
+																			.map(attrName -> attributeFactory.create()
+																											 .setName(
+																													 attrName))
+																			.collect(Collectors.toList()) : null;
 
-		return createWritable(entityName, attributes, AttributeWriteMode.ATTRIBUTE_NAMES);
+		return createWritable(entityTypeId, attributes, AttributeWriteMode.ATTRIBUTE_NAMES);
 	}
 
 	public void save(OutputStream out) throws IOException
@@ -138,17 +147,11 @@ public class ExcelRepositoryCollection extends FileRepositoryCollection
 	}
 
 	@Override
-	public Repository addEntityMeta(EntityMetaData entityMeta)
+	public Iterator<Repository<Entity>> iterator()
 	{
-		return getRepository(entityMeta.getName());
-	}
-
-	@Override
-	public Iterator<Repository> iterator()
-	{
-		return new Iterator<Repository>()
+		return new Iterator<Repository<Entity>>()
 		{
-			Iterator<String> it = getEntityNames().iterator();
+			Iterator<String> it = getEntityTypeIds().iterator();
 
 			@Override
 			public boolean hasNext()
@@ -157,7 +160,7 @@ public class ExcelRepositoryCollection extends FileRepositoryCollection
 			}
 
 			@Override
-			public Repository next()
+			public Repository<Entity> next()
 			{
 				return getRepository(it.next());
 			}
@@ -169,12 +172,28 @@ public class ExcelRepositoryCollection extends FileRepositoryCollection
 	public boolean hasRepository(String name)
 	{
 		if (null == name) return false;
-		Iterator<String> entityNames = getEntityNames().iterator();
-		while (entityNames.hasNext())
+		for (String s : getEntityTypeIds())
 		{
-			if (entityNames.next().equals(name)) return true;
+			if (s.equals(name)) return true;
 		}
 		return false;
 	}
 
+	@Override
+	public boolean hasRepository(EntityType entityType)
+	{
+		return hasRepository(entityType.getId());
+	}
+
+	@Autowired
+	public void setEntityTypeFactory(EntityTypeFactory entityTypeFactory)
+	{
+		this.entityTypeFactory = entityTypeFactory;
+	}
+
+	@Autowired
+	public void setAttributeFactory(AttributeFactory attributeFactory)
+	{
+		this.attributeFactory = attributeFactory;
+	}
 }

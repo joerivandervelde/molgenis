@@ -1,58 +1,60 @@
 package org.molgenis.ui.jobs;
 
-import static java.util.Objects.requireNonNull;
-import static java.util.stream.StreamSupport.stream;
-import static org.molgenis.data.jobs.JobExecution.SUBMISSION_DATE;
-import static org.molgenis.ui.jobs.JobsController.URI;
-import static org.springframework.web.bind.annotation.RequestMethod.GET;
-
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
-
-import org.molgenis.auth.MolgenisUser;
+import org.molgenis.auth.User;
 import org.molgenis.data.DataService;
 import org.molgenis.data.Entity;
 import org.molgenis.data.Query;
-import org.molgenis.data.jobs.JobExecution;
-import org.molgenis.data.jobs.JobExecutionMetaData;
+import org.molgenis.data.jobs.model.JobExecution;
+import org.molgenis.data.jobs.model.JobExecutionMetaData;
+import org.molgenis.data.jobs.schedule.JobScheduler;
 import org.molgenis.security.user.UserAccountService;
-import org.molgenis.ui.MolgenisPluginController;
+import org.molgenis.ui.menu.MenuReaderService;
+import org.molgenis.web.PluginController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
+
+import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
+import static org.molgenis.data.jobs.model.JobExecutionMetaData.SUBMISSION_DATE;
+import static org.molgenis.data.jobs.model.JobExecutionMetaData.USER;
+import static org.molgenis.data.support.Href.concatEntityHref;
+import static org.molgenis.ui.jobs.JobsController.URI;
+import static org.springframework.http.HttpStatus.NO_CONTENT;
+import static org.springframework.web.bind.annotation.RequestMethod.GET;
+import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 @Controller
 @RequestMapping(URI)
-public class JobsController extends MolgenisPluginController
+public class JobsController extends PluginController
 {
 	public static final String ID = "jobs";
-	public static final String URI = MolgenisPluginController.PLUGIN_URI_PREFIX + ID;
-	private static int MAX_JOBS_TO_RETURN = 20;
+	public static final String URI = PluginController.PLUGIN_URI_PREFIX + ID;
+	private static final int MAX_JOBS_TO_RETURN = 20;
 
-	private UserAccountService userAccountService;
-	private DataService dataService;
-	private JobExecutionMetaData jobMetaDataMetaData;
+	private final UserAccountService userAccountService;
+	private final DataService dataService;
+	private final JobExecutionMetaData jobMetaDataMetaData;
+	private final JobScheduler jobScheduler;
+	private final MenuReaderService menuReaderService;
 
 	@Autowired
 	public JobsController(UserAccountService userAccountService, DataService dataService,
-			JobExecutionMetaData jobMetaDataMetaData)
+			JobExecutionMetaData jobMetaDataMetaData, JobScheduler jobScheduler, MenuReaderService menuReaderService)
 	{
 		super(URI);
 		this.userAccountService = requireNonNull(userAccountService);
 		this.dataService = requireNonNull(dataService);
 		this.jobMetaDataMetaData = requireNonNull(jobMetaDataMetaData);
-	}
-
-	public JobsController()
-	{
-		super(URI);
+		this.jobScheduler = requireNonNull(jobScheduler);
+		this.menuReaderService = requireNonNull(menuReaderService);
 	}
 
 	@RequestMapping(method = GET)
@@ -62,41 +64,58 @@ public class JobsController extends MolgenisPluginController
 		return "view-jobs";
 	}
 
+	@RequestMapping(method = GET, value = "/viewJob")
+	public String viewJob(Model model, @RequestParam(name = "jobHref") String jobHref,
+			@RequestParam(name = "refreshTimeoutMillis", defaultValue = "10000") Integer refreshTimeoutMillis)
+	{
+		model.addAttribute("jobHref", jobHref);
+		model.addAttribute("refreshTimeoutMillis", refreshTimeoutMillis);
+		return "view-job";
+	}
+
 	@RequestMapping(method = GET, value = "/latest", produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
 	public List<Entity> findLastJobs()
 	{
 		final List<Entity> jobs = new ArrayList<>();
 
-		Calendar cal = Calendar.getInstance();
-		cal.add(Calendar.DATE, -7);
-		Date weekAgo = cal.getTime();
-		MolgenisUser currentUser = userAccountService.getCurrentUser();
+		Instant weekAgo = Instant.now().minus(7, ChronoUnit.DAYS).truncatedTo(ChronoUnit.DAYS);
+		User currentUser = userAccountService.getCurrentUser();
 
-		stream(dataService.getMeta().getEntityMetaDatas().spliterator(), false)
-				.filter(e -> e.getExtends() != null && e.getExtends().getName().equals(jobMetaDataMetaData.getName()))
-				.forEach(e -> {
-					Query q = dataService.query(e.getName()).ge(JobExecution.SUBMISSION_DATE, weekAgo);
-					if (!currentUser.isSuperuser())
-					{
-						q.and().eq(JobExecution.USER, currentUser.getUsername());
-					}
-					dataService.findAll(e.getName(), q).forEach(jobs::add);
-				});
+		dataService.getMeta()
+				   .getEntityTypes()
+				   .filter(e -> e.getExtends() != null && e.getExtends().getId().equals(jobMetaDataMetaData.getId()))
+				   .forEach(e ->
+				   {
+					   Query<Entity> q = dataService.query(e.getId()).ge(JobExecutionMetaData.SUBMISSION_DATE, weekAgo);
+					   if (!currentUser.isSuperuser())
+					   {
+						   q.and().eq(USER, currentUser.getUsername());
+					   }
+					   dataService.findAll(e.getId(), q).forEach(jobs::add);
+				   });
 
-		Collections.sort(jobs, new Comparator<Entity>()
-		{
-			@Override
-			public int compare(Entity job1, Entity job2)
-			{
-				return job2.getUtilDate(SUBMISSION_DATE).compareTo(job1.getUtilDate(SUBMISSION_DATE));
-			}
-		});
+		jobs.sort((job1, job2) -> job2.getInstant(SUBMISSION_DATE).compareTo(job1.getInstant(SUBMISSION_DATE)));
 		if (jobs.size() > MAX_JOBS_TO_RETURN)
 		{
 			return jobs.subList(0, MAX_JOBS_TO_RETURN);
 		}
 
 		return jobs;
+	}
+
+	@RequestMapping(value = "/run/{scheduledJobId}", method = POST)
+	@ResponseStatus(NO_CONTENT)
+	public void runNow(@PathVariable("scheduledJobId") String scheduledJobId)
+	{
+		jobScheduler.runNow(scheduledJobId);
+	}
+
+	public String createJobExecutionViewHref(JobExecution jobExecution, int refreshTimeoutMillis)
+	{
+		String jobHref = concatEntityHref(jobExecution);
+		String jobControllerURL = menuReaderService.getMenu().findMenuItemPath(ID);
+		return format("%s/viewJob/?jobHref=%s&refreshTimeoutMillis=%s", jobControllerURL, jobHref,
+				refreshTimeoutMillis);
 	}
 }

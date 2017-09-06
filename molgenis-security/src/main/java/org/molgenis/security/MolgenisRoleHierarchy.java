@@ -1,20 +1,13 @@
 package org.molgenis.security;
 
-import static org.molgenis.security.core.utils.SecurityUtils.AUTHORITY_ENTITY_COUNT_PREFIX;
-import static org.molgenis.security.core.utils.SecurityUtils.AUTHORITY_ENTITY_READ_PREFIX;
-import static org.molgenis.security.core.utils.SecurityUtils.AUTHORITY_ENTITY_WRITEMETA_PREFIX;
-import static org.molgenis.security.core.utils.SecurityUtils.AUTHORITY_ENTITY_WRITE_PREFIX;
-import static org.molgenis.security.core.utils.SecurityUtils.AUTHORITY_PLUGIN_COUNT_PREFIX;
-import static org.molgenis.security.core.utils.SecurityUtils.AUTHORITY_PLUGIN_READ_PREFIX;
-import static org.molgenis.security.core.utils.SecurityUtils.AUTHORITY_PLUGIN_WRITEMETA_PREFIX;
-import static org.molgenis.security.core.utils.SecurityUtils.AUTHORITY_PLUGIN_WRITE_PREFIX;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import static org.molgenis.security.core.utils.SecurityUtils.*;
 
 public class MolgenisRoleHierarchy implements RoleHierarchy
 {
@@ -22,7 +15,7 @@ public class MolgenisRoleHierarchy implements RoleHierarchy
 	public Collection<? extends GrantedAuthority> getReachableGrantedAuthorities(
 			Collection<? extends GrantedAuthority> authorities)
 	{
-		Collection<GrantedAuthority> hierarchicalAuthorities = new ArrayList<GrantedAuthority>();
+		Collection<GrantedAuthority> hierarchicalAuthorities = new ArrayList<>();
 		for (GrantedAuthority authority : authorities)
 		{
 			if (authority.getAuthority().startsWith(AUTHORITY_ENTITY_WRITEMETA_PREFIX))

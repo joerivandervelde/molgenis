@@ -1,17 +1,17 @@
 package org.molgenis.data.rest;
 
-import java.util.List;
+import org.molgenis.data.QueryRule;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
-
-import org.molgenis.data.QueryRule;
+import java.util.List;
 
 public class EntityCollectionRequest
 {
 	public static final int MAX_ROWS = 10000;
 	public static final int DEFAULT_ROW_COUNT = 100;
 	private List<QueryRule> q;
+	@SuppressWarnings("deprecation")
 	private SortV1 sort;
 	private String[] attributes;
 	private String[] expand;
@@ -53,11 +53,13 @@ public class EntityCollectionRequest
 		this.q = q;
 	}
 
+	@SuppressWarnings("deprecation")
 	public SortV1 getSort()
 	{
 		return sort;
 	}
 
+	@SuppressWarnings("deprecation")
 	public void setSort(SortV1 sort)
 	{
 		this.sort = sort;

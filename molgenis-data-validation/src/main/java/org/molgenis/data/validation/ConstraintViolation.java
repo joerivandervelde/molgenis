@@ -1,22 +1,27 @@
 package org.molgenis.data.validation;
 
-import static java.lang.Math.toIntExact;
+import org.molgenis.data.Entity;
+import org.molgenis.data.meta.model.Attribute;
+import org.molgenis.data.meta.model.EntityType;
 
 import java.util.List;
 
-import org.molgenis.data.AttributeMetaData;
-import org.molgenis.data.Entity;
-import org.molgenis.data.EntityMetaData;
+import static java.lang.Math.toIntExact;
 
 public class ConstraintViolation
 {
 	private final String message;
 	private Object invalidValue;
 	private Entity entity;
-	private AttributeMetaData violatedAttribute;
-	private EntityMetaData entityMetaData;
+	private Attribute violatedAttribute;
+	private EntityType entityType;
 	private String importInfo;
 	private Long rownr;
+
+	public ConstraintViolation(String message)
+	{
+		this(message, null);
+	}
 
 	public ConstraintViolation(String message, Long rownr)
 	{
@@ -24,33 +29,31 @@ public class ConstraintViolation
 		this.rownr = rownr;
 	}
 
-	public ConstraintViolation(String message, AttributeMetaData violatedAttribute, Long rownr)
+	public ConstraintViolation(String message, Attribute violatedAttribute, Long rownr)
 	{
 		this.message = message;
 		this.violatedAttribute = violatedAttribute;
 		this.rownr = rownr;
 	}
 
-	public ConstraintViolation(String message, Object invalidValue, Entity entity, AttributeMetaData violatedAttribute,
-			EntityMetaData entityMetaData, Long rownr)
+	public ConstraintViolation(String message, Object invalidValue, Entity entity, Attribute violatedAttribute,
+			EntityType entityType, Long rownr)
 	{
 		this.message = message;
 		this.invalidValue = invalidValue;
 		this.entity = entity;
 		this.violatedAttribute = violatedAttribute;
-		this.entityMetaData = entityMetaData;
+		this.entityType = entityType;
 		this.rownr = rownr;
 	}
 
 	/**
 	 * Renumber the violation row number from a list of actual row numbers The list of indices is 0-indexed and the
 	 * rownnr are 1-indexed
-	 * 
-	 * @param indices
 	 */
 	public void renumberRowIndex(List<Integer> indices)
 	{
-		this.rownr = new Long(indices.get(toIntExact(this.rownr - 1)));
+		this.rownr = this.rownr != null ? new Long(indices.get(toIntExact(this.rownr - 1))) : null;
 	}
 
 	public String getMessage()
@@ -73,14 +76,14 @@ public class ConstraintViolation
 		return entity;
 	}
 
-	public AttributeMetaData getViolatedAttribute()
+	public Attribute getViolatedAttribute()
 	{
 		return violatedAttribute;
 	}
 
-	public EntityMetaData getEntityMetaData()
+	public EntityType getEntityType()
 	{
-		return entityMetaData;
+		return entityType;
 	}
 
 	public Long getRownr()
@@ -109,7 +112,7 @@ public class ConstraintViolation
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((entity == null) ? 0 : entity.hashCode());
-		result = prime * result + ((entityMetaData == null) ? 0 : entityMetaData.hashCode());
+		result = prime * result + ((entityType == null) ? 0 : entityType.hashCode());
 		result = prime * result + ((importInfo == null) ? 0 : importInfo.hashCode());
 		result = prime * result + ((invalidValue == null) ? 0 : invalidValue.hashCode());
 		result = prime * result + ((message == null) ? 0 : message.hashCode());
@@ -130,11 +133,11 @@ public class ConstraintViolation
 			if (other.entity != null) return false;
 		}
 		else if (!entity.equals(other.entity)) return false;
-		if (entityMetaData == null)
+		if (entityType == null)
 		{
-			if (other.entityMetaData != null) return false;
+			if (other.entityType != null) return false;
 		}
-		else if (!entityMetaData.equals(other.entityMetaData)) return false;
+		else if (!entityType.equals(other.entityType)) return false;
 		if (importInfo == null)
 		{
 			if (other.importInfo != null) return false;
@@ -167,7 +170,7 @@ public class ConstraintViolation
 	public String toString()
 	{
 		return "ConstraintViolation [message=" + message + ", invalidValue=" + invalidValue + ", entity=" + entity
-				+ ", violatedAttribute=" + violatedAttribute + ", entityMetaData=" + entityMetaData + ", importInfo="
+				+ ", violatedAttribute=" + violatedAttribute + ", entityType=" + entityType + ", importInfo="
 				+ importInfo + ", rownr=" + rownr + "]";
 	}
 

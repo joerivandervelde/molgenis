@@ -1,24 +1,24 @@
 package org.molgenis.data.rest.v2;
 
+import org.molgenis.data.Entity;
+import org.molgenis.data.meta.model.Attribute;
+import org.molgenis.data.meta.model.EntityType;
+
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.molgenis.data.AttributeMetaData;
-import org.molgenis.data.Entity;
-import org.molgenis.data.EntityMetaData;
-
 /**
  * An AttributeFilter represents the value of the attrs parameter in a REST query.
- * 
+ * <p>
  * The AttributeFilter allows you to specify which attributes should be fetched for each {@link Entity} that is
  * retrieved.
- * 
+ * <p>
  * By default, the top level entity will always be fetched with all attributes, but you can also specify a list of
  * attribute names. Those will be added to the ID and label attributes, which will always be fetched.
- * 
+ * <p>
  * Referenced entities will always be fetched using ID and label, but you can also specify a list of attribute names.
  * Those will be added to the ID and label attributes, which will always be fetched. You can also specify the special
  * selector `*` which will fetch all attributes for a referenced entity.
@@ -34,7 +34,7 @@ class AttributeFilter implements Iterable<Entry<String, AttributeFilter>>
 
 	public AttributeFilter()
 	{
-		this.attributes = new LinkedHashMap<String, AttributeFilter>();
+		this.attributes = new LinkedHashMap<>();
 	}
 
 	public boolean isIncludeAllAttrs()
@@ -90,13 +90,13 @@ class AttributeFilter implements Iterable<Entry<String, AttributeFilter>>
 		return this;
 	}
 
-	public AttributeFilter getAttributeFilter(EntityMetaData entityMeta, AttributeMetaData attr)
+	public AttributeFilter getAttributeFilter(EntityType entityType, Attribute attr)
 	{
-		if (idAttrFilter != null && attr.equals(entityMeta.getIdAttribute()))
+		if (idAttrFilter != null && attr.equals(entityType.getIdAttribute()))
 		{
 			return idAttrFilter;
 		}
-		else if (labelAttrFilter != null && attr.equals(entityMeta.getLabelAttribute()))
+		else if (labelAttrFilter != null && attr.equals(entityType.getLabelAttribute()))
 		{
 			return labelAttrFilter;
 		}
@@ -125,7 +125,7 @@ class AttributeFilter implements Iterable<Entry<String, AttributeFilter>>
 
 	private String normalize(String name)
 	{
-		return name.toLowerCase();
+		return name;//.toLowerCase();
 	}
 
 	@Override

@@ -1,7 +1,19 @@
 package org.molgenis.dataexplorer.download;
 
-import static com.google.common.collect.Iterables.filter;
-import static com.google.common.collect.Iterables.transform;
+import org.molgenis.data.DataService;
+import org.molgenis.data.Entity;
+import org.molgenis.data.csv.CsvWriter;
+import org.molgenis.data.excel.ExcelSheetWriter;
+import org.molgenis.data.excel.ExcelWriter;
+import org.molgenis.data.excel.ExcelWriter.FileFormat;
+import org.molgenis.data.meta.model.Attribute;
+import org.molgenis.data.meta.model.AttributeFactory;
+import org.molgenis.data.meta.model.EntityType;
+import org.molgenis.data.support.AbstractWritable.AttributeWriteMode;
+import org.molgenis.data.support.AbstractWritable.EntityWriteMode;
+import org.molgenis.data.support.QueryImpl;
+import org.molgenis.dataexplorer.controller.DataRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -9,51 +21,43 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import org.molgenis.data.AttributeMetaData;
-import org.molgenis.data.DataService;
-import org.molgenis.data.EntityMetaData;
-import org.molgenis.data.csv.CsvWriter;
-import org.molgenis.data.excel.ExcelSheetWriter;
-import org.molgenis.data.excel.ExcelWriter;
-import org.molgenis.data.excel.ExcelWriter.FileFormat;
-import org.molgenis.data.support.AbstractWritable.AttributeWriteMode;
-import org.molgenis.data.support.AbstractWritable.EntityWriteMode;
-import org.molgenis.data.support.QueryImpl;
-import org.molgenis.dataexplorer.controller.DataRequest;
-import org.springframework.beans.factory.annotation.Autowired;
+import static com.google.common.collect.Iterables.filter;
+import static com.google.common.collect.Iterables.transform;
+import static java.util.Objects.requireNonNull;
 
 public class DataExplorerDownloadHandler
 {
 	private final DataService dataService;
+	private final AttributeFactory attrMetaFactory;
 
 	@Autowired
-	public DataExplorerDownloadHandler(DataService dataService)
+	public DataExplorerDownloadHandler(DataService dataService, AttributeFactory attrMetaFactory)
 	{
-		this.dataService = dataService;
+		this.dataService = requireNonNull(dataService);
+		this.attrMetaFactory = requireNonNull(attrMetaFactory);
 	}
 
 	public void writeToExcel(DataRequest dataRequest, OutputStream outputStream) throws IOException
 	{
-		ExcelWriter excelWriter = new ExcelWriter(outputStream, FileFormat.XLSX);
-		String entityName = dataRequest.getEntityName();
+		String entityTypeId = dataRequest.getEntityName();
 
-		QueryImpl query = dataRequest.getQuery();
+		QueryImpl<Entity> query = dataRequest.getQuery();
 		ExcelSheetWriter excelSheetWriter = null;
-		try
+		try (ExcelWriter excelWriter = new ExcelWriter(outputStream, attrMetaFactory, FileFormat.XLSX))
 		{
-			EntityMetaData entityMetaData = dataService.getEntityMetaData(entityName);
-			final Set<String> attributeNames = new LinkedHashSet<String>(dataRequest.getAttributeNames());
-			Iterable<AttributeMetaData> attributes = filter(entityMetaData.getAtomicAttributes(),
-					attributeMetaData -> attributeNames.contains(attributeMetaData.getName()));
+			EntityType entityType = dataService.getEntityType(entityTypeId);
+			final Set<String> attributeNames = new LinkedHashSet<>(dataRequest.getAttributeNames());
+			Iterable<Attribute> attributes = filter(entityType.getAtomicAttributes(),
+					attribute -> attributeNames.contains(attribute.getName()));
 
 			switch (dataRequest.getColNames())
 			{
 				case ATTRIBUTE_LABELS:
-					excelSheetWriter = excelWriter.createWritable(entityName, attributes,
+					excelSheetWriter = excelWriter.createWritable(entityTypeId, attributes,
 							AttributeWriteMode.ATTRIBUTE_LABELS);
 					break;
 				case ATTRIBUTE_NAMES:
-					excelSheetWriter = excelWriter.createWritable(entityName, attributes,
+					excelSheetWriter = excelWriter.createWritable(entityTypeId, attributes,
 							AttributeWriteMode.ATTRIBUTE_NAMES);
 					break;
 			}
@@ -69,12 +73,8 @@ public class DataExplorerDownloadHandler
 					break;
 			}
 
-			excelSheetWriter.add(dataService.findAll(entityName, query));
+			excelSheetWriter.add(dataService.findAll(entityTypeId, query));
 			excelSheetWriter.close();
-		}
-		finally
-		{
-			excelWriter.close();
 		}
 	}
 
@@ -98,14 +98,14 @@ public class DataExplorerDownloadHandler
 			default:
 				break;
 		}
-		String entityName = dataRequest.getEntityName();
+		String entityTypeId = dataRequest.getEntityName();
 
 		try
 		{
-			EntityMetaData entityMetaData = dataService.getEntityMetaData(entityName);
-			final Set<String> attributeNames = new HashSet<String>(dataRequest.getAttributeNames());
-			Iterable<AttributeMetaData> attributes = filter(entityMetaData.getAtomicAttributes(),
-					attributeMetaData -> attributeNames.contains(attributeMetaData.getName()));
+			EntityType entityType = dataService.getEntityType(entityTypeId);
+			final Set<String> attributeNames = new HashSet<>(dataRequest.getAttributeNames());
+			Iterable<Attribute> attributes = filter(entityType.getAtomicAttributes(),
+					attribute -> attributeNames.contains(attribute.getName()));
 
 			switch (dataRequest.getColNames())
 			{
@@ -113,12 +113,12 @@ public class DataExplorerDownloadHandler
 					csvWriter.writeAttributes(attributes);
 					break;
 				case ATTRIBUTE_NAMES:
-					csvWriter.writeAttributeNames(transform(attributes, AttributeMetaData::getName));
+					csvWriter.writeAttributeNames(transform(attributes, Attribute::getName));
 					break;
 			}
 
-			QueryImpl query = dataRequest.getQuery();
-			csvWriter.add(dataService.findAll(entityName, query));
+			QueryImpl<Entity> query = dataRequest.getQuery();
+			csvWriter.add(dataService.findAll(entityTypeId, query));
 		}
 		finally
 		{

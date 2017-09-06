@@ -16,16 +16,6 @@
 
 package org.molgenis.wikipathways.utils;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Consts;
 import org.apache.http.HttpEntity;
@@ -40,16 +30,12 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
-import org.molgenis.wikipathways.client.WSCurationTag;
-import org.molgenis.wikipathways.client.WSCurationTagHistory;
-import org.molgenis.wikipathways.client.WSHistoryRow;
-import org.molgenis.wikipathways.client.WSIndexField;
-import org.molgenis.wikipathways.client.WSNamespaces;
-import org.molgenis.wikipathways.client.WSOntologyTerm;
-import org.molgenis.wikipathways.client.WSPathway;
-import org.molgenis.wikipathways.client.WSPathwayHistory;
-import org.molgenis.wikipathways.client.WSPathwayInfo;
-import org.molgenis.wikipathways.client.WSSearchResult;
+import org.molgenis.wikipathways.client.*;
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class Utils
 {
@@ -59,25 +45,20 @@ public class Utils
 		HttpGet httpget = new HttpGet(url);
 		HttpResponse response = client.execute(httpget);
 		HttpEntity entity = response.getEntity();
-		InputStream instream = entity.getContent();
-		try
+		try (InputStream instream = entity.getContent())
 		{
-			String content = "";
+			StringBuilder content = new StringBuilder();
 			BufferedReader reader = new BufferedReader(new InputStreamReader(instream, "UTF-8"));
 			String line;
 			while ((line = reader.readLine()) != null)
 			{
-				content = content + line + "\n";
+				content.append(line).append("\n");
 			}
 			reader.close();
 
 			SAXBuilder jdomBuilder = new SAXBuilder();
-			Document jdomDocument = jdomBuilder.build(new StringReader(content));
+			Document jdomDocument = jdomBuilder.build(new StringReader(content.toString()));
 			return jdomDocument;
-		}
-		finally
-		{
-			instream.close();
 		}
 	}
 
@@ -86,7 +67,7 @@ public class Utils
 
 		HttpPost httpost = new HttpPost(url);
 		// Adding all form parameters in a List of type NameValuePair
-		List<NameValuePair> nvps = new ArrayList<NameValuePair>();
+		List<NameValuePair> nvps = new ArrayList<>();
 		for (String key : attributes.keySet())
 		{
 			nvps.add(new BasicNameValuePair(key, attributes.get(key)));
@@ -129,6 +110,7 @@ public class Utils
 		String score = searchResult.getChildText("score", WSNamespaces.NS2);
 		res.setScore(Double.parseDouble(score));
 
+		@SuppressWarnings("unchecked")
 		List<Element> fieldList = searchResult.getChildren("fields", WSNamespaces.NS2);
 		WSIndexField[] fields = new WSIndexField[fieldList.size()];
 		for (int i = 0; i < fieldList.size(); i++)
@@ -182,6 +164,7 @@ public class Utils
 		String species = hist.getChildText("species", WSNamespaces.NS2);
 		String revision = hist.getChildText("revision", WSNamespaces.NS2);
 
+		@SuppressWarnings("unchecked")
 		List<Element> list = hist.getChildren("history", WSNamespaces.NS2);
 		WSHistoryRow[] histRows = new WSHistoryRow[list.size()];
 		for (int i = 0; i < list.size(); i++)

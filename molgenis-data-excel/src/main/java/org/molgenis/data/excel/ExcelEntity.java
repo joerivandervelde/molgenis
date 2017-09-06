@@ -1,23 +1,22 @@
 package org.molgenis.data.excel;
 
-import java.util.List;
-import java.util.Map;
-
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.molgenis.data.Entity;
-import org.molgenis.data.EntityMetaData;
+import org.molgenis.data.meta.model.EntityType;
 import org.molgenis.data.processor.CellProcessor;
-import org.molgenis.data.support.AbstractMetaDataEntity;
+import org.molgenis.data.support.DynamicEntity;
 import org.springframework.util.LinkedCaseInsensitiveMap;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Entity implementation for Excel.
- * 
+ * <p>
  * All attributes are of type String, values are processed using the given CellProcessors
- * 
  */
-public class ExcelEntity extends AbstractMetaDataEntity
+public class ExcelEntity extends DynamicEntity
 {
 	private static final long serialVersionUID = 8928375571009145452L;
 	private final transient Row row;
@@ -27,9 +26,9 @@ public class ExcelEntity extends AbstractMetaDataEntity
 	private transient Map<String, Object> cachedValueMap;
 
 	public ExcelEntity(Row row, Map<String, Integer> colNamesMap, List<CellProcessor> cellProcessors,
-			EntityMetaData entityMetaData)
+			EntityType entityType)
 	{
-		super(entityMetaData);
+		super(entityType);
 
 		if (row == null) throw new IllegalArgumentException("row is null");
 		if (colNamesMap == null) throw new IllegalArgumentException("column names map is null");
@@ -41,7 +40,7 @@ public class ExcelEntity extends AbstractMetaDataEntity
 
 	/**
 	 * Gets an Attribute (Cell value).
-	 * 
+	 * <p>
 	 * All values are retrieved as String, returns null if the attributeName is unknown
 	 */
 	@Override

@@ -1,18 +1,16 @@
 package org.molgenis.security.account;
 
-import org.molgenis.auth.MolgenisUser;
+import org.molgenis.auth.User;
 
 public interface AccountService
 {
-	public static final String ALL_USER_GROUP = "All Users";
+	String ALL_USER_GROUP = "All Users";
 
-	void createUser(MolgenisUser molgenisUser, String baseActivationUri) throws UsernameAlreadyExistsException,
-			EmailAlreadyExistsException;
+	void createUser(User user, String baseActivationUri)
+			throws UsernameAlreadyExistsException, EmailAlreadyExistsException;
 
 	/**
 	 * Activate a registered user
-	 * 
-	 * @param activationCode
 	 */
 	void activateUser(String activationCode);
 

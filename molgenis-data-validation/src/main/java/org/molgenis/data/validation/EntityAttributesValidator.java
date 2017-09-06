@@ -1,5 +1,15 @@
 package org.molgenis.data.validation;
 
+import org.apache.commons.lang3.StringUtils;
+import org.hibernate.validator.constraints.impl.EmailValidator;
+import org.molgenis.data.Entity;
+import org.molgenis.data.Range;
+import org.molgenis.data.meta.AttributeType;
+import org.molgenis.data.meta.model.Attribute;
+import org.molgenis.data.meta.model.EntityType;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -7,35 +17,38 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.lang3.StringUtils;
-import org.hibernate.validator.constraints.impl.EmailValidator;
-import org.molgenis.MolgenisFieldTypes;
-import org.molgenis.data.AttributeMetaData;
-import org.molgenis.data.Entity;
-import org.molgenis.data.EntityMetaData;
-import org.molgenis.data.Range;
-import org.molgenis.fieldtypes.FieldType;
-import org.springframework.stereotype.Component;
+import static com.google.common.collect.Lists.newArrayList;
+import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
+import static org.molgenis.data.meta.AttributeType.*;
 
 /**
  * Attribute data type validator.
- * 
+ * <p>
  * Does not check if xref,mref, categorical values are present. That happens in the EntityValidator.
  */
 @Component
 public class EntityAttributesValidator
 {
+	private final ExpressionValidator expressionValidator;
 	private EmailValidator emailValidator;
 
-	public Set<ConstraintViolation> validate(Entity entity, EntityMetaData meta)
+	@Autowired
+	public EntityAttributesValidator(ExpressionValidator expressionValidator)
+	{
+		this.expressionValidator = requireNonNull(expressionValidator);
+	}
+
+	public Set<ConstraintViolation> validate(Entity entity, EntityType meta)
 	{
 		Set<ConstraintViolation> violations = checkValidationExpressions(entity, meta);
 
-		for (AttributeMetaData attr : meta.getAtomicAttributes())
+		for (Attribute attr : meta.getAtomicAttributes())
 		{
 			ConstraintViolation violation = null;
 
-			switch (attr.getDataType().getEnumType())
+			AttributeType attrType = attr.getDataType();
+			switch (attrType)
 			{
 				case EMAIL:
 					violation = checkEmail(entity, attr, meta);
@@ -73,31 +86,32 @@ public class EntityAttributesValidator
 					violation = checkEnum(entity, attr, meta);
 					break;
 				case HTML:
-					violation = checkText(entity, attr, meta, MolgenisFieldTypes.HTML);
+					violation = checkText(entity, attr, meta, HTML);
 					break;
 				case SCRIPT:
-					violation = checkText(entity, attr, meta, MolgenisFieldTypes.SCRIPT);
+					violation = checkText(entity, attr, meta, SCRIPT);
 					break;
 				case TEXT:
-					violation = checkText(entity, attr, meta, MolgenisFieldTypes.TEXT);
+					violation = checkText(entity, attr, meta, TEXT);
 					break;
 				case STRING:
-					violation = checkText(entity, attr, meta, MolgenisFieldTypes.STRING);
+					violation = checkText(entity, attr, meta, STRING);
 					break;
 				case CATEGORICAL:
+				case FILE:
 				case XREF:
 					violation = checkXref(entity, attr, meta);
 					break;
 				case CATEGORICAL_MREF:
-				case FILE:
 				case MREF:
+				case ONE_TO_MANY:
 					violation = checkMref(entity, attr, meta);
 					break;
 				case COMPOUND:
 					// no op
 					break;
 				default:
-					break;
+					throw new RuntimeException(format("Unknown attribute type [%s]", attrType.toString()));
 			}
 
 			if (violation != null)
@@ -109,7 +123,7 @@ public class EntityAttributesValidator
 		return violations;
 	}
 
-	private ConstraintViolation checkMref(Entity entity, AttributeMetaData attr, EntityMetaData meta)
+	private ConstraintViolation checkMref(Entity entity, Attribute attr, EntityType entityType)
 	{
 		Iterable<Entity> refEntities;
 		try
@@ -118,27 +132,27 @@ public class EntityAttributesValidator
 		}
 		catch (Exception e)
 		{
-			return createConstraintViolation(entity, attr, meta, "Not a valid entity, expected an entity list.");
+			return createConstraintViolation(entity, attr, entityType, "Not a valid entity, expected an entity list.");
 		}
 		if (refEntities == null)
 		{
-			return createConstraintViolation(entity, attr, meta, "Not a valid entity, expected an entity list.");
+			return createConstraintViolation(entity, attr, entityType, "Not a valid entity, expected an entity list.");
 		}
 		for (Entity refEntity : refEntities)
 		{
 			if (refEntity == null)
 			{
-				return createConstraintViolation(entity, attr, meta, "Not a valid entity, null is not allowed");
+				return createConstraintViolation(entity, attr, entityType, "Not a valid entity, null is not allowed");
 			}
-			if (!refEntity.getEntityMetaData().equals(attr.getRefEntity()))
+			if (!refEntity.getEntityType().getId().equals(attr.getRefEntity().getId()))
 			{
-				return createConstraintViolation(entity, attr, meta, "Not a valid entity type.");
+				return createConstraintViolation(entity, attr, entityType, "Not a valid entity type.");
 			}
 		}
 		return null;
 	}
 
-	private ConstraintViolation checkXref(Entity entity, AttributeMetaData attr, EntityMetaData meta)
+	private ConstraintViolation checkXref(Entity entity, Attribute attr, EntityType entityType)
 	{
 		Entity refEntity;
 		try
@@ -147,45 +161,45 @@ public class EntityAttributesValidator
 		}
 		catch (Exception e)
 		{
-			return createConstraintViolation(entity, attr, meta, "Not a valid entity.");
+			return createConstraintViolation(entity, attr, entityType, "Not a valid entity.");
 		}
 
 		if (refEntity == null)
 		{
 			return null;
 		}
-		if (!refEntity.getEntityMetaData().equals(attr.getRefEntity()))
+		if (!refEntity.getEntityType().getId().equals(attr.getRefEntity().getId()))
 		{
-			return createConstraintViolation(entity, attr, meta, "Not a valid entity type.");
+			return createConstraintViolation(entity, attr, entityType, "Not a valid entity type.");
 		}
 		return null;
 	}
 
-	private Set<ConstraintViolation> checkValidationExpressions(Entity entity, EntityMetaData meta)
+	private Set<ConstraintViolation> checkValidationExpressions(Entity entity, EntityType meta)
 	{
 		List<String> validationExpressions = new ArrayList<>();
-		List<AttributeMetaData> expressionAttributes = new ArrayList<>();
+		List<Attribute> expressionAttributes = new ArrayList<>();
 
-		for (AttributeMetaData attribute : meta.getAtomicAttributes())
+		for (Attribute attribute : meta.getAtomicAttributes())
 		{
 			if (StringUtils.isNotBlank(attribute.getValidationExpression()))
 			{
 				expressionAttributes.add(attribute);
 				validationExpressions.add(attribute.getValidationExpression());
 			}
-
 		}
 
 		Set<ConstraintViolation> violations = new LinkedHashSet<>();
 
 		if (!validationExpressions.isEmpty())
 		{
-			List<Boolean> results = ValidationUtils.resolveBooleanExpressions(validationExpressions, entity, meta);
+			List<Boolean> results = expressionValidator.resolveBooleanExpressions(validationExpressions, entity);
 			for (int i = 0; i < results.size(); i++)
 			{
 				if (!results.get(i))
 				{
-					violations.add(createConstraintViolation(entity, expressionAttributes.get(i), meta));
+					violations.add(createConstraintViolation(entity, expressionAttributes.get(i), meta,
+							format("Offended expression: %s", validationExpressions.get(i))));
 				}
 			}
 		}
@@ -193,7 +207,7 @@ public class EntityAttributesValidator
 		return violations;
 	}
 
-	private ConstraintViolation checkEmail(Entity entity, AttributeMetaData attribute, EntityMetaData meta)
+	private ConstraintViolation checkEmail(Entity entity, Attribute attribute, EntityType entityType)
 	{
 		String email = entity.getString(attribute.getName());
 		if (email == null)
@@ -208,18 +222,18 @@ public class EntityAttributesValidator
 
 		if (!emailValidator.isValid(email, null))
 		{
-			return createConstraintViolation(entity, attribute, meta, "Not a valid e-mail address.");
+			return createConstraintViolation(entity, attribute, entityType, "Not a valid e-mail address.");
 		}
 
-		if (email.length() > MolgenisFieldTypes.EMAIL.getMaxLength())
+		if (email.length() > EMAIL.getMaxLength())
 		{
-			return createConstraintViolation(entity, attribute, meta);
+			return createConstraintViolation(entity, attribute, entityType);
 		}
 
 		return null;
 	}
 
-	private ConstraintViolation checkBoolean(Entity entity, AttributeMetaData attribute, EntityMetaData meta)
+	private static ConstraintViolation checkBoolean(Entity entity, Attribute attribute, EntityType entityType)
 	{
 		try
 		{
@@ -228,37 +242,37 @@ public class EntityAttributesValidator
 		}
 		catch (Exception e)
 		{
-			return createConstraintViolation(entity, attribute, meta);
+			return createConstraintViolation(entity, attribute, entityType);
 		}
 	}
 
-	private ConstraintViolation checkDateTime(Entity entity, AttributeMetaData attribute, EntityMetaData meta)
+	private static ConstraintViolation checkDateTime(Entity entity, Attribute attribute, EntityType entityType)
 	{
 		try
 		{
-			entity.getUtilDate(attribute.getName());
+			entity.getInstant(attribute.getName());
 			return null;
 		}
 		catch (Exception e)
 		{
-			return createConstraintViolation(entity, attribute, meta);
+			return createConstraintViolation(entity, attribute, entityType);
 		}
 	}
 
-	private ConstraintViolation checkDate(Entity entity, AttributeMetaData attribute, EntityMetaData meta)
+	private static ConstraintViolation checkDate(Entity entity, Attribute attribute, EntityType entityType)
 	{
 		try
 		{
-			entity.getDate(attribute.getName());
+			entity.getLocalDate(attribute.getName());
 			return null;
 		}
 		catch (Exception e)
 		{
-			return createConstraintViolation(entity, attribute, meta);
+			return createConstraintViolation(entity, attribute, entityType);
 		}
 	}
 
-	private ConstraintViolation checkDecimal(Entity entity, AttributeMetaData attribute, EntityMetaData meta)
+	private static ConstraintViolation checkDecimal(Entity entity, Attribute attribute, EntityType entityType)
 	{
 		try
 		{
@@ -267,11 +281,11 @@ public class EntityAttributesValidator
 		}
 		catch (Exception e)
 		{
-			return createConstraintViolation(entity, attribute, meta);
+			return createConstraintViolation(entity, attribute, entityType);
 		}
 	}
 
-	private ConstraintViolation checkHyperlink(Entity entity, AttributeMetaData attribute, EntityMetaData meta)
+	private ConstraintViolation checkHyperlink(Entity entity, Attribute attribute, EntityType entityType)
 	{
 		String link = entity.getString(attribute.getName());
 		if (link == null)
@@ -285,18 +299,18 @@ public class EntityAttributesValidator
 		}
 		catch (URISyntaxException e)
 		{
-			return createConstraintViolation(entity, attribute, meta, "Not a valid hyperlink.");
+			return createConstraintViolation(entity, attribute, entityType, "Not a valid hyperlink.");
 		}
 
-		if (link.length() > MolgenisFieldTypes.HYPERLINK.getMaxLength())
+		if (link.length() > HYPERLINK.getMaxLength())
 		{
-			return createConstraintViolation(entity, attribute, meta);
+			return createConstraintViolation(entity, attribute, entityType);
 		}
 
 		return null;
 	}
 
-	private ConstraintViolation checkInt(Entity entity, AttributeMetaData attribute, EntityMetaData meta)
+	private static ConstraintViolation checkInt(Entity entity, Attribute attribute, EntityType entityType)
 	{
 		try
 		{
@@ -305,11 +319,11 @@ public class EntityAttributesValidator
 		}
 		catch (Exception e)
 		{
-			return createConstraintViolation(entity, attribute, meta);
+			return createConstraintViolation(entity, attribute, entityType);
 		}
 	}
 
-	private ConstraintViolation checkLong(Entity entity, AttributeMetaData attribute, EntityMetaData meta)
+	private static ConstraintViolation checkLong(Entity entity, Attribute attribute, EntityType entityType)
 	{
 		try
 		{
@@ -318,25 +332,38 @@ public class EntityAttributesValidator
 		}
 		catch (Exception e)
 		{
-			return createConstraintViolation(entity, attribute, meta);
+			return createConstraintViolation(entity, attribute, entityType);
 		}
 	}
 
-	private ConstraintViolation checkRange(Entity entity, AttributeMetaData attribute, EntityMetaData meta)
+	private static ConstraintViolation checkRange(Entity entity, Attribute attr, EntityType entityType)
 	{
-		Range range = attribute.getRange();
-		Long value = entity.getLong(attribute.getName());
-		if ((value != null) && ((range.getMin() != null && value < range.getMin())
-				|| (range.getMax() != null && value > range.getMax())))
+		Range range = attr.getRange();
+		Long value;
+		switch (attr.getDataType())
 		{
-			return createConstraintViolation(entity, attribute, meta);
+			case INT:
+				Integer intValue = entity.getInt(attr.getName());
+				value = intValue != null ? intValue.longValue() : null;
+				break;
+			case LONG:
+				value = entity.getLong(attr.getName());
+				break;
+			default:
+				throw new RuntimeException(
+						format("Range not allowed for data type [%s]", attr.getDataType().toString()));
+		}
+		if ((value != null) && ((range.getMin() != null && value < range.getMin()) || (range.getMax() != null
+				&& value > range.getMax())))
+		{
+			return createConstraintViolation(entity, attr, entityType);
 		}
 
 		return null;
 	}
 
-	private ConstraintViolation checkText(Entity entity, AttributeMetaData attribute, EntityMetaData meta,
-			FieldType fieldType)
+	private static ConstraintViolation checkText(Entity entity, Attribute attribute, EntityType meta,
+			AttributeType fieldType)
 	{
 		String text = entity.getString(attribute.getName());
 		if (text == null)
@@ -352,22 +379,16 @@ public class EntityAttributesValidator
 		return null;
 	}
 
-	private ConstraintViolation checkEnum(Entity entity, AttributeMetaData attribute, EntityMetaData meta)
+	private ConstraintViolation checkEnum(Entity entity, Attribute attribute, EntityType entityType)
 	{
 		String value = entity.getString(attribute.getName());
 		if (value != null)
 		{
 			List<String> enumOptions = attribute.getEnumOptions();
 
-			// Keep OMX/JPA happy
-			if (enumOptions == null)
-			{
-				return null;
-			}
-
 			if (!enumOptions.contains(value))
 			{
-				return createConstraintViolation(entity, attribute, meta,
+				return createConstraintViolation(entity, attribute, entityType,
 						"Value must be one of " + enumOptions.toString());
 			}
 		}
@@ -375,37 +396,85 @@ public class EntityAttributesValidator
 		return null;
 	}
 
-	private ConstraintViolation createConstraintViolation(Entity entity, AttributeMetaData attribute,
-			EntityMetaData meta)
+	private static ConstraintViolation createConstraintViolation(Entity entity, Attribute attribute,
+			EntityType entityType)
 	{
-		String message = String.format("Invalid %s value '%s' for attribute '%s' of entity '%s'.",
-				attribute.getDataType().getEnumType().toString().toLowerCase(), entity.getString(attribute.getName()),
-				attribute.getLabel(), meta.getName());
+		String message = format("Invalid %s value '%s' for attribute '%s' of entity '%s'.",
+				attribute.getDataType().toString().toLowerCase(), entity.get(attribute.getName()), attribute.getLabel(),
+				entityType.getId());
 
 		Range range = attribute.getRange();
 		if (range != null)
 		{
-			message += String.format("Value must be between %d and %d", range.getMin(), range.getMax());
+			message += format("Value must be between %d and %d", range.getMin(), range.getMax());
 		}
 
 		Long maxLength = attribute.getDataType().getMaxLength();
 		if (maxLength != null)
 		{
-			message += String.format("Value must be less than or equal to %d characters", maxLength);
+			message += format("Value must be less than or equal to %d characters", maxLength);
 		}
 
-		return new ConstraintViolation(message, entity.getString(attribute.getName()), entity, attribute, meta, null);
+		return new ConstraintViolation(message, entity.get(attribute.getName()), entity, attribute, entityType, null);
 	}
 
-	private ConstraintViolation createConstraintViolation(Entity entity, AttributeMetaData attribute,
-			EntityMetaData meta, String message)
+	private ConstraintViolation createConstraintViolation(Entity entity, Attribute attribute, EntityType entityType,
+			String message)
 	{
-		String fullMessage = String.format("Invalid %s value '%s' for attribute '%s' of entity '%s'.",
-				attribute.getDataType().getEnumType().toString().toLowerCase(), entity.getString(attribute.getName()),
-				attribute.getLabel(), meta.getName());
+		Object value = getDataValuesForType(entity, attribute);
+		String dataValue = value != null ? value.toString() : null;
+		String fullMessage = format("Invalid [%s] value [%s] for attribute [%s] of entity [%s] with type [%s].",
+				attribute.getDataType().toString().toLowerCase(), dataValue, attribute.getLabel(),
+				entity.getLabelValue(), entityType.getId());
 		fullMessage += " " + message;
 
-		return new ConstraintViolation(fullMessage, entity.getString(attribute.getName()), entity, attribute, meta,
-				null);
+		return new ConstraintViolation(fullMessage, dataValue, entity, attribute, entityType, null);
+	}
+
+	private Object getDataValuesForType(Entity entity, Attribute attribute)
+	{
+		String attributeName = attribute.getName();
+		switch (attribute.getDataType())
+		{
+			case DATE:
+				return entity.getLocalDate(attributeName);
+			case DATE_TIME:
+				return entity.getInstant(attributeName);
+			case BOOL:
+				return entity.getBoolean(attributeName);
+			case DECIMAL:
+			case LONG:
+			case INT:
+				return entity.getInt(attributeName);
+			case HYPERLINK:
+			case ENUM:
+			case HTML:
+			case TEXT:
+			case SCRIPT:
+			case EMAIL:
+			case STRING:
+				return entity.getString(attributeName);
+			case CATEGORICAL:
+			case XREF:
+			case FILE:
+				Entity refEntity = entity.getEntity(attributeName);
+				if (refEntity != null) return refEntity.getIdValue();
+				else return "";
+			case CATEGORICAL_MREF:
+			case MREF:
+				List<String> mrefValues = newArrayList();
+				for (Entity mrefEntity : entity.getEntities(attributeName))
+				{
+					if (mrefEntity != null)
+					{
+						mrefValues.add(mrefEntity.getIdValue().toString());
+					}
+				}
+				return mrefValues;
+			case COMPOUND:
+				return "";
+			default:
+				return "";
+		}
 	}
 }

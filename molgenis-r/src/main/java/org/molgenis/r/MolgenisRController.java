@@ -1,13 +1,13 @@
 package org.molgenis.r;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.molgenis.security.token.TokenExtractor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * Returns the molgenis R api client script
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 public class MolgenisRController
 {
 	private static final String URI = "/molgenis.R";
-	private static final String API_URI = "/api/v1/";
+	private static final String API_URI = "/api/";
 
 	@RequestMapping(method = RequestMethod.GET, value = URI)
 	public String showMolgenisRApiClient(HttpServletRequest request, Model model)

@@ -1,32 +1,34 @@
 package org.molgenis.security;
 
-import static org.molgenis.framework.ui.ResourcePathPatterns.PATTERN_CSS;
-import static org.molgenis.framework.ui.ResourcePathPatterns.PATTERN_FONTS;
-import static org.molgenis.framework.ui.ResourcePathPatterns.PATTERN_IMG;
-import static org.molgenis.framework.ui.ResourcePathPatterns.PATTERN_JS;
-import static org.molgenis.security.google.GoogleAuthenticationProcessingFilter.GOOGLE_AUTHENTICATION_URL;
-
-import java.util.List;
-
-import javax.servlet.Filter;
-
+import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.jackson2.JacksonFactory;
+import org.molgenis.auth.GroupMemberFactory;
+import org.molgenis.auth.TokenFactory;
+import org.molgenis.auth.UserFactory;
 import org.molgenis.data.DataService;
-import org.molgenis.data.settings.AppSettings;
 import org.molgenis.security.account.AccountController;
 import org.molgenis.security.core.MolgenisPasswordEncoder;
-import org.molgenis.security.core.MolgenisPermissionService;
 import org.molgenis.security.core.token.TokenService;
 import org.molgenis.security.core.utils.SecurityUtils;
 import org.molgenis.security.google.GoogleAuthenticationProcessingFilter;
-import org.molgenis.security.permission.MolgenisPermissionServiceImpl;
 import org.molgenis.security.session.ApiSessionExpirationFilter;
 import org.molgenis.security.token.DataServiceTokenService;
 import org.molgenis.security.token.TokenAuthenticationFilter;
 import org.molgenis.security.token.TokenAuthenticationProvider;
 import org.molgenis.security.token.TokenGenerator;
+import org.molgenis.security.twofactor.TwoFactorAuthenticationController;
+import org.molgenis.security.twofactor.auth.*;
+import org.molgenis.security.twofactor.service.OtpService;
+import org.molgenis.security.twofactor.service.RecoveryService;
+import org.molgenis.security.twofactor.service.TwoFactorAuthenticationService;
+import org.molgenis.security.settings.AuthenticationSettings;
 import org.molgenis.security.user.MolgenisUserDetailsChecker;
-import org.molgenis.security.user.MolgenisUserDetailsService;
-import org.molgenis.security.user.MolgenisUserService;
+import org.molgenis.security.user.UserAccountService;
+import org.molgenis.security.user.UserDetailsService;
+import org.molgenis.security.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
@@ -40,12 +42,12 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.annotation.web.configurers.ExpressionUrlAuthorizationConfigurer;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
 import org.springframework.security.core.userdetails.UserDetailsChecker;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.DefaultRedirectStrategy;
@@ -61,11 +63,12 @@ import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
-import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.jackson2.JacksonFactory;
+import javax.servlet.Filter;
+import java.util.List;
+
+import static org.molgenis.framework.ui.ResourcePathPatterns.*;
+import static org.molgenis.security.UriConstants.PATH_SEGMENT_APPS;
+import static org.molgenis.security.google.GoogleAuthenticationProcessingFilter.GOOGLE_AUTHENTICATION_URL;
 
 public abstract class MolgenisWebAppSecurityConfig extends WebSecurityConfigurerAdapter
 {
@@ -75,10 +78,31 @@ public abstract class MolgenisWebAppSecurityConfig extends WebSecurityConfigurer
 	private DataService dataService;
 
 	@Autowired
-	private MolgenisUserService molgenisUserService;
+	private UserService userService;
 
 	@Autowired
-	private AppSettings appSettings;
+	private AuthenticationSettings authenticationSettings;
+
+	@Autowired
+	private TokenFactory tokenFactory;
+
+	@Autowired
+	private UserFactory userFactory;
+
+	@Autowired
+	private GroupMemberFactory groupMemberFactory;
+
+	@Autowired
+	private OtpService otpService;
+
+	@Autowired
+	private TwoFactorAuthenticationService twoFactorAuthenticationService;
+
+	@Autowired
+	private RecoveryService recoveryService;
+
+	@Autowired
+	private UserAccountService userAccountService;
 
 	@Override
 	protected void configure(HttpSecurity http) throws Exception
@@ -92,15 +116,23 @@ public abstract class MolgenisWebAppSecurityConfig extends WebSecurityConfigurer
 				matcher, new CacheControlHeadersWriter());
 
 		// add default header options but use custom cache control header writer
-		http.headers().contentTypeOptions().and().xssProtection().and().httpStrictTransportSecurity().and()
-				.frameOptions().and().addHeaderWriter(cacheControlHeaderWriter);
+		http.headers()
+			.contentTypeOptions()
+			.and()
+			.xssProtection()
+			.and()
+			.httpStrictTransportSecurity()
+			.and()
+			.frameOptions()
+			.and()
+			.addHeaderWriter(cacheControlHeaderWriter);
 
 		http.addFilterBefore(anonymousAuthFilter(), AnonymousAuthenticationFilter.class);
 		http.authenticationProvider(anonymousAuthenticationProvider());
 
 		http.addFilterBefore(apiSessionExpirationFilter(), MolgenisAnonymousAuthenticationFilter.class);
 		http.authenticationProvider(tokenAuthenticationProvider());
-		
+
 		http.authenticationProvider(runAsAuthenticationProvider());
 
 		http.addFilterBefore(tokenAuthenticationFilter(), ApiSessionExpirationFilter.class);
@@ -108,6 +140,10 @@ public abstract class MolgenisWebAppSecurityConfig extends WebSecurityConfigurer
 		http.addFilterBefore(googleAuthenticationProcessingFilter(), TokenAuthenticationFilter.class);
 
 		http.addFilterAfter(changePasswordFilter(), SwitchUserFilter.class);
+
+		http.addFilterAfter(twoFactorAuthenticationFilter(), MolgenisChangePasswordFilter.class);
+		http.authenticationProvider(twoFactorAuthenticationProvider());
+		http.authenticationProvider(recoveryAuthenticationProvider());
 
 		ExpressionUrlAuthorizationConfigurer<HttpSecurity>.ExpressionInterceptUrlRegistry expressionInterceptUrlRegistry = http
 				.authorizeRequests();
@@ -117,9 +153,13 @@ public abstract class MolgenisWebAppSecurityConfig extends WebSecurityConfigurer
 
 				.antMatchers("/login").permitAll()
 
+				.antMatchers(TwoFactorAuthenticationController.URI + "/**").permitAll()
+
 				.antMatchers(GOOGLE_AUTHENTICATION_URL).permitAll()
 
 				.antMatchers("/logo/**").permitAll()
+
+				.antMatchers("/molgenis.py").permitAll()
 
 				.antMatchers("/molgenis.R").permitAll()
 
@@ -141,6 +181,8 @@ public abstract class MolgenisWebAppSecurityConfig extends WebSecurityConfigurer
 
 				.antMatchers("/api/**").permitAll()
 
+				.antMatchers("/webjars/**").permitAll()
+
 				.antMatchers("/search").permitAll()
 
 				.antMatchers("/captcha").permitAll()
@@ -153,7 +195,11 @@ public abstract class MolgenisWebAppSecurityConfig extends WebSecurityConfigurer
 
 				.antMatchers("/scripts/**/run").authenticated()
 
+				.antMatchers("/scripts/**/start").authenticated()
+
 				.antMatchers("/files/**").permitAll()
+
+				.antMatchers('/' + PATH_SEGMENT_APPS + "/**").permitAll()
 
 				.anyRequest().denyAll().and()
 
@@ -161,13 +207,17 @@ public abstract class MolgenisWebAppSecurityConfig extends WebSecurityConfigurer
 
 				.formLogin().loginPage("/login").failureUrl("/login?error").and()
 
-				.logout().deleteCookies("JSESSIONID").addLogoutHandler((req, res, auth) -> {
-					if (req.getSession(false) != null
-							&& req.getSession().getAttribute("continueWithUnsupportedBrowser") != null)
-					{
-						req.setAttribute("continueWithUnsupportedBrowser", true);
-					}
-				}).logoutSuccessHandler((req, res, auth) -> {
+				.logout().deleteCookies("JSESSIONID").addLogoutHandler((req, res, auth) ->
+		{
+			if (req.getSession(false) != null
+					&& req.getSession().getAttribute("continueWithUnsupportedBrowser") != null)
+			{
+				req.setAttribute("continueWithUnsupportedBrowser", true);
+			}
+		})
+
+				.logoutSuccessHandler((req, res, auth) ->
+				{
 					StringBuilder logoutSuccessUrl = new StringBuilder("/");
 					if (req.getAttribute("continueWithUnsupportedBrowser") != null)
 					{
@@ -176,11 +226,20 @@ public abstract class MolgenisWebAppSecurityConfig extends WebSecurityConfigurer
 					SimpleUrlLogoutSuccessHandler logoutSuccessHandler = new SimpleUrlLogoutSuccessHandler();
 					logoutSuccessHandler.setDefaultTargetUrl(logoutSuccessUrl.toString());
 					logoutSuccessHandler.onLogoutSuccess(req, res, auth);
-				})
-
-				.and()
+				}).and()
 
 				.csrf().disable();
+
+	}
+
+	@Override
+	public void configure(WebSecurity web) throws Exception
+	{
+		web.ignoring()
+		   .antMatchers(PATTERN_CSS)
+		   .antMatchers(PATTERN_IMG)
+		   .antMatchers(PATTERN_JS)
+		   .antMatchers(PATTERN_FONTS);
 	}
 
 	@Bean
@@ -214,7 +273,7 @@ public abstract class MolgenisWebAppSecurityConfig extends WebSecurityConfigurer
 	@Bean
 	public TokenService tokenService()
 	{
-		return new DataServiceTokenService(new TokenGenerator(), dataService, userDetailsService());
+		return new DataServiceTokenService(new TokenGenerator(), dataService, userDetailsService(), tokenFactory);
 	}
 
 	@Bean
@@ -241,7 +300,8 @@ public abstract class MolgenisWebAppSecurityConfig extends WebSecurityConfigurer
 	public Filter googleAuthenticationProcessingFilter() throws Exception
 	{
 		GoogleAuthenticationProcessingFilter googleAuthenticationProcessingFilter = new GoogleAuthenticationProcessingFilter(
-				googlePublicKeysManager(), dataService, (MolgenisUserDetailsService) userDetailsService(), appSettings);
+				googlePublicKeysManager(), dataService, (UserDetailsService) userDetailsService(),
+				authenticationSettings, userFactory, groupMemberFactory);
 		googleAuthenticationProcessingFilter.setAuthenticationManager(authenticationManagerBean());
 		return googleAuthenticationProcessingFilter;
 	}
@@ -249,7 +309,26 @@ public abstract class MolgenisWebAppSecurityConfig extends WebSecurityConfigurer
 	@Bean
 	public Filter changePasswordFilter()
 	{
-		return new MolgenisChangePasswordFilter(molgenisUserService, redirectStrategy());
+		return new MolgenisChangePasswordFilter(userService, redirectStrategy());
+	}
+
+	@Bean
+	public TwoFactorAuthenticationFilter twoFactorAuthenticationFilter()
+	{
+		return new TwoFactorAuthenticationFilter(authenticationSettings, twoFactorAuthenticationService,
+				redirectStrategy(), userAccountService);
+	}
+
+	@Bean
+	public TwoFactorAuthenticationProvider twoFactorAuthenticationProvider()
+	{
+		return new TwoFactorAuthenticationProviderImpl(twoFactorAuthenticationService, otpService, recoveryService);
+	}
+
+	@Bean
+	public RecoveryAuthenticationProvider recoveryAuthenticationProvider()
+	{
+		return new RecoveryAuthenticationProviderImpl(recoveryService);
 	}
 
 	@Bean
@@ -283,14 +362,14 @@ public abstract class MolgenisWebAppSecurityConfig extends WebSecurityConfigurer
 	}
 
 	@Override
-	protected UserDetailsService userDetailsService()
+	protected org.springframework.security.core.userdetails.UserDetailsService userDetailsService()
 	{
-		return new MolgenisUserDetailsService(dataService, roleHierarchyAuthoritiesMapper());
+		return new UserDetailsService(dataService, roleHierarchyAuthoritiesMapper());
 	}
 
 	@Override
 	@Bean
-	public UserDetailsService userDetailsServiceBean() throws Exception
+	public org.springframework.security.core.userdetails.UserDetailsService userDetailsServiceBean() throws Exception
 	{
 		return userDetailsService();
 	}
@@ -307,12 +386,11 @@ public abstract class MolgenisWebAppSecurityConfig extends WebSecurityConfigurer
 		try
 		{
 			auth.userDetailsService(userDetailsServiceBean());
-
-			DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
-			daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
-			daoAuthenticationProvider.setUserDetailsService(userDetailsServiceBean());
-			daoAuthenticationProvider.setPreAuthenticationChecks(userDetailsChecker());
-			auth.authenticationProvider(daoAuthenticationProvider);
+			DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
+			authenticationProvider.setPasswordEncoder(passwordEncoder());
+			authenticationProvider.setUserDetailsService(userDetailsServiceBean());
+			authenticationProvider.setPreAuthenticationChecks(userDetailsChecker());
+			auth.authenticationProvider(authenticationProvider);
 		}
 		catch (Exception e)
 		{
@@ -325,12 +403,6 @@ public abstract class MolgenisWebAppSecurityConfig extends WebSecurityConfigurer
 	public AuthenticationManager authenticationManagerBean() throws Exception
 	{
 		return super.authenticationManagerBean();
-	}
-
-	@Bean
-	public MolgenisPermissionService molgenisPermissionService()
-	{
-		return new MolgenisPermissionServiceImpl();
 	}
 
 	@Bean

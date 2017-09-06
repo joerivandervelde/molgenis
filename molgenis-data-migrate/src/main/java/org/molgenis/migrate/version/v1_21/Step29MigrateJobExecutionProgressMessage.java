@@ -1,7 +1,6 @@
 package org.molgenis.migrate.version.v1_21;
 
 import org.molgenis.framework.MolgenisUpgrade;
-import org.molgenis.migrate.version.v1_16.Step26migrateJpaBackend;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,9 +40,10 @@ public class Step29MigrateJobExecutionProgressMessage extends MolgenisUpgrade
 	private void updateDataType(String entityFullName, String attributeName, String newDataType)
 	{
 		LOG.info("Update data type of {}.{} to {}...", entityFullName, attributeName, newDataType);
-		String attributeId = jdbcTemplate.queryForObject("SELECT a.identifier " + "FROM entities_attributes ea "
-				+ "JOIN attributes a " + "ON ea.attributes = a.identifier " + "WHERE ea.fullName = '" + entityFullName
-				+ "' " + "AND a.name='" + attributeName + "'", String.class);
+		String attributeId = jdbcTemplate.queryForObject(
+				"SELECT a.identifier " + "FROM entities_attributes ea " + "JOIN attributes a "
+						+ "ON ea.attributes = a.identifier " + "WHERE ea.fullName = '" + entityFullName + "' "
+						+ "AND a.name='" + attributeName + "'", String.class);
 		jdbcTemplate.update(
 				"UPDATE attributes SET dataType = '" + newDataType + "' WHERE identifier = '" + attributeId + "'");
 	}

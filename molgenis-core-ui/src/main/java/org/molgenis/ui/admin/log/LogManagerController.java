@@ -1,14 +1,11 @@
 package org.molgenis.ui.admin.log;
 
-import static org.molgenis.ui.admin.log.LogManagerController.URI;
-
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.util.ContextInitializer;
+import ch.qos.logback.core.joran.spi.JoranException;
 import org.molgenis.security.core.utils.SecurityUtils;
-import org.molgenis.ui.MolgenisPluginController;
+import org.molgenis.web.PluginController;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,19 +18,21 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.util.ContextInitializer;
-import ch.qos.logback.core.joran.spi.JoranException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import static org.molgenis.ui.admin.log.LogManagerController.URI;
 
 @Controller
 @RequestMapping(URI)
-public class LogManagerController extends MolgenisPluginController
+public class LogManagerController extends PluginController
 {
 	private static final Logger LOG = LoggerFactory.getLogger(LogManagerController.class);
 
 	public static final String ID = "logmanager";
-	public static final String URI = MolgenisPluginController.PLUGIN_URI_PREFIX + ID;
+	public static final String URI = PluginController.PLUGIN_URI_PREFIX + ID;
 
 	private static final List<Level> LOG_LEVELS;
 
@@ -57,7 +56,7 @@ public class LogManagerController extends MolgenisPluginController
 		}
 		LoggerContext loggerContext = (LoggerContext) iLoggerFactory;
 
-		List<Logger> loggers = new ArrayList<Logger>();
+		List<Logger> loggers = new ArrayList<>();
 		for (ch.qos.logback.classic.Logger logger : loggerContext.getLoggerList())
 		{
 			if (logger.getLevel() != null || logger.iteratorForAppenders().hasNext())

@@ -1,23 +1,32 @@
 package org.molgenis.data.excel;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
+import com.google.common.collect.Lists;
+import org.molgenis.data.AbstractMolgenisSpringTest;
+import org.molgenis.data.Entity;
+import org.molgenis.data.MolgenisInvalidFormatException;
+import org.molgenis.data.Repository;
+import org.molgenis.data.meta.model.AttributeFactory;
+import org.molgenis.data.meta.model.EntityTypeFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
-import org.apache.commons.io.IOUtils;
-import org.molgenis.data.MolgenisInvalidFormatException;
-import org.molgenis.data.Repository;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 
-import com.google.common.collect.Lists;
-
-public class ExcelRepositorySourceTest
+public class ExcelRepositorySourceTest extends AbstractMolgenisSpringTest
 {
+	@Autowired
+	private EntityTypeFactory entityTypeFactory;
+
+	@Autowired
+	private AttributeFactory attrMetaFactory;
+
 	private InputStream is;
 	private ExcelRepositoryCollection excelRepositoryCollection;
 
@@ -26,12 +35,14 @@ public class ExcelRepositorySourceTest
 	{
 		is = getClass().getResourceAsStream("/test.xls");
 		excelRepositoryCollection = new ExcelRepositoryCollection("test.xls", is);
+		excelRepositoryCollection.setEntityTypeFactory(entityTypeFactory);
+		excelRepositoryCollection.setAttributeFactory(attrMetaFactory);
 	}
 
 	@AfterMethod
-	public void afterMethod()
+	public void afterMethod() throws IOException
 	{
-		IOUtils.closeQuietly(is);
+		is.close();
 	}
 
 	@Test
@@ -43,7 +54,7 @@ public class ExcelRepositorySourceTest
 	@Test
 	public void getRepositories()
 	{
-		List<String> repositories = Lists.newArrayList(excelRepositoryCollection.getEntityNames());
+		List<String> repositories = Lists.newArrayList(excelRepositoryCollection.getEntityTypeIds());
 		assertNotNull(repositories);
 		assertEquals(repositories.size(), 3);
 	}
@@ -51,11 +62,11 @@ public class ExcelRepositorySourceTest
 	@Test
 	public void getRepository()
 	{
-		Repository test = excelRepositoryCollection.getRepository("test");
+		Repository<Entity> test = excelRepositoryCollection.getRepository("test");
 		assertNotNull(test);
 		assertEquals(test.getName(), "test");
 
-		Repository blad2 = excelRepositoryCollection.getRepository("Blad2");
+		Repository<Entity> blad2 = excelRepositoryCollection.getRepository("Blad2");
 		assertNotNull(blad2);
 		assertEquals(blad2.getName(), "Blad2");
 	}

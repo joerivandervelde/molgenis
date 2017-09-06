@@ -1,27 +1,21 @@
 package org.molgenis.ui.admin.usermanager;
 
-import static org.molgenis.ui.admin.usermanager.UserManagerController.URI;
-
-import org.molgenis.ui.MolgenisPluginController;
+import org.molgenis.web.PluginController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.SessionAttributes;
+import org.springframework.web.bind.annotation.*;
+
+import static org.molgenis.ui.admin.usermanager.UserManagerController.URI;
 
 @Controller
 @RequestMapping(URI)
 @SessionAttributes("viewState")
 // either users or groups
-public class UserManagerController extends MolgenisPluginController
+public class UserManagerController extends PluginController
 {
-	public final static String URI = MolgenisPluginController.PLUGIN_URI_PREFIX + "usermanager";
+	public final static String URI = PluginController.PLUGIN_URI_PREFIX + "usermanager";
 	private final UserManagerService pluginUserManagerService;
 
 	@Autowired
@@ -38,8 +32,8 @@ public class UserManagerController extends MolgenisPluginController
 	@RequestMapping(method = RequestMethod.GET)
 	public String init(Model model)
 	{
-		model.addAttribute("users", this.pluginUserManagerService.getAllMolgenisUsers());
-		model.addAttribute("groups", this.pluginUserManagerService.getAllMolgenisGroups());
+		model.addAttribute("users", this.pluginUserManagerService.getAllUsers());
+		model.addAttribute("groups", this.pluginUserManagerService.getAllGroups());
 
 		if (!model.containsAttribute("viewState")) model.addAttribute("viewState", "users");
 
@@ -55,7 +49,8 @@ public class UserManagerController extends MolgenisPluginController
 
 	@RequestMapping(value = "/activation", method = RequestMethod.PUT)
 	@ResponseStatus(HttpStatus.OK)
-	public @ResponseBody ActivationResponse activation(@RequestBody Activation activation)
+	public @ResponseBody
+	ActivationResponse activation(@RequestBody Activation activation)
 	{
 		ActivationResponse activationResponse = new ActivationResponse();
 		activationResponse.setId(activation.getId());
@@ -71,8 +66,8 @@ public class UserManagerController extends MolgenisPluginController
 			activationResponse.setSuccess(true);
 		}
 		else throw new RuntimeException(
-				"Trying to deactivate entity. Type may only be 'user' or 'group', however, value is: "
-						+ activation.getType());
+					"Trying to deactivate entity. Type may only be 'user' or 'group', however, value is: "
+							+ activation.getType());
 
 		return activationResponse;
 	}
@@ -136,8 +131,7 @@ public class UserManagerController extends MolgenisPluginController
 		}
 
 		/**
-		 * @param type
-		 *            the type to set
+		 * @param type the type to set
 		 */
 		public void setType(String type)
 		{
@@ -153,8 +147,7 @@ public class UserManagerController extends MolgenisPluginController
 		}
 
 		/**
-		 * @param id
-		 *            the id to set
+		 * @param id the id to set
 		 */
 		public void setId(String id)
 		{
@@ -170,8 +163,7 @@ public class UserManagerController extends MolgenisPluginController
 		}
 
 		/**
-		 * @param active
-		 *            the active to set
+		 * @param active the active to set
 		 */
 		public void setActive(Boolean active)
 		{
@@ -181,7 +173,8 @@ public class UserManagerController extends MolgenisPluginController
 
 	@RequestMapping(value = "/changeGroupMembership", method = RequestMethod.PUT)
 	@ResponseStatus(HttpStatus.OK)
-	public @ResponseBody GroupMembershipResponse changeGroupMembership(@RequestBody GroupMembership groupMembership)
+	public @ResponseBody
+	GroupMembershipResponse changeGroupMembership(@RequestBody GroupMembership groupMembership)
 	{
 		GroupMembershipResponse groupMembershipResponse = new GroupMembershipResponse();
 		groupMembershipResponse.setUserId(groupMembership.getUserId());
@@ -215,8 +208,7 @@ public class UserManagerController extends MolgenisPluginController
 		}
 
 		/**
-		 * @param userId
-		 *            the userId to set
+		 * @param userId the userId to set
 		 */
 		public void setUserId(String userId)
 		{
@@ -232,8 +224,7 @@ public class UserManagerController extends MolgenisPluginController
 		}
 
 		/**
-		 * @param groupId
-		 *            the groupId to set
+		 * @param groupId the groupId to set
 		 */
 		public void setGroupId(String groupId)
 		{
@@ -249,8 +240,7 @@ public class UserManagerController extends MolgenisPluginController
 		}
 
 		/**
-		 * @param member
-		 *            the member to set
+		 * @param member the member to set
 		 */
 		public void setMember(Boolean member)
 		{
@@ -286,8 +276,7 @@ public class UserManagerController extends MolgenisPluginController
 		}
 
 		/**
-		 * @param userId
-		 *            the userId to set
+		 * @param userId the userId to set
 		 */
 		public void setUserId(String userId)
 		{

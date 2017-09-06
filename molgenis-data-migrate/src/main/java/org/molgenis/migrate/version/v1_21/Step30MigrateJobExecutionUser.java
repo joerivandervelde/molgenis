@@ -1,16 +1,15 @@
 package org.molgenis.migrate.version.v1_21;
 
-import static java.util.Objects.requireNonNull;
-
-import java.util.List;
-
-import javax.sql.DataSource;
-
 import org.molgenis.framework.MolgenisUpgrade;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+
+import javax.sql.DataSource;
+import java.util.List;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * <ul>
@@ -74,10 +73,10 @@ public class Step30MigrateJobExecutionUser extends MolgenisUpgrade
 		LOG.info("Update data type of {}.{} to {}...", entityFullName, attributeName, newDataType);
 		String attributeId = jdbcTemplate.queryForObject(
 				"SELECT a.identifier FROM entities_attributes ea JOIN attributes a ON ea.attributes = a.identifier WHERE ea.fullName = '"
-						+ entityFullName + "' AND a.name='" + attributeName + "'",
-				String.class);
-		jdbcTemplate.update("UPDATE attributes SET dataType = '" + newDataType
-				+ "', refEntity = NULL WHERE identifier = '" + attributeId + "'");
+						+ entityFullName + "' AND a.name='" + attributeName + "'", String.class);
+		jdbcTemplate.update(
+				"UPDATE attributes SET dataType = '" + newDataType + "', refEntity = NULL WHERE identifier = '"
+						+ attributeId + "'");
 	}
 
 	private void dropForeignKey(String entityFullName)

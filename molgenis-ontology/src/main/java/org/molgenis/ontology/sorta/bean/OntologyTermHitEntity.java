@@ -1,16 +1,22 @@
 package org.molgenis.ontology.sorta.bean;
 
 import org.molgenis.data.Entity;
-import org.molgenis.data.support.DefaultEntityMetaData;
-import org.molgenis.data.support.MapEntity;
+import org.molgenis.data.meta.model.EntityType;
+import org.molgenis.data.support.DynamicEntity;
 
-public class OntologyTermHitEntity extends MapEntity
+public class OntologyTermHitEntity extends DynamicEntity
 {
 	private static final long serialVersionUID = 428705681838535084L;
 
-	public OntologyTermHitEntity(Entity entity, DefaultEntityMetaData entityMetaData)
+	public OntologyTermHitEntity(Entity entity, EntityType entityType)
 	{
-		super(entity, entityMetaData);
+		super(entityType);
+		set(entity);
+	}
+
+	protected void validateValueType(String attrName, Object value)
+	{
+		// no operation
 	}
 
 	@Override
@@ -19,7 +25,14 @@ public class OntologyTermHitEntity extends MapEntity
 		if (this == obj) return true;
 		if (obj == null) return false;
 		if (getClass() != obj.getClass()) return false;
-		MapEntity other = (MapEntity) obj;
+		DynamicEntity other = (DynamicEntity) obj;
 		return getIdValue().equals(other.getIdValue());
+	}
+
+	@Override
+	public int hashCode()
+	{
+		Object idValue = getIdValue();
+		return idValue != null ? getIdValue().hashCode() : 0;
 	}
 }

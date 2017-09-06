@@ -1,32 +1,32 @@
 package org.molgenis.dataexplorer.controller;
 
-import java.util.List;
+import org.molgenis.data.Entity;
+import org.molgenis.data.support.QueryImpl;
 
 import javax.validation.constraints.NotNull;
-
-import org.molgenis.data.support.QueryImpl;
+import java.util.List;
 
 public class DataRequest
 {
-	public static enum ColNames
+	public enum ColNames
 	{
 		ATTRIBUTE_NAMES, ATTRIBUTE_LABELS
 	}
 
-	public static enum EntityValues
+	public enum EntityValues
 	{
 		ENTITY_LABELS, ENTITY_IDS
 	}
 
-	public static enum DownloadType
+	public enum DownloadType
 	{
 		DOWNLOAD_TYPE_CSV, DOWNLOAD_TYPE_XLSX
 	}
 
 	@NotNull
-	private String entityName;
+	private String entityTypeId;
 	@NotNull
-	private QueryImpl query;
+	private QueryImpl<Entity> query;
 	@NotNull
 	private List<String> attributeNames;
 	@NotNull
@@ -38,20 +38,20 @@ public class DataRequest
 
 	public String getEntityName()
 	{
-		return entityName;
+		return entityTypeId;
 	}
 
-	public void setEntityName(String entityName)
+	public void setEntityName(String entityTypeId)
 	{
-		this.entityName = entityName;
+		this.entityTypeId = entityTypeId;
 	}
 
-	public QueryImpl getQuery()
+	public QueryImpl<Entity> getQuery()
 	{
 		return query;
 	}
 
-	public void setQuery(QueryImpl query)
+	public void setQuery(QueryImpl<Entity> query)
 	{
 		this.query = query;
 	}

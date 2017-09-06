@@ -1,16 +1,23 @@
 package org.molgenis.data.vcf;
 
 import com.google.common.collect.ImmutableSet;
-import org.molgenis.data.EntityMetaData;
+import org.molgenis.data.Entity;
 import org.molgenis.data.MolgenisDataException;
 import org.molgenis.data.Repository;
+import org.molgenis.data.meta.model.AttributeFactory;
+import org.molgenis.data.meta.model.EntityType;
+import org.molgenis.data.meta.model.EntityTypeFactory;
 import org.molgenis.data.support.FileRepositoryCollection;
+import org.molgenis.data.vcf.model.VcfAttributes;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
+
+import static java.util.Objects.requireNonNull;
 
 public class VcfRepositoryCollection extends FileRepositoryCollection
 {
@@ -20,27 +27,35 @@ public class VcfRepositoryCollection extends FileRepositoryCollection
 	private static final String EXTENSION_VCF_ZIP = "vcf.zip";
 	static final Set<String> EXTENSIONS = ImmutableSet.of(EXTENSION_VCF, EXTENSION_VCF_GZ, EXTENSION_VCF_ZIP);
 
+	@Autowired
+	private VcfAttributes vcfAttributes;
+
+	@Autowired
+	private EntityTypeFactory entityTypeFactory;
+
+	@Autowired
+	private AttributeFactory attrMetaFactory;
+
 	private final File file;
-	private final String entityName;
+	private final String entityTypeId;
 
 	public VcfRepositoryCollection(File file) throws IOException
 	{
 		super(EXTENSIONS);
-		if (file == null) throw new IllegalArgumentException("file is null");
-		this.file = file;
+		this.file = requireNonNull(file);
 
 		String name = file.getName();
-		if (name.endsWith(EXTENSION_VCF))
+		if (name.toLowerCase().endsWith(EXTENSION_VCF))
 		{
-			this.entityName = name.substring(0, name.lastIndexOf('.' + EXTENSION_VCF));
+			this.entityTypeId = name.substring(0, name.toLowerCase().lastIndexOf('.' + EXTENSION_VCF));
 		}
-		else if (name.endsWith(EXTENSION_VCF_GZ))
+		else if (name.toLowerCase().endsWith(EXTENSION_VCF_GZ))
 		{
-			this.entityName = name.substring(0, name.lastIndexOf('.' + EXTENSION_VCF_GZ));
+			this.entityTypeId = name.substring(0, name.toLowerCase().lastIndexOf('.' + EXTENSION_VCF_GZ));
 		}
-		else if (name.endsWith(EXTENSION_VCF_ZIP)) 
+		else if (name.toLowerCase().endsWith(EXTENSION_VCF_ZIP))
 		{
-			this.entityName = name.substring(0, name.lastIndexOf('.' + EXTENSION_VCF_ZIP));
+			this.entityTypeId = name.substring(0, name.toLowerCase().lastIndexOf('.' + EXTENSION_VCF_ZIP));
 		}
 		else
 		{
@@ -49,18 +64,24 @@ public class VcfRepositoryCollection extends FileRepositoryCollection
 	}
 
 	@Override
-	public Iterable<String> getEntityNames()
+	public void init() throws IOException
 	{
-		return Collections.singleton(entityName);
+		// no operation
 	}
 
 	@Override
-	public Repository getRepository(String name)
+	public Iterable<String> getEntityTypeIds()
 	{
-		if (!entityName.equals(name)) throw new MolgenisDataException("Unknown entity name [" + name + "]");
+		return Collections.singleton(entityTypeId);
+	}
+
+	@Override
+	public Repository<Entity> getRepository(String name)
+	{
+		if (!entityTypeId.equals(name)) throw new MolgenisDataException("Unknown entity name [" + name + "]");
 		try
 		{
-			return new VcfRepository(file, name);
+			return new VcfRepository(file, name, vcfAttributes, entityTypeFactory, attrMetaFactory);
 		}
 		catch (IOException e)
 		{
@@ -75,17 +96,11 @@ public class VcfRepositoryCollection extends FileRepositoryCollection
 	}
 
 	@Override
-	public Repository addEntityMeta(EntityMetaData entityMeta)
+	public Iterator<Repository<Entity>> iterator()
 	{
-		return getRepository(entityMeta.getName());
-	}
-
-	@Override
-	public Iterator<Repository> iterator()
-	{
-		return new Iterator<Repository>()
+		return new Iterator<Repository<Entity>>()
 		{
-			Iterator<String> it = getEntityNames().iterator();
+			Iterator<String> it = getEntityTypeIds().iterator();
 
 			@Override
 			public boolean hasNext()
@@ -94,7 +109,7 @@ public class VcfRepositoryCollection extends FileRepositoryCollection
 			}
 
 			@Override
-			public Repository next()
+			public Repository<Entity> next()
 			{
 				return getRepository(it.next());
 			}
@@ -106,11 +121,16 @@ public class VcfRepositoryCollection extends FileRepositoryCollection
 	public boolean hasRepository(String name)
 	{
 		if (null == name) return false;
-		Iterator<String> entityNames = getEntityNames().iterator();
-		while (entityNames.hasNext())
+		for (String s : getEntityTypeIds())
 		{
-			if (entityNames.next().equals(name)) return true;
+			if (s.equals(name)) return true;
 		}
 		return false;
+	}
+
+	@Override
+	public boolean hasRepository(EntityType entityType)
+	{
+		return hasRepository(entityType.getId());
 	}
 }

@@ -1,6 +1,6 @@
 package org.molgenis.ui.controller;
 
-import org.molgenis.ui.MolgenisPluginController;
+import org.molgenis.web.PluginController;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -10,18 +10,17 @@ import org.springframework.web.servlet.view.RedirectView;
 
 /**
  * Plugin that redirects the user to another url.
- * 
+ * <p>
  * Can be used to create a menu item to show a page outside molgenis
- * 
+ * <p>
  * Usage: /plugin/redirect?url=http://www.mysite.nl
- * 
  */
 @Controller
 @RequestMapping(RedirectController.URI)
-public class RedirectController extends MolgenisPluginController
+public class RedirectController extends PluginController
 {
 	public static final String ID = "redirect";
-	public static final String URI = MolgenisPluginController.PLUGIN_URI_PREFIX + ID;
+	public static final String URI = PluginController.PLUGIN_URI_PREFIX + ID;
 
 	public RedirectController()
 	{

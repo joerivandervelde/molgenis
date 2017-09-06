@@ -1,35 +1,48 @@
 package org.molgenis.data.support;
 
-import static org.molgenis.data.EntityMetaData.AttributeRole.ROLE_ID;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.fail;
-
-import org.molgenis.data.AttributeMetaData;
+import com.google.gson.JsonSyntaxException;
 import org.molgenis.data.Entity;
-import org.molgenis.fieldtypes.IntField;
-import org.molgenis.fieldtypes.LongField;
-import org.molgenis.fieldtypes.StringField;
-import org.springframework.core.convert.ConversionFailedException;
+import org.molgenis.data.MolgenisDataException;
+import org.molgenis.data.meta.model.Attribute;
+import org.molgenis.data.meta.model.EntityType;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import com.google.gson.JsonSyntaxException;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.molgenis.data.meta.AttributeType.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.fail;
 
 public class StringExpressionEvaluatorTest
 {
 	private Entity entity;
-	private DefaultEntityMetaData emd;
+	private EntityType entityType;
 
 	@BeforeTest
 	public void createEntity()
 	{
-		emd = new DefaultEntityMetaData("Source");
-		emd.addAttributeMetaData(new DefaultAttributeMetaData("Identifier").setDataType(new IntField()), ROLE_ID);
-		emd.addAttributeMetaData(new DefaultAttributeMetaData("Int").setDataType(new IntField()));
-		emd.addAttributeMetaData(new DefaultAttributeMetaData("String").setDataType(new StringField()));
-		emd.addAttributeMetaData(new DefaultAttributeMetaData("NonNumericString").setDataType(new StringField()));
-		emd.addAttributeMetaData(new DefaultAttributeMetaData("Long").setDataType(new LongField()));
-		entity = new MapEntity(emd);
+		entityType = when(mock(EntityType.class).getId()).thenReturn("Source").getMock();
+		Attribute idAttr = when(mock(Attribute.class).getName()).thenReturn("Identifier").getMock();
+
+		when(idAttr.getDataType()).thenReturn(INT);
+		Attribute intAttr = when(mock(Attribute.class).getName()).thenReturn("Int").getMock();
+		when(intAttr.getDataType()).thenReturn(INT);
+		Attribute stringAttr = when(mock(Attribute.class).getName()).thenReturn("String").getMock();
+		when(stringAttr.getDataType()).thenReturn(STRING);
+		Attribute nonNumericStringAttr = when(mock(Attribute.class).getName()).thenReturn("NonNumericString").getMock();
+		when(nonNumericStringAttr.getDataType()).thenReturn(STRING);
+		Attribute longAttr = when(mock(Attribute.class).getName()).thenReturn("Long").getMock();
+		when(longAttr.getDataType()).thenReturn(LONG);
+		when(entityType.getIdAttribute()).thenReturn(idAttr);
+		when(entityType.getId()).thenReturn("test");
+		when(entityType.getAttribute("Identifier")).thenReturn(idAttr);
+		when(entityType.getAttribute("Int")).thenReturn(intAttr);
+		when(entityType.getAttribute("String")).thenReturn(stringAttr);
+		when(entityType.getAttribute("NonNumericString")).thenReturn(nonNumericStringAttr);
+		when(entityType.getAttribute("Long")).thenReturn(longAttr);
+
+		entity = new DynamicEntity(entityType);
 		entity.set("Int", 1);
 		entity.set("String", "12");
 		entity.set("Long", 10L);
@@ -39,10 +52,11 @@ public class StringExpressionEvaluatorTest
 	@Test
 	public void testStringEvaluatorConstructorChecksIfAttributeHasExpression()
 	{
-		AttributeMetaData amd = new DefaultAttributeMetaData("#CHROM").setDataType(new StringField());
+		Attribute amd = when(mock(Attribute.class).getName()).thenReturn("#CHROM").getMock();
+		when(amd.getDataType()).thenReturn(STRING);
 		try
 		{
-			new StringExpressionEvaluator(amd, emd);
+			new StringExpressionEvaluator(amd, entityType);
 			fail("Expected NPE");
 		}
 		catch (NullPointerException expected)
@@ -55,11 +69,12 @@ public class StringExpressionEvaluatorTest
 	@Test
 	public void testStringEvaluatorConstructorChecksIfExpressionIsMap()
 	{
-		AttributeMetaData amd = new DefaultAttributeMetaData("#CHROM").setDataType(new StringField())
-				.setExpression("{}");
+		Attribute amd = when(mock(Attribute.class).getName()).thenReturn("#CHROM").getMock();
+		when(amd.getDataType()).thenReturn(STRING);
+		when(amd.getExpression()).thenReturn("{}");
 		try
 		{
-			new StringExpressionEvaluator(amd, emd);
+			new StringExpressionEvaluator(amd, entityType);
 			fail("expected illegal state exception");
 		}
 		catch (JsonSyntaxException expected)
@@ -71,11 +86,12 @@ public class StringExpressionEvaluatorTest
 	@Test
 	public void testStringEvaluatorConstructorChecksIfAttributeMentionsExistingAttribute()
 	{
-		AttributeMetaData amd = new DefaultAttributeMetaData("#CHROM").setDataType(new StringField())
-				.setExpression("bogus");
+		Attribute amd = when(mock(Attribute.class).getName()).thenReturn("#CHROM").getMock();
+		when(amd.getDataType()).thenReturn(STRING);
+		when(amd.getExpression()).thenReturn("bogus");
 		try
 		{
-			new StringExpressionEvaluator(amd, emd);
+			new StringExpressionEvaluator(amd, entityType);
 			fail("expected illegal argument exception");
 		}
 		catch (IllegalArgumentException expected)
@@ -89,48 +105,47 @@ public class StringExpressionEvaluatorTest
 	@Test
 	public void testStringEvaluatorLookupAttributeAndConvertFromIntToString()
 	{
-		AttributeMetaData amd = new DefaultAttributeMetaData("#CHROM").setDataType(new StringField())
-				.setExpression("Int");
-		assertEquals(new StringExpressionEvaluator(amd, emd).evaluate(entity), "1");
+		Attribute amd = when(mock(Attribute.class).getName()).thenReturn("#CHROM").getMock();
+		when(amd.getDataType()).thenReturn(STRING);
+		when(amd.getExpression()).thenReturn("Int");
+		assertEquals(new StringExpressionEvaluator(amd, entityType).evaluate(entity), "1");
 	}
 
 	@Test
 	public void testStringEvaluatorLookupAttributeAndConvertFromIntToLong()
 	{
-		AttributeMetaData amd = new DefaultAttributeMetaData("#POS").setDataType(new LongField()).setExpression("Int");
-		assertEquals(new StringExpressionEvaluator(amd, emd).evaluate(entity), 1L);
+		Attribute amd = when(mock(Attribute.class).getName()).thenReturn("#POS").getMock();
+		when(amd.getDataType()).thenReturn(LONG);
+		when(amd.getExpression()).thenReturn("Int");
+		assertEquals(new StringExpressionEvaluator(amd, entityType).evaluate(entity), 1L);
 	}
 
 	@Test
 	public void testStringEvaluatorLookupAttributeAndConvertFromLongToInt()
 	{
-		AttributeMetaData amd = new DefaultAttributeMetaData("#POS").setDataType(new IntField()).setExpression("Long");
-		assertEquals(new StringExpressionEvaluator(amd, emd).evaluate(entity), 10);
+		Attribute amd = when(mock(Attribute.class).getName()).thenReturn("#POS").getMock();
+		when(amd.getDataType()).thenReturn(INT);
+		when(amd.getExpression()).thenReturn("Long");
+		assertEquals(new StringExpressionEvaluator(amd, entityType).evaluate(entity), 10);
 	}
 
 	@Test
 	public void testStringEvaluatorLookupAttributeAndConvertFromStringToLong()
 	{
-		AttributeMetaData amd = new DefaultAttributeMetaData("#POS").setDataType(new LongField())
-				.setExpression("String");
-		assertEquals(new StringExpressionEvaluator(amd, emd).evaluate(entity), 12L);
+		Attribute amd = when(mock(Attribute.class).getName()).thenReturn("#POS").getMock();
+		when(amd.getDataType()).thenReturn(LONG);
+		when(amd.getExpression()).thenReturn("String");
+		assertEquals(new StringExpressionEvaluator(amd, entityType).evaluate(entity), 12L);
 	}
 
-	@Test
+	@Test(expectedExceptions = MolgenisDataException.class, expectedExceptionsMessageRegExp = "Conversion failure in entity type \\[test\\] attribute \\[id\\]; Failed to convert from type \\[java.lang.String\\] to type \\[java.lang.Long\\] for value 'Hello World!'; nested exception is java.lang.NumberFormatException: For input string: \"HelloWorld!\"")
 	public void testStringEvaluatorLookupAttributeAndConvertFromNonNumericStringToLongFails()
 	{
-
-		AttributeMetaData amd = new DefaultAttributeMetaData("#POS").setDataType(new LongField())
-				.setExpression("NonNumericString");
-		try
-		{
-			assertEquals(new StringExpressionEvaluator(amd, emd).evaluate(entity), 12L);
-			fail("Expected ConversionFailedException.");
-		}
-		catch (ConversionFailedException expected)
-		{
-			assertEquals(expected.getMessage(),
-					"Failed to convert from type java.lang.String to type java.lang.Long for value 'Hello World!'; nested exception is java.lang.NumberFormatException: For input string: \"HelloWorld!\"");
-		}
+		Attribute amd = when(mock(Attribute.class).getName()).thenReturn("#POS").getMock();
+		when(amd.getName()).thenReturn("id");
+		when(amd.getDataType()).thenReturn(LONG);
+		when(amd.getExpression()).thenReturn("NonNumericString");
+		when(amd.getEntity()).thenReturn(entityType);
+		new StringExpressionEvaluator(amd, entityType).evaluate(entity);
 	}
 }

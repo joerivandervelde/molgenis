@@ -1,24 +1,14 @@
 package org.molgenis.data.support;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import org.molgenis.data.*;
+import org.molgenis.data.QueryRule.Operator;
+
+import java.util.*;
 import java.util.stream.Stream;
 
-import org.molgenis.data.Entity;
-import org.molgenis.data.Fetch;
-import org.molgenis.data.MolgenisDataException;
-import org.molgenis.data.Query;
-import org.molgenis.data.QueryRule;
-import org.molgenis.data.QueryRule.Operator;
-import org.molgenis.data.Repository;
-import org.molgenis.data.Sort;
-
-public class QueryImpl implements Query
+public class QueryImpl<E extends Entity> implements Query<E>
 {
-	private final List<List<QueryRule>> rules = new ArrayList<List<QueryRule>>();
+	private final List<List<QueryRule>> rules = new ArrayList<>();
 
 	private int offset;
 	private int pageSize;
@@ -27,35 +17,47 @@ public class QueryImpl implements Query
 	 * {@link Fetch} that defines which entity attributes to retrieve.
 	 */
 	private Fetch fetch;
-	private Repository repository;
 
-	public static Query query()
+	@Override
+	public Repository<E> getRepository()
 	{
-		return new QueryImpl();
+		return repository;
 	}
 
-	public static Query EQ(String attributeName, Object value)
+	public void setRepository(Repository<E> repository)
+	{
+		this.repository = repository;
+	}
+
+	private Repository<E> repository;
+
+	public static Query<Entity> query()
+	{
+		return new QueryImpl<>();
+	}
+
+	public static Query<Entity> EQ(String attributeName, Object value)
 	{
 		return query().eq(attributeName, value);
 	}
 
-	public static Query IN(String attributeName, Iterable<?> values)
+	public static Query<Entity> IN(String attributeName, Iterable<?> values)
 	{
 		return query().in(attributeName, values);
 	}
 
 	public QueryImpl()
 	{
-		this.rules.add(new ArrayList<QueryRule>());
+		this.rules.add(new ArrayList<>());
 	}
 
-	public QueryImpl(Repository repository)
+	public QueryImpl(Repository<E> repository)
 	{
 		this();
 		this.repository = repository;
 	}
 
-	public QueryImpl(Query q)
+	public QueryImpl(Query<E> q)
 	{
 		this();
 		for (QueryRule rule : q.getRules())
@@ -93,14 +95,14 @@ public class QueryImpl implements Query
 	}
 
 	@Override
-	public Stream<Entity> findAll()
+	public Stream<E> findAll()
 	{
 		if (repository == null) throw new RuntimeException("Query failed: repository not set");
 		return repository.findAll(this);
 	}
 
 	@Override
-	public Entity findOne()
+	public E findOne()
 	{
 		if (repository == null) throw new RuntimeException("Query failed: repository not set");
 		return repository.findOne(this);
@@ -109,8 +111,8 @@ public class QueryImpl implements Query
 	@Override
 	public List<QueryRule> getRules()
 	{
-		if (this.rules.size() > 1) throw new MolgenisDataException(
-				"Nested query not closed, use unnest() or unnestAll()");
+		if (this.rules.size() > 1)
+			throw new MolgenisDataException("Nested query not closed, use unnest() or unnestAll()");
 
 		if (this.rules.size() > 0)
 		{
@@ -127,7 +129,7 @@ public class QueryImpl implements Query
 		return pageSize;
 	}
 
-	public QueryImpl setPageSize(int pageSize)
+	public QueryImpl<E> setPageSize(int pageSize)
 	{
 		this.pageSize = pageSize;
 		return this;
@@ -139,7 +141,7 @@ public class QueryImpl implements Query
 		return offset;
 	}
 
-	public QueryImpl setOffset(int offset)
+	public QueryImpl<E> setOffset(int offset)
 	{
 		this.offset = offset;
 		return this;
@@ -157,99 +159,99 @@ public class QueryImpl implements Query
 	}
 
 	@Override
-	public Query search(String searchTerms)
+	public Query<E> search(String searchTerms)
 	{
 		rules.get(this.rules.size() - 1).add(new QueryRule(Operator.SEARCH, searchTerms));
 		return this;
 	}
 
 	@Override
-	public Query search(String field, String searchTerms)
+	public Query<E> search(String field, String searchTerms)
 	{
 		rules.get(this.rules.size() - 1).add(new QueryRule(field, Operator.SEARCH, searchTerms));
 		return this;
 	}
 
 	@Override
-	public Query or()
+	public Query<E> or()
 	{
 		rules.get(this.rules.size() - 1).add(new QueryRule(Operator.OR));
 		return this;
 	}
 
 	@Override
-	public Query and()
+	public Query<E> and()
 	{
 		rules.get(this.rules.size() - 1).add(new QueryRule(Operator.AND));
 		return this;
 	}
 
 	@Override
-	public Query not()
+	public Query<E> not()
 	{
 		rules.get(this.rules.size() - 1).add(new QueryRule(Operator.NOT));
 		return this;
 	}
 
 	@Override
-	public Query like(String field, String value)
+	public Query<E> like(String field, String value)
 	{
 		rules.get(this.rules.size() - 1).add(new QueryRule(field, Operator.LIKE, value));
 		return this;
 	}
 
 	@Override
-	public Query eq(String field, Object value)
+	public Query<E> eq(String field, Object value)
 	{
 		rules.get(this.rules.size() - 1).add(new QueryRule(field, Operator.EQUALS, value));
 		return this;
 	}
 
 	@Override
-	public Query in(String field, Iterable<?> objectIterator)
+	public Query<E> in(String field, Iterable<?> valueIterable)
 	{
-		rules.get(this.rules.size() - 1).add(new QueryRule(field, Operator.IN, objectIterator));
+		rules.get(this.rules.size() - 1).add(new QueryRule(field, Operator.IN, valueIterable));
 		return this;
 	}
 
 	@Override
-	public Query gt(String field, Object value)
+	public Query<E> gt(String field, Object value)
 	{
 		rules.get(this.rules.size() - 1).add(new QueryRule(field, Operator.GREATER, value));
 		return this;
 	}
 
 	@Override
-	public Query ge(String field, Object value)
+	public Query<E> ge(String field, Object value)
 	{
 		rules.get(this.rules.size() - 1).add(new QueryRule(field, Operator.GREATER_EQUAL, value));
 		return this;
 	}
 
 	@Override
-	public Query le(String field, Object value)
+	public Query<E> le(String field, Object value)
 	{
 		rules.get(this.rules.size() - 1).add(new QueryRule(field, Operator.LESS_EQUAL, value));
 		return this;
 	}
 
 	@Override
-	public Query lt(String field, Object value)
+	public Query<E> lt(String field, Object value)
 	{
 		rules.get(this.rules.size() - 1).add(new QueryRule(field, Operator.LESS, value));
 		return this;
 	}
 
 	@Override
-	public Query nest()
+	public Query<E> nest()
 	{
 		// add element to our nesting list...
-		this.rules.add(new ArrayList<QueryRule>());
+		this.rules.add(new ArrayList<>());
 		return this;
 	}
 
 	@Override
-	public Query unnest()
+	public Query<E> unnest()
 	{
 		if (this.rules.size() == 1) throw new MolgenisDataException("Cannot unnest root element of query");
 
@@ -261,7 +263,7 @@ public class QueryImpl implements Query
 	}
 
 	@Override
-	public Query unnestAll()
+	public Query<E> unnestAll()
 	{
 		while (this.rules.size() > 1)
 		{
@@ -271,21 +273,21 @@ public class QueryImpl implements Query
 	}
 
 	@Override
-	public Query rng(String field, Object smaller, Object bigger)
+	public Query<E> rng(String field, Object from, Object to)
 	{
-		rules.get(this.rules.size() - 1).add(new QueryRule(field, Operator.RANGE, Arrays.asList(smaller, bigger)));
+		rules.get(this.rules.size() - 1).add(new QueryRule(field, Operator.RANGE, Arrays.asList(from, to)));
 		return this;
 	}
 
 	@Override
-	public Query pageSize(int pageSize)
+	public Query<E> pageSize(int pageSize)
 	{
 		setPageSize(pageSize);
 		return this;
 	}
 
 	@Override
-	public Query offset(int offset)
+	public Query<E> offset(int offset)
 	{
 		setOffset(offset);
 		return this;
@@ -299,14 +301,14 @@ public class QueryImpl implements Query
 	}
 
 	@Override
-	public Query sort(Sort sort)
+	public Query<E> sort(Sort sort)
 	{
 		setSort(sort);
 		return this;
 	}
 
 	@Override
-	public Iterator<Entity> iterator()
+	public Iterator<E> iterator()
 	{
 		if (repository == null) throw new RuntimeException("Query failed: repository not set");
 		return repository.findAll(this).iterator();
@@ -332,7 +334,7 @@ public class QueryImpl implements Query
 	}
 
 	@Override
-	public Query fetch(Fetch fetch)
+	public Query<E> fetch(Fetch fetch)
 	{
 		setFetch(fetch);
 		return this;
@@ -356,7 +358,8 @@ public class QueryImpl implements Query
 		if (this == obj) return true;
 		if (obj == null) return false;
 		if (getClass() != obj.getClass()) return false;
-		QueryImpl other = (QueryImpl) obj;
+		@SuppressWarnings("unchecked")
+		QueryImpl<Entity> other = (QueryImpl<Entity>) obj;
 		if (offset != other.offset) return false;
 		if (pageSize != other.pageSize) return false;
 		if (rules == null)

@@ -1,18 +1,18 @@
 package org.molgenis.charts.requests;
 
-import java.util.List;
-
-import javax.validation.constraints.NotNull;
-
 import org.molgenis.charts.AbstractChart;
+import org.molgenis.data.Entity;
 import org.molgenis.data.QueryRule;
 import org.molgenis.data.support.QueryImpl;
+
+import javax.validation.constraints.NotNull;
+import java.util.List;
 
 public abstract class ChartRequest
 {
 	@NotNull
 	private String entity;
-	
+
 	private String title;
 	private String type;
 	private Integer width = AbstractChart.DEFAULT_WITH;
@@ -20,10 +20,10 @@ public abstract class ChartRequest
 
 	// The query rules to select the rows
 	private List<QueryRule> queryRules;
-	
+
 	// The query that is used  to select the rows
-	private QueryImpl query;
-	
+	private QueryImpl<Entity> query;
+
 	private String xLabel;
 	private String yLabel;
 
@@ -36,8 +36,7 @@ public abstract class ChartRequest
 	}
 
 	/**
-	 * @param entity
-	 *            the entity to set
+	 * @param entity the entity to set
 	 */
 	public void setEntity(String entity)
 	{
@@ -53,27 +52,30 @@ public abstract class ChartRequest
 	}
 
 	/**
-	 * @param title
-	 *            the title to set
+	 * @param title the title to set
 	 */
 	public void setTitle(String title)
 	{
 		this.title = title;
 	}
-	
-	public String getxLabel() {
+
+	public String getxLabel()
+	{
 		return xLabel;
 	}
 
-	public void setxLabel(String xLabel) {
+	public void setxLabel(String xLabel)
+	{
 		this.xLabel = xLabel;
 	}
 
-	public String getyLabel() {
+	public String getyLabel()
+	{
 		return yLabel;
 	}
 
-	public void setyLabel(String yLabel) {
+	public void setyLabel(String yLabel)
+	{
 		this.yLabel = yLabel;
 	}
 
@@ -86,8 +88,7 @@ public abstract class ChartRequest
 	}
 
 	/**
-	 * @param width
-	 *            the width to set
+	 * @param width the width to set
 	 */
 	public void setWidth(Integer width)
 	{
@@ -103,8 +104,7 @@ public abstract class ChartRequest
 	}
 
 	/**
-	 * @param height
-	 *            the height to set
+	 * @param height the height to set
 	 */
 	public void setHeight(Integer height)
 	{
@@ -120,8 +120,7 @@ public abstract class ChartRequest
 	}
 
 	/**
-	 * @param queryRules
-	 *            the queryRules to set
+	 * @param queryRules the queryRules to set
 	 */
 	public void setQueryRules(List<QueryRule> queryRules)
 	{
@@ -131,16 +130,15 @@ public abstract class ChartRequest
 	/**
 	 * @return the query
 	 */
-	public QueryImpl getQuery()
+	public QueryImpl<Entity> getQuery()
 	{
 		return query;
 	}
 
 	/**
-	 * @param query
-	 *            the query to set
+	 * @param query the query to set
 	 */
-	public void setQuery(QueryImpl query)
+	public void setQuery(QueryImpl<Entity> query)
 	{
 		this.query = query;
 	}

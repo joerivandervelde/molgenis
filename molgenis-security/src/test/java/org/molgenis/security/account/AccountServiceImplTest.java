@@ -1,44 +1,40 @@
 package org.molgenis.security.account;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-
-import java.net.URISyntaxException;
-import java.util.Arrays;
-
-import javax.mail.internet.MimeMessage;
-
 import org.mockito.ArgumentCaptor;
-import org.mockito.Matchers;
-import org.molgenis.auth.MolgenisGroup;
-import org.molgenis.auth.MolgenisUser;
+import org.mockito.Mock;
+import org.molgenis.auth.Group;
+import org.molgenis.auth.GroupMember;
+import org.molgenis.auth.GroupMemberFactory;
+import org.molgenis.auth.User;
 import org.molgenis.data.DataService;
-import org.molgenis.data.Entity;
 import org.molgenis.data.Query;
+import org.molgenis.data.populate.IdGenerator;
 import org.molgenis.data.settings.AppSettings;
-import org.molgenis.data.support.QueryImpl;
+import org.molgenis.security.settings.AuthenticationSettings;
 import org.molgenis.security.user.MolgenisUserException;
-import org.molgenis.security.user.MolgenisUserService;
+import org.molgenis.security.user.UserService;
+import org.molgenis.test.AbstractMockitoTestNGSpringContextTests;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.net.URISyntaxException;
+
+import static org.mockito.Mockito.*;
+import static org.molgenis.auth.GroupMetaData.GROUP;
+import static org.molgenis.auth.GroupMetaData.NAME;
+import static org.molgenis.auth.UserMetaData.*;
+import static org.molgenis.data.populate.IdGenerator.Strategy.SECURE_RANDOM;
+import static org.molgenis.data.populate.IdGenerator.Strategy.SHORT_SECURE_RANDOM;
+import static org.molgenis.security.account.AccountService.ALL_USER_GROUP;
+
 @ContextConfiguration
-public class AccountServiceImplTest extends AbstractTestNGSpringContextTests
+public class AccountServiceImplTest extends AbstractMockitoTestNGSpringContextTests
 {
 	@Autowired
 	private AccountService accountService;
@@ -47,54 +43,90 @@ public class AccountServiceImplTest extends AbstractTestNGSpringContextTests
 	private DataService dataService;
 
 	@Autowired
-	private JavaMailSender javaMailSender;
+	private MailSender mailSender;
+
+	@Mock
+	private User user;
 
 	@Autowired
 	private AppSettings appSettings;
 
+	@Autowired
+	private AuthenticationSettings authenticationSettings;
+
+	@Autowired
+	private IdGenerator idGenerator;
+
 	@BeforeMethod
 	public void setUp()
 	{
-		reset(dataService);
-		when(appSettings.getSignUpModeration()).thenReturn(false);
+		when(appSettings.getTitle()).thenReturn("Molgenis title");
+		when(authenticationSettings.getSignUpModeration()).thenReturn(false);
 
-		MolgenisGroup allUsersGroup = mock(MolgenisGroup.class);
-		when(dataService.findAll(MolgenisGroup.ENTITY_NAME,
-				new QueryImpl().eq(MolgenisGroup.NAME, AccountService.ALL_USER_GROUP), MolgenisGroup.class))
-						.thenReturn(Arrays.asList(allUsersGroup).stream());
-		reset(javaMailSender);
-		MimeMessage mimeMessage = mock(MimeMessage.class);
-		when(javaMailSender.createMimeMessage()).thenReturn(mimeMessage);
+		Group allUsersGroup = mock(Group.class);
+		@SuppressWarnings("unchecked")
+		Query<Group> q = mock(Query.class);
+		when(q.eq(NAME, ALL_USER_GROUP)).thenReturn(q);
+		when(q.findOne()).thenReturn(allUsersGroup);
+		when(dataService.query(GROUP, Group.class)).thenReturn(q);
+
+		when(user.getUsername()).thenReturn("jansenj");
+		when(user.getFirstName()).thenReturn("Jan");
+		when(user.getMiddleNames()).thenReturn("Piet Hein");
+		when(user.getLastName()).thenReturn("Jansen");
+		when(user.getEmail()).thenReturn("jan.jansen@activation.nl");
+		when(user.getPassword()).thenReturn("password");
 	}
 
 	@Test
 	public void activateUser()
 	{
-		when(dataService.findOne(MolgenisUser.ENTITY_NAME,
-				new QueryImpl().eq(MolgenisUser.ACTIVE, false).and().eq(MolgenisUser.ACTIVATIONCODE, "123"),
-				MolgenisUser.class)).thenReturn(new MolgenisUser());
+		@SuppressWarnings("unchecked")
+		Query<User> q = mock(Query.class);
+		when(q.eq(ACTIVE, false)).thenReturn(q);
+		when(q.and()).thenReturn(q);
+		when(q.eq(ACTIVATIONCODE, "123")).thenReturn(q);
+		when(q.findOne()).thenReturn(user);
+		when(dataService.query(USER, User.class)).thenReturn(q);
 
 		accountService.activateUser("123");
 
-		ArgumentCaptor<MolgenisUser> argument = ArgumentCaptor.forClass(MolgenisUser.class);
-		verify(dataService).update(eq(MolgenisUser.ENTITY_NAME), argument.capture());
-		assertTrue(argument.getValue().isActive());
-		verify(javaMailSender).send(any(SimpleMailMessage.class));
-		// TODO improve test
+		ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);
+		verify(dataService).update(eq(USER), argument.capture());
+		verify(user).setActive(true);
+
+		SimpleMailMessage expected = new SimpleMailMessage();
+		expected.setTo("jan.jansen@activation.nl");
+		expected.setText("Dear Jan Jansen,\n\nyour registration request for Molgenis title was approved.\n"
+				+ "Your account is now active.\n");
+		expected.setSubject("Your registration request for Molgenis title");
+		verify(mailSender).send(expected);
 	}
 
 	@Test(expectedExceptions = MolgenisUserException.class)
 	public void activateUser_invalidActivationCode()
 	{
+		@SuppressWarnings("unchecked")
+		Query<User> q = mock(Query.class);
+		when(q.eq(ACTIVE, false)).thenReturn(q);
+		when(q.and()).thenReturn(q);
+		when(q.eq(ACTIVATIONCODE, "invalid")).thenReturn(q);
+		when(q.findOne()).thenReturn(null);
+		when(dataService.query(USER, User.class)).thenReturn(q);
+
 		accountService.activateUser("invalid");
 	}
 
 	@Test(expectedExceptions = MolgenisUserException.class)
 	public void activateUser_alreadyActivated()
 	{
-		when(dataService.findOne(MolgenisUser.ENTITY_NAME,
-				new QueryImpl().eq(MolgenisUser.ACTIVE, false).eq(MolgenisUser.ACTIVATIONCODE, "456"),
-				MolgenisUser.class)).thenReturn(null);
+		@SuppressWarnings("unchecked")
+		Query<User> q = mock(Query.class);
+		when(q.eq(ACTIVE, false)).thenReturn(q);
+		when(q.and()).thenReturn(q);
+		when(q.eq(ACTIVATIONCODE, "456")).thenReturn(q);
+		when(q.findOne()).thenReturn(null);
+		when(dataService.query(USER, User.class)).thenReturn(q);
 
 		accountService.activateUser("456");
 	}
@@ -102,40 +134,61 @@ public class AccountServiceImplTest extends AbstractTestNGSpringContextTests
 	@Test
 	public void createUser() throws URISyntaxException, UsernameAlreadyExistsException, EmailAlreadyExistsException
 	{
-		MolgenisUser molgenisUser = new MolgenisUser();
-		molgenisUser.setEmail("user@molgenis.org");
-		accountService.createUser(molgenisUser, "http://molgenis.org/activate");
-		ArgumentCaptor<MolgenisUser> argument = ArgumentCaptor.forClass(MolgenisUser.class);
-		verify(dataService).add(eq(MolgenisUser.ENTITY_NAME), argument.capture());
-		assertFalse(argument.getValue().isActive());
-		verify(javaMailSender).send(any(SimpleMailMessage.class));
-		// TODO improve test
+		when(idGenerator.generateId(SECURE_RANDOM)).thenReturn("3541db68-435b-416b-8c2c-cf2edf6ba435");
+
+		accountService.createUser(user, "http://molgenis.org/activate");
+
+		ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);
+		verify(dataService).add(eq(USER), argument.capture());
+		verify(argument.getValue()).setActive(false);
+
+		SimpleMailMessage expected = new SimpleMailMessage();
+		expected.setTo("jan.jansen@activation.nl");
+		expected.setSubject("User registration for Molgenis title");
+		expected.setText("User registration for Molgenis title\n" + "User name: jansenj Full name: Jan Jansen\n"
+				+ "In order to activate the user visit the following URL:\n"
+				+ "http://molgenis.org/activate/3541db68-435b-416b-8c2c-cf2edf6ba435\n\n");
+
+		verify(mailSender).send(expected);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Test
 	public void resetPassword()
 	{
-		MolgenisUser molgenisUser = mock(MolgenisUser.class);
-		when(molgenisUser.getPassword()).thenReturn("password");
-		when(dataService.findOne(eq(MolgenisUser.ENTITY_NAME), any(Query.class),
-				(Class<Entity>) Matchers.notNull(MolgenisUser.class.getClass()))).thenReturn(molgenisUser);
+		when(idGenerator.generateId(SHORT_SECURE_RANDOM)).thenReturn("newPassword");
+
+		Query<User> q = mock(Query.class);
+		when(q.eq(EMAIL, "user@molgenis.org")).thenReturn(q);
+		when(q.findOne()).thenReturn(user);
+		when(dataService.query(USER, User.class)).thenReturn(q);
 
 		accountService.resetPassword("user@molgenis.org");
-		ArgumentCaptor<MolgenisUser> argument = ArgumentCaptor.forClass(MolgenisUser.class);
-		verify(dataService).update(eq(MolgenisUser.ENTITY_NAME), argument.capture());
-		assertNotNull(argument.getValue().getPassword());
-		verify(javaMailSender).send(any(SimpleMailMessage.class));
+
+		verify(dataService).update(USER, user);
+		verify(user).setPassword("newPassword");
+		when(user.getPassword()).thenReturn("newPassword");
+
+		SimpleMailMessage expected = new SimpleMailMessage();
+		expected.setTo("jan.jansen@activation.nl");
+		expected.setSubject("Your new password request");
+		expected.setText("Somebody, probably you, requested a new password for Molgenis title.\n"
+				+ "The new password is: newPassword\n"
+				+ "Note: we strongly recommend you reset your password after log-in!");
+		verify(mailSender).send(expected);
 	}
 
 	@Test(expectedExceptions = MolgenisUserException.class)
 	public void resetPassword_invalidEmailAddress()
 	{
-		MolgenisUser molgenisUser = mock(MolgenisUser.class);
-		when(molgenisUser.getPassword()).thenReturn("password");
-		when(dataService.findOne(MolgenisUser.ENTITY_NAME,
-				new QueryImpl().eq(MolgenisUser.EMAIL, "invalid-user@molgenis.org"), MolgenisUser.class))
-						.thenReturn(null);
+		User user = mock(User.class);
+		when(user.getPassword()).thenReturn("password");
+
+		@SuppressWarnings("unchecked")
+		Query<User> q = mock(Query.class);
+		when(q.eq(EMAIL, "invalid-user@molgenis.org")).thenReturn(q);
+		when(q.findOne()).thenReturn(null);
+		when(dataService.query(USER, User.class)).thenReturn(q);
 
 		accountService.resetPassword("invalid-user@molgenis.org");
 	}
@@ -143,17 +196,20 @@ public class AccountServiceImplTest extends AbstractTestNGSpringContextTests
 	@Test
 	public void changePassword()
 	{
-		MolgenisUser user = new MolgenisUser();
-		user.setUsername("test");
-		user.setPassword("oldpass");
+		User user = mock(User.class);
+		when(user.getUsername()).thenReturn("test");
+		when(user.getPassword()).thenReturn("oldpass");
 
-		when(dataService.findOne(MolgenisUser.ENTITY_NAME, new QueryImpl().eq(MolgenisUser.USERNAME, "test"),
-				MolgenisUser.class)).thenReturn(user);
+		@SuppressWarnings("unchecked")
+		Query<User> q = mock(Query.class);
+		when(q.eq(USERNAME, "test")).thenReturn(q);
+		when(q.findOne()).thenReturn(user);
+		when(dataService.query(USER, User.class)).thenReturn(q);
 
 		accountService.changePassword("test", "newpass");
 
-		verify(dataService).update(MolgenisUser.ENTITY_NAME, user);
-		assertNotEquals(user.getPassword(), "oldpass");
+		verify(dataService).update(USER, user);
+		verify(user).setPassword("newpass");
 	}
 
 	@Configuration
@@ -162,7 +218,14 @@ public class AccountServiceImplTest extends AbstractTestNGSpringContextTests
 		@Bean
 		public AccountService accountService()
 		{
-			return new AccountServiceImpl(dataService(), mailSender(), molgenisUserService(), appSettings());
+			return new AccountServiceImpl(dataService(), mailSender(), molgenisUserService(), appSettings(),
+					authenticationSettings(), molgenisGroupMemberFactory(), idGenerator());
+		}
+
+		@Bean
+		public IdGenerator idGenerator()
+		{
+			return mock(IdGenerator.class);
 		}
 
 		@Bean
@@ -178,15 +241,29 @@ public class AccountServiceImplTest extends AbstractTestNGSpringContextTests
 		}
 
 		@Bean
-		public JavaMailSender mailSender()
+		public AuthenticationSettings authenticationSettings()
 		{
-			return mock(JavaMailSender.class);
+			return mock(AuthenticationSettings.class);
 		}
 
 		@Bean
-		public MolgenisUserService molgenisUserService()
+		public MailSender mailSender()
 		{
-			return mock(MolgenisUserService.class);
+			return mock(MailSender.class);
+		}
+
+		@Bean
+		public UserService molgenisUserService()
+		{
+			return mock(UserService.class);
+		}
+
+		@Bean
+		public GroupMemberFactory molgenisGroupMemberFactory()
+		{
+			GroupMemberFactory groupMemberFactory = mock(GroupMemberFactory.class);
+			when(groupMemberFactory.create()).thenAnswer(invocationOnMock -> mock(GroupMember.class));
+			return groupMemberFactory;
 		}
 	}
 }

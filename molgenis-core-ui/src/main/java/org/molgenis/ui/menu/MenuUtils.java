@@ -1,9 +1,11 @@
 package org.molgenis.ui.menu;
 
+import com.google.common.collect.Lists;
+import com.google.gson.Gson;
+import org.molgenis.web.UiMenu;
+
 import java.util.List;
 import java.util.Stack;
-
-import org.elasticsearch.common.collect.Lists;
 
 public class MenuUtils
 {
@@ -32,14 +34,10 @@ public class MenuUtils
 
 	/**
 	 * Return URI path to menu item of the given id or null if item does not exist.
-	 * 
-	 * @param id
-	 * @param menu
-	 * @return
 	 */
 	public static String findMenuItemPath(String id, Menu menu)
 	{
-		Stack<MenuItem> path = new Stack<MenuItem>();
+		Stack<MenuItem> path = new Stack<>();
 		MenuItem menuItem = findMenuItemPathRec(id, menu, path);
 		if (menuItem != null)
 		{
@@ -101,5 +99,10 @@ public class MenuUtils
 			}
 		}
 		return newMenu;
+	}
+
+	public static String getMenuJson(UiMenu menu)
+	{
+		return new Gson().toJson(org.molgenis.ui.menu.json.MenuItem.create(menu));
 	}
 }

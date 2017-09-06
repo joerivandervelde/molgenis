@@ -1,29 +1,30 @@
 package org.molgenis.ui.settings;
 
-import org.molgenis.data.DataService;
-import org.molgenis.data.EntityMetaData;
-import org.molgenis.data.support.DefaultEntity;
+import org.molgenis.data.Entity;
+import org.molgenis.data.meta.model.EntityType;
+import org.molgenis.data.support.StaticEntity;
 
-public class StaticContent extends DefaultEntity
+import javax.annotation.Nullable;
+
+import static org.molgenis.ui.settings.StaticContentMeta.CONTENT;
+import static org.molgenis.ui.settings.StaticContentMeta.KEY;
+
+public class StaticContent extends StaticEntity
 {
-	private static final long serialVersionUID = 1L;
-
-	public static final String ENTITY_NAME = "StaticContent";
-
-	public static final EntityMetaData META_DATA = new StaticContentMeta();
-
-	static final String KEY = "key_";
-	static final String CONTENT = "content";
-
-	public StaticContent(DataService dataService)
+	public StaticContent(Entity entity)
 	{
-		super(META_DATA, dataService);
+		super(entity);
 	}
-	
-	public StaticContent(String key, DataService dataService)
+
+	public StaticContent(EntityType entityType)
 	{
-		super(META_DATA, dataService);
-		set(KEY, key);
+		super(entityType);
+	}
+
+	public StaticContent(String key, EntityType entityType)
+	{
+		super(entityType);
+		setKey(key);
 	}
 
 	public String getKey()
@@ -31,6 +32,12 @@ public class StaticContent extends DefaultEntity
 		return getString(KEY);
 	}
 
+	private void setKey(String key)
+	{
+		set(KEY, key);
+	}
+
+	@Nullable
 	public String getContent()
 	{
 		return getString(CONTENT);

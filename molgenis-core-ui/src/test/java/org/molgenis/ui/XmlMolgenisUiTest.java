@@ -1,13 +1,8 @@
 package org.molgenis.ui;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-
-import java.io.IOException;
-
-import org.molgenis.security.core.MolgenisPermissionService;
+import org.molgenis.security.core.PermissionService;
 import org.molgenis.ui.XmlMolgenisUiTest.Config;
+import org.molgenis.web.UiMenu;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,6 +11,13 @@ import org.springframework.test.context.support.AnnotationConfigContextLoader;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertEquals;
+
+@SuppressWarnings("deprecation")
 @ContextConfiguration(classes = Config.class, loader = AnnotationConfigContextLoader.class)
 public class XmlMolgenisUiTest extends AbstractTestNGSpringContextTests
 {
@@ -32,7 +34,7 @@ public class XmlMolgenisUiTest extends AbstractTestNGSpringContextTests
 		MenuType menuType = new MenuType();
 		menuType.setName(menuId);
 		when(molgenis.getMenu()).thenReturn(menuType);
-		MolgenisUiMenu menu = xmlMolgenisUi.getMenu();
+		UiMenu menu = xmlMolgenisUi.getMenu();
 		assertEquals(menu.getId(), menuId);
 	}
 
@@ -42,7 +44,7 @@ public class XmlMolgenisUiTest extends AbstractTestNGSpringContextTests
 		@Bean
 		public XmlMolgenisUi xmlMolgenisUi() throws IOException
 		{
-			return new XmlMolgenisUi(xmlMolgenisUiLoader(), molgenisPermissionService());
+			return new XmlMolgenisUi(xmlMolgenisUiLoader(), permissionService());
 		}
 
 		@Bean
@@ -58,9 +60,9 @@ public class XmlMolgenisUiTest extends AbstractTestNGSpringContextTests
 		}
 
 		@Bean
-		public MolgenisPermissionService molgenisPermissionService()
+		public PermissionService permissionService()
 		{
-			return mock(MolgenisPermissionService.class);
+			return mock(PermissionService.class);
 		}
 	}
 }

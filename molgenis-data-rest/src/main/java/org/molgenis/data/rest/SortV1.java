@@ -15,24 +15,19 @@
  */
 package org.molgenis.data.rest;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
+import org.apache.commons.lang3.StringUtils;
 
-import org.elasticsearch.common.lang3.StringUtils;
-import org.molgenis.data.rest.SortV1.DirectionV1;
+import java.io.Serializable;
+import java.util.*;
 
 /**
  * Copy of org.springframework.data.domain.Sort for backwards compatibility
- * 
+ * <p>
  * Sort option for queries. You have to provide at least a list of properties to sort for that must not include
- * {@literal null} or empty strings. The direction defaults to {@value SortV1#DEFAULT_DIRECTION}.
- * 
+ * {@literal null} or empty strings. The direction defaults to {@link SortV1#DEFAULT_DIRECTION}.
+ *
  * @author Oliver Gierke
- * @deprecated use {@link #org.molgenis.data.Sort} instead.
+ * @deprecated use {@link org.molgenis.data.Sort} instead.
  */
 public class SortV1 implements Iterable<SortV1.OrderV1>, Serializable
 {
@@ -44,9 +39,8 @@ public class SortV1 implements Iterable<SortV1.OrderV1>, Serializable
 
 	/**
 	 * Creates a new {@link SortV1} instance using the given {@link OrderV1}s.
-	 * 
-	 * @param orders
-	 *            must not be {@literal null}.
+	 *
+	 * @param orders must not be {@literal null}.
 	 */
 	public SortV1(OrderV1... orders)
 	{
@@ -55,9 +49,8 @@ public class SortV1 implements Iterable<SortV1.OrderV1>, Serializable
 
 	/**
 	 * Creates a new {@link SortV1} instance.
-	 * 
-	 * @param orders
-	 *            must not be {@literal null} or contain {@literal null}.
+	 *
+	 * @param orders must not be {@literal null} or contain {@literal null}.
 	 */
 	public SortV1(List<OrderV1> orders)
 	{
@@ -71,10 +64,9 @@ public class SortV1 implements Iterable<SortV1.OrderV1>, Serializable
 	}
 
 	/**
-	 * Creates a new {@link SortV1} instance. Order defaults to {@value DirectionV1#ASC}.
-	 * 
-	 * @param properties
-	 *            must not be {@literal null} or contain {@literal null} or empty strings
+	 * Creates a new {@link SortV1} instance. Order defaults to {@link DirectionV1#ASC}.
+	 *
+	 * @param properties must not be {@literal null} or contain {@literal null} or empty strings
 	 */
 	public SortV1(String... properties)
 	{
@@ -83,22 +75,17 @@ public class SortV1 implements Iterable<SortV1.OrderV1>, Serializable
 
 	/**
 	 * Creates a new {@link SortV1} instance.
-	 * 
-	 * @param direction
-	 *            defaults to {@value SortV1#DEFAULT_DIRECTION} (for {@literal null} cases, too)
-	 * @param properties
-	 *            must not be {@literal null} or contain {@literal null} or empty strings
+	 *
+	 * @param direction  defaults to {@link SortV1#DEFAULT_DIRECTION} (for {@literal null} cases, too)
+	 * @param properties must not be {@literal null} or contain {@literal null} or empty strings
 	 */
 	public SortV1(DirectionV1 direction, String... properties)
 	{
-		this(direction, properties == null ? new ArrayList<String>() : Arrays.asList(properties));
+		this(direction, properties == null ? new ArrayList<>() : Arrays.asList(properties));
 	}
 
 	/**
 	 * Creates a new {@link SortV1} instance.
-	 * 
-	 * @param direction
-	 * @param properties
 	 */
 	public SortV1(DirectionV1 direction, List<String> properties)
 	{
@@ -108,7 +95,7 @@ public class SortV1 implements Iterable<SortV1.OrderV1>, Serializable
 			throw new IllegalArgumentException("You have to provide at least one property to sort by!");
 		}
 
-		this.orders = new ArrayList<OrderV1>(properties.size());
+		this.orders = new ArrayList<>(properties.size());
 
 		for (String property : properties)
 		{
@@ -119,10 +106,8 @@ public class SortV1 implements Iterable<SortV1.OrderV1>, Serializable
 	/**
 	 * Returns a new {@link SortV1} consisting of the {@link OrderV1}s of the current {@link SortV1} combined with the
 	 * given ones.
-	 * 
-	 * @param sort
-	 *            can be {@literal null}.
-	 * @return
+	 *
+	 * @param sort can be {@literal null}.
 	 */
 	public SortV1 and(SortV1 sort)
 	{
@@ -132,7 +117,7 @@ public class SortV1 implements Iterable<SortV1.OrderV1>, Serializable
 			return this;
 		}
 
-		ArrayList<OrderV1> these = new ArrayList<OrderV1>(this.orders);
+		ArrayList<OrderV1> these = new ArrayList<>(this.orders);
 
 		for (OrderV1 order : sort)
 		{
@@ -144,9 +129,6 @@ public class SortV1 implements Iterable<SortV1.OrderV1>, Serializable
 
 	/**
 	 * Returns the order registered for the given property.
-	 * 
-	 * @param property
-	 * @return
 	 */
 	public OrderV1 getOrderFor(String property)
 	{
@@ -223,19 +205,16 @@ public class SortV1 implements Iterable<SortV1.OrderV1>, Serializable
 
 	/**
 	 * Enumeration for sort directions.
-	 * 
+	 *
 	 * @author Oliver Gierke
 	 */
-	public static enum DirectionV1
+	public enum DirectionV1
 	{
 
 		ASC, DESC;
 
 		/**
 		 * Returns the {@link DirectionV1} enum for the given {@link String} value.
-		 * 
-		 * @param value
-		 * @return
 		 */
 		public static DirectionV1 fromString(String value)
 		{
@@ -256,7 +235,7 @@ public class SortV1 implements Iterable<SortV1.OrderV1>, Serializable
 	/**
 	 * PropertyPath implements the pairing of an {@link DirectionV1} and a property. It is used to provide input for
 	 * {@link SortV1}
-	 * 
+	 *
 	 * @author Oliver Gierke
 	 */
 	public static class OrderV1 implements Serializable
@@ -269,12 +248,10 @@ public class SortV1 implements Iterable<SortV1.OrderV1>, Serializable
 
 		/**
 		 * Creates a new {@link OrderV1} instance. if order is {@literal null} then order defaults to
-		 * {@value SortV1#DEFAULT_DIRECTION}
-		 * 
-		 * @param direction
-		 *            can be {@literal null}, will default to {@value SortV1#DEFAULT_DIRECTION}
-		 * @param property
-		 *            must not be {@literal null} or empty.
+		 * {@link SortV1#DEFAULT_DIRECTION}
+		 *
+		 * @param direction can be {@literal null}, will default to {@link SortV1#DEFAULT_DIRECTION}
+		 * @param property  must not be {@literal null} or empty.
 		 */
 		public OrderV1(DirectionV1 direction, String property)
 		{
@@ -290,10 +267,9 @@ public class SortV1 implements Iterable<SortV1.OrderV1>, Serializable
 
 		/**
 		 * Creates a new {@link OrderV1} instance. Takes a single property. Direction defaults to
-		 * {@value SortV1#DEFAULT_DIRECTION}.
-		 * 
-		 * @param property
-		 *            must not be {@literal null} or empty.
+		 * {@link SortV1#DEFAULT_DIRECTION}.
+		 *
+		 * @param property must not be {@literal null} or empty.
 		 */
 		public OrderV1(String property)
 		{
@@ -301,13 +277,13 @@ public class SortV1 implements Iterable<SortV1.OrderV1>, Serializable
 		}
 
 		/**
-		 * @deprecated use {@link SortV1#Sort(DirectionV1, List)} instead.
+		 * @deprecated use {@link SortV1#SortV1(DirectionV1, List)} instead.
 		 */
 		@Deprecated
 		public static List<OrderV1> create(DirectionV1 direction, Iterable<String> properties)
 		{
 
-			List<OrderV1> orders = new ArrayList<SortV1.OrderV1>();
+			List<OrderV1> orders = new ArrayList<>();
 			for (String property : properties)
 			{
 				orders.add(new OrderV1(direction, property));
@@ -317,8 +293,6 @@ public class SortV1 implements Iterable<SortV1.OrderV1>, Serializable
 
 		/**
 		 * Returns the order the property shall be sorted for.
-		 * 
-		 * @return
 		 */
 		public DirectionV1 getDirection()
 		{
@@ -327,8 +301,6 @@ public class SortV1 implements Iterable<SortV1.OrderV1>, Serializable
 
 		/**
 		 * Returns the property to order for.
-		 * 
-		 * @return
 		 */
 		public String getProperty()
 		{
@@ -337,8 +309,6 @@ public class SortV1 implements Iterable<SortV1.OrderV1>, Serializable
 
 		/**
 		 * Returns whether sorting for this property shall be ascending.
-		 * 
-		 * @return
 		 */
 		public boolean isAscending()
 		{
@@ -347,9 +317,6 @@ public class SortV1 implements Iterable<SortV1.OrderV1>, Serializable
 
 		/**
 		 * Returns a new {@link OrderV1} with the given {@link OrderV1}.
-		 * 
-		 * @param order
-		 * @return
 		 */
 		public OrderV1 with(DirectionV1 order)
 		{
@@ -358,9 +325,6 @@ public class SortV1 implements Iterable<SortV1.OrderV1>, Serializable
 
 		/**
 		 * Returns a new {@link SortV1} instance for the given properties.
-		 * 
-		 * @param properties
-		 * @return
 		 */
 		public SortV1 withProperties(String... properties)
 		{

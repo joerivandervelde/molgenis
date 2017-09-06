@@ -1,6 +1,6 @@
 package org.molgenis.migrate.version.v1_22;
 
-import org.molgenis.data.IdGenerator;
+import org.molgenis.data.populate.IdGenerator;
 import org.molgenis.framework.MolgenisUpgrade;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +35,7 @@ public class Step31UpdateApplicationSettings extends MolgenisUpgrade
 		String customJavascriptHeadersId = idGenerator.generateId();
 		boolean googleSignInIdDefaultValue = true;
 		jdbcTemplate.update(
-				"INSERT INTO attributes (`identifier`,`name`,`dataType`,`refEntity`,`expression`,`nillable`,`auto`,`visible`,`label`,`description`,`aggregateable`,`enumOptions`,`rangeMin`,`rangeMax`,`readOnly`,`unique`,`visibleExpression`,`validationExpression`,`defaultValue`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+				"INSERT INTO attributes (`identifier`,`name`,`dataType`,`refEntity`,`expression`,`nillable`,`auto`,`visible`,`label`,`description`,`isAggregatable`,`enumOptions`,`rangeMin`,`rangeMax`,`readOnly`,`unique`,`visibleExpression`,`validationExpression`,`defaultValue`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 				customJavascriptHeadersId, "custom_javascript", "text", null, null, true, false, true,
 				"Custom javascript headers",
 				"Custom javascript headers, specified as comma separated list. These headers will be included in the molgenis header before the applications own javascript headers.",

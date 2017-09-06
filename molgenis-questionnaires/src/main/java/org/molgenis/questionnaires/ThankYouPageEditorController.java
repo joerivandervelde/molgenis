@@ -1,15 +1,9 @@
 package org.molgenis.questionnaires;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import javax.servlet.http.HttpServletResponse;
-
 import org.molgenis.data.DataService;
 import org.molgenis.data.Entity;
-import org.molgenis.data.meta.EntityMetaDataMetaData;
-import org.molgenis.ui.MolgenisPluginController;
+import org.molgenis.data.meta.model.EntityType;
+import org.molgenis.web.PluginController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -17,15 +11,20 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  * Static content editor for the questionnaires thank you page
  */
 @Controller
 @RequestMapping(ThankYouPageEditorController.URI)
-public class ThankYouPageEditorController extends MolgenisPluginController
+public class ThankYouPageEditorController extends PluginController
 {
 	public static final String ID = "questionnaireThankYouPage";
-	public static final String URI = MolgenisPluginController.PLUGIN_URI_PREFIX + ID;
+	public static final String URI = PluginController.PLUGIN_URI_PREFIX + ID;
 
 	private final ThankYouTextService thankYouTextService;
 	private final DataService dataService;
@@ -43,20 +42,20 @@ public class ThankYouPageEditorController extends MolgenisPluginController
 			@RequestParam(value = "edit", required = false, defaultValue = "false") String edit, Model model,
 			HttpServletResponse response) throws IOException
 	{
-		if ((questionnaireName != null) && dataService.getMeta().getEntityMetaData(questionnaireName) == null)
+		if ((questionnaireName != null) && dataService.getMeta().getEntityType(questionnaireName) == null)
 		{
 			response.sendError(404);
 			return null;
 		}
 		if (edit.equalsIgnoreCase("true") && (questionnaireName != null)) model.addAttribute("edit", true);
 
-		List<Entity> questionnaires = QuestionnaireUtils.findQuestionnairesMetaData(dataService).collect(
-				Collectors.toList());
+		List<EntityType> questionnaires = QuestionnaireUtils.findQuestionnairesMetaData(dataService)
+															.collect(Collectors.toList());
 		model.addAttribute("questionnaires", questionnaires);
 
 		if ((questionnaireName == null) && !questionnaires.isEmpty())
 		{
-			questionnaireName = questionnaires.get(0).getString(EntityMetaDataMetaData.FULL_NAME);
+			questionnaireName = questionnaires.get(0).getId();
 		}
 
 		model.addAttribute("content", thankYouTextService.getThankYouText(questionnaireName));
@@ -69,13 +68,13 @@ public class ThankYouPageEditorController extends MolgenisPluginController
 	public String save(@RequestParam("questionnaireName") String questionnaireName,
 			@RequestParam("content") String content, Model model)
 	{
-		if (dataService.getMeta().getEntityMetaData(questionnaireName) != null)
+		if (dataService.getMeta().getEntityType(questionnaireName) != null)
 		{
 			thankYouTextService.saveThankYouText(questionnaireName, content);
 		}
 
-		List<Entity> questionnaires = QuestionnaireUtils.findQuestionnairesMetaData(dataService).collect(
-				Collectors.toList());
+		List<Entity> questionnaires = QuestionnaireUtils.findQuestionnairesMetaData(dataService)
+														.collect(Collectors.toList());
 		model.addAttribute("questionnaires", questionnaires);
 		model.addAttribute("content", content);
 		model.addAttribute("selectedQuestionnaire", questionnaireName);

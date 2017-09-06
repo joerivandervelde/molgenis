@@ -1,19 +1,19 @@
 package org.molgenis.data.excel;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
-import org.molgenis.data.AttributeMetaData;
 import org.molgenis.data.Entity;
 import org.molgenis.data.MolgenisDataException;
-import org.molgenis.data.convert.DateToStringConverter;
+import org.molgenis.data.meta.model.Attribute;
 import org.molgenis.data.processor.AbstractCellProcessor;
 import org.molgenis.data.processor.CellProcessor;
 import org.molgenis.data.support.AbstractWritable;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Writable implementation for an excel sheet
@@ -23,11 +23,13 @@ public class ExcelSheetWriter extends AbstractWritable
 	private final Sheet sheet;
 	private int row;
 
-	/** process cells before writing */
+	/**
+	 * process cells before writing
+	 */
 	private List<CellProcessor> cellProcessors;
-	private Iterable<AttributeMetaData> cachedAttributes;
+	private Iterable<Attribute> cachedAttributes;
 
-	ExcelSheetWriter(Sheet sheet, Iterable<AttributeMetaData> attributes, AttributeWriteMode attributeWriteMode,
+	ExcelSheetWriter(Sheet sheet, Iterable<Attribute> attributes, AttributeWriteMode attributeWriteMode,
 			List<CellProcessor> cellProcessors)
 	{
 		if (sheet == null) throw new IllegalArgumentException("sheet is null");
@@ -48,14 +50,14 @@ public class ExcelSheetWriter extends AbstractWritable
 	public void add(Entity entity)
 	{
 		if (entity == null) throw new IllegalArgumentException("Entity cannot be null");
-		if (cachedAttributes == null) throw new MolgenisDataException(
-				"The attribute names are not defined, call writeAttributeNames first");
+		if (cachedAttributes == null)
+			throw new MolgenisDataException("The attribute names are not defined, call writeAttributeNames first");
 
 		int i = 0;
 		Row poiRow = sheet.createRow(row++);
-		for (AttributeMetaData attribute : cachedAttributes)
+		for (Attribute attribute : cachedAttributes)
 		{
-			Cell cell = poiRow.createCell(i++, Cell.CELL_TYPE_STRING);
+			Cell cell = poiRow.createCell(i++, CellType.STRING);
 			cell.setCellValue(toValue(entity.get(attribute.getName())));
 		}
 
@@ -65,7 +67,7 @@ public class ExcelSheetWriter extends AbstractWritable
 	/**
 	 * Write sheet column headers
 	 */
-	public void writeAttributeHeaders(Iterable<AttributeMetaData> attributes, AttributeWriteMode attributeWriteMode)
+	public void writeAttributeHeaders(Iterable<Attribute> attributes, AttributeWriteMode attributeWriteMode)
 	{
 		if (attributes == null) throw new IllegalArgumentException("Attributes cannot be null");
 		if (attributeWriteMode == null) throw new IllegalArgumentException("AttributeWriteMode cannot be null");
@@ -76,14 +78,15 @@ public class ExcelSheetWriter extends AbstractWritable
 
 			// write header
 			int i = 0;
-			for (AttributeMetaData attribute : attributes)
+			for (Attribute attribute : attributes)
 			{
-				Cell cell = poiRow.createCell(i++, Cell.CELL_TYPE_STRING);
+				Cell cell = poiRow.createCell(i++, CellType.STRING);
 
 				switch (attributeWriteMode)
 				{
 					case ATTRIBUTE_LABELS:
-						cell.setCellValue(AbstractCellProcessor.processCell(attribute.getLabel(), true, cellProcessors));
+						cell.setCellValue(
+								AbstractCellProcessor.processCell(attribute.getLabel(), true, cellProcessors));
 						break;
 					case ATTRIBUTE_NAMES:
 						cell.setCellValue(AbstractCellProcessor.processCell(attribute.getName(), true, cellProcessors));
@@ -98,7 +101,7 @@ public class ExcelSheetWriter extends AbstractWritable
 
 	public void addCellProcessor(CellProcessor cellProcessor)
 	{
-		if (cellProcessors == null) cellProcessors = new ArrayList<CellProcessor>();
+		if (cellProcessors == null) cellProcessors = new ArrayList<>();
 		cellProcessors.add(cellProcessor);
 	}
 
@@ -108,10 +111,6 @@ public class ExcelSheetWriter extends AbstractWritable
 		if (obj == null)
 		{
 			value = null;
-		}
-		else if (obj instanceof java.util.Date)
-		{
-			value = new DateToStringConverter().convert((java.util.Date) obj);
 		}
 		else if (obj instanceof Entity)
 		{
@@ -123,7 +122,8 @@ public class ExcelSheetWriter extends AbstractWritable
 						value = ((Entity) obj).getIdValue().toString();
 						break;
 					case ENTITY_LABELS:
-						value = ((Entity) obj).getLabelValue();
+						Object labelValue = ((Entity) obj).getLabelValue();
+						value = labelValue != null ? labelValue.toString() : null;
 						break;
 					default:
 						throw new RuntimeException("Unknown write mode [" + getEntityWriteMode() + "]");
@@ -131,7 +131,8 @@ public class ExcelSheetWriter extends AbstractWritable
 			}
 			else
 			{
-				value = ((Entity) obj).getLabelValue();
+				Object labelValue = ((Entity) obj).getLabelValue();
+				value = labelValue != null ? labelValue.toString() : null;
 			}
 		}
 		else if (obj instanceof Iterable<?>)

@@ -1,17 +1,14 @@
 package org.molgenis.data.support;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
-import static org.molgenis.data.EntityMetaData.AttributeRole.ROLE_ID;
-
 import org.molgenis.data.Entity;
 import org.molgenis.data.EntityManager;
 import org.molgenis.data.Fetch;
+import org.molgenis.data.meta.model.Attribute;
+import org.molgenis.data.meta.model.EntityType;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import static org.mockito.Mockito.*;
 
 public class PartialEntityTest
 {
@@ -20,18 +17,19 @@ public class PartialEntityTest
 	private Entity decoratedEntity;
 	private Fetch fetch;
 	private EntityManager entityManager;
-	private DefaultEntityMetaData meta;
+	private EntityType meta;
 
 	@BeforeMethod
 	public void setUpBeforeMethod()
 	{
-		meta = new DefaultEntityMetaData("entity");
-		meta.addAttribute("id", ROLE_ID);
+		Attribute idAttr = when(mock(Attribute.class).getName()).thenReturn("id").getMock();
+		meta = when(mock(EntityType.class).getId()).thenReturn("entity").getMock();
+		when(meta.getIdAttribute()).thenReturn(idAttr);
 
 		originalEntity = mock(Entity.class);
 
 		decoratedEntity = mock(Entity.class);
-		when(decoratedEntity.getEntityMetaData()).thenReturn(meta);
+		when(decoratedEntity.getEntityType()).thenReturn(meta);
 		when(decoratedEntity.getIdValue()).thenReturn("id");
 
 		fetch = new Fetch().field("id");
@@ -71,17 +69,9 @@ public class PartialEntityTest
 	}
 
 	@Test
-	public void getDate()
-	{
-		partialEntity.getDate("id");
-		verify(decoratedEntity, times(1)).getDate("id");
-		verifyZeroInteractions(entityManager);
-	}
-
-	@Test
 	public void getDateNotInFetch()
 	{
-		partialEntity.getDate("label");
+		partialEntity.getLocalDate("label");
 		verify(entityManager, times(1)).getReference(meta, "id");
 	}
 
@@ -176,36 +166,6 @@ public class PartialEntityTest
 	}
 
 	@Test
-	public void getIntList()
-	{
-		partialEntity.getIntList("id");
-		verify(decoratedEntity, times(1)).getIntList("id");
-		verifyZeroInteractions(entityManager);
-	}
-
-	@Test
-	public void getIntListNotInFetch()
-	{
-		partialEntity.getIntList("label");
-		verify(entityManager, times(1)).getReference(meta, "id");
-	}
-
-	@Test
-	public void getList()
-	{
-		partialEntity.getList("id");
-		verify(decoratedEntity, times(1)).getList("id");
-		verifyZeroInteractions(entityManager);
-	}
-
-	@Test
-	public void getListNotInFetch()
-	{
-		partialEntity.getList("label");
-		verify(entityManager, times(1)).getReference(meta, "id");
-	}
-
-	@Test
 	public void getLong()
 	{
 		partialEntity.getLong("id");
@@ -238,30 +198,30 @@ public class PartialEntityTest
 	@Test
 	public void getTimestamp()
 	{
-		partialEntity.getTimestamp("id");
-		verify(decoratedEntity, times(1)).getTimestamp("id");
+		partialEntity.getLocalDate("id");
+		verify(decoratedEntity, times(1)).getLocalDate("id");
 		verifyZeroInteractions(entityManager);
 	}
 
 	@Test
 	public void getTimestampNotInFetch()
 	{
-		partialEntity.getTimestamp("label");
+		partialEntity.getLocalDate("label");
 		verify(entityManager, times(1)).getReference(meta, "id");
 	}
 
 	@Test
 	public void getUtilDate()
 	{
-		partialEntity.getUtilDate("id");
-		verify(decoratedEntity, times(1)).getUtilDate("id");
+		partialEntity.getInstant("id");
+		verify(decoratedEntity, times(1)).getInstant("id");
 		verifyZeroInteractions(entityManager);
 	}
 
 	@Test
 	public void getUtilDateNotInFetch()
 	{
-		partialEntity.getUtilDate("label");
+		partialEntity.getInstant("label");
 		verify(entityManager, times(1)).getReference(meta, "id");
 	}
 
@@ -292,10 +252,10 @@ public class PartialEntityTest
 	}
 
 	@Test
-	public void getEntityMetaData()
+	public void getEntityType()
 	{
-		partialEntity.getEntityMetaData();
-		verify(decoratedEntity, times(1)).getEntityMetaData();
+		partialEntity.getEntityType();
+		verify(decoratedEntity, times(1)).getEntityType();
 		verifyZeroInteractions(entityManager);
 	}
 

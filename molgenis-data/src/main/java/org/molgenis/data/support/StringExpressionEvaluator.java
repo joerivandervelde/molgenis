@@ -1,45 +1,45 @@
 package org.molgenis.data.support;
 
-import org.molgenis.data.AttributeMetaData;
+import com.google.gson.Gson;
 import org.molgenis.data.DataConverter;
 import org.molgenis.data.Entity;
-import org.molgenis.data.EntityMetaData;
-
-import com.google.gson.Gson;
+import org.molgenis.data.meta.model.Attribute;
+import org.molgenis.data.meta.model.EntityType;
 
 public class StringExpressionEvaluator implements ExpressionEvaluator
 {
-	private AttributeMetaData targetAttributeMetaData;
-	private AttributeMetaData sourceAttributeMetaData;
+	private Attribute targetAttribute;
+	private Attribute sourceAttribute;
 
 	/**
-	 * Constructs a new EspressionEvaluator for an attribute whose expression is a simple string.
-	 * 
-	 * @param attributeMetaData
-	 * @param entityMetaData
+	 * Constructs a new expression evaluator for an attribute whose expression is a simple string.
+	 *
+	 * @param attribute  attribute meta data
+	 * @param entityType entity meta data
 	 */
-	public StringExpressionEvaluator(AttributeMetaData attributeMetaData, EntityMetaData entityMetaData)
+	StringExpressionEvaluator(Attribute attribute, EntityType entityType)
 	{
-		targetAttributeMetaData = attributeMetaData;
-		String expression = attributeMetaData.getExpression();
+		targetAttribute = attribute;
+		String expression = attribute.getExpression();
 		if (expression == null)
 		{
 			throw new NullPointerException("Attribute has no expression.");
 		}
 		Gson gson = new Gson();
 		String attributeName = gson.fromJson(expression, String.class);
-		sourceAttributeMetaData = entityMetaData.getAttribute(attributeName);
-		if (sourceAttributeMetaData == null)
+		sourceAttribute = entityType.getAttribute(attributeName);
+		if (sourceAttribute == null)
 		{
-			throw new IllegalArgumentException("Expression for attribute '" + attributeMetaData.getName()
-					+ "' references non-existant attribute '" + attributeName + "'.");
+			throw new IllegalArgumentException(
+					"Expression for attribute '" + attribute.getName() + "' references non-existant attribute '"
+							+ attributeName + "'.");
 		}
 	}
 
 	@Override
 	public Object evaluate(Entity entity)
 	{
-		Object o = entity.get(sourceAttributeMetaData.getName());
-		return DataConverter.convert(o, targetAttributeMetaData);
+		Object o = entity.get(sourceAttribute.getName());
+		return DataConverter.convert(o, targetAttribute);
 	}
 }

@@ -1,14 +1,10 @@
 package org.molgenis.ui.menumanager;
 
-import static java.util.Objects.requireNonNull;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
+import com.google.gson.GsonBuilder;
+import org.molgenis.data.DataService;
+import org.molgenis.data.plugin.model.Plugin;
+import org.molgenis.data.plugin.model.PluginMetadata;
 import org.molgenis.data.settings.AppSettings;
-import org.molgenis.framework.ui.MolgenisPlugin;
-import org.molgenis.framework.ui.MolgenisPluginRegistry;
 import org.molgenis.security.core.runas.RunAsSystem;
 import org.molgenis.ui.MenuType;
 import org.molgenis.ui.Molgenis;
@@ -21,32 +17,34 @@ import org.molgenis.ui.menu.MenuReaderService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationListener;
-import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.google.gson.GsonBuilder;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
-public class MenuManagerServiceImpl implements MenuManagerService, ApplicationListener<ContextRefreshedEvent>
+import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toList;
+
+public class MenuManagerServiceImpl implements MenuManagerService
 {
 	private static final Logger LOG = LoggerFactory.getLogger(MenuManagerServiceImpl.class);
 
 	private final MenuReaderService menuReaderService;
 	private final AppSettings appSettings;
-	private final MolgenisPluginRegistry molgenisPluginRegistry;
+	private final DataService dataService;
 
 	@Autowired
-	public MenuManagerServiceImpl(MenuReaderService menuReaderService, AppSettings appSettings,
-			MolgenisPluginRegistry molgenisPluginRegistry)
+	public MenuManagerServiceImpl(MenuReaderService menuReaderService, AppSettings appSettings, DataService dataService)
 	{
 		this.menuReaderService = requireNonNull(menuReaderService);
 		this.appSettings = requireNonNull(appSettings);
-		this.molgenisPluginRegistry = requireNonNull(molgenisPluginRegistry);
+		this.dataService = requireNonNull(dataService);
 	}
 
 	@Override
-	@PreAuthorize("hasAnyRole('ROLE_SYSTEM, ROLE_SU, ROLE_PLUGIN_READ_MENUMANAGER')")
+	@PreAuthorize("hasAnyRole('ROLE_SYSTEM, ROLE_SU, ROLE_PLUGIN_READ_menumanager')")
 	@Transactional(readOnly = true)
 	public Menu getMenu()
 	{
@@ -54,15 +52,16 @@ public class MenuManagerServiceImpl implements MenuManagerService, ApplicationLi
 	}
 
 	@Override
-	@PreAuthorize("hasAnyRole('ROLE_SYSTEM, ROLE_SU, ROLE_PLUGIN_READ_MENUMANAGER')")
+	@RunAsSystem
+	@PreAuthorize("hasAnyRole('ROLE_SYSTEM, ROLE_SU, ROLE_PLUGIN_READ_menumanager')")
 	@Transactional(readOnly = true)
-	public Iterable<MolgenisPlugin> getPlugins()
+	public Iterable<Plugin> getPlugins()
 	{
-		return molgenisPluginRegistry;
+		return dataService.findAll(PluginMetadata.PLUGIN, Plugin.class).collect(toList());
 	}
 
 	@Override
-	@PreAuthorize("hasAnyRole('ROLE_SYSTEM, ROLE_SU, ROLE_PLUGIN_WRITE_MENUMANAGER')")
+	@PreAuthorize("hasAnyRole('ROLE_SYSTEM, ROLE_SU, ROLE_PLUGIN_WRITE_menumanager')")
 	@Transactional
 	public void saveMenu(Menu molgenisMenu)
 	{
@@ -70,38 +69,28 @@ public class MenuManagerServiceImpl implements MenuManagerService, ApplicationLi
 		appSettings.setMenu(menuJson);
 	}
 
-	/**
-	 * Backwards compatibility: load default menu on application startup if no menu exists
-	 * 
-	 * @param event
-	 */
-	@Override
-	@RunAsSystem
-	public void onApplicationEvent(ContextRefreshedEvent event)
+	public String getDefaultMenuValue()
 	{
-		if (appSettings.getMenu() == null)
+		Molgenis molgenis;
+		try
 		{
-			Molgenis molgenis;
-			try
-			{
-				molgenis = new XmlMolgenisUiLoader().load();
-			}
-			catch (IOException e)
-			{
-				// default menu does not exist, no op
-				return;
-			}
-
-			LOG.info("Creating default menu from XML");
-			loadDefaultMenu(molgenis);
+			molgenis = new XmlMolgenisUiLoader().load();
 		}
+		catch (IOException e)
+		{
+			// default menu does not exist, no op
+			return null;
+		}
+
+		Menu defaultMenu = loadDefaultMenu(molgenis);
+		return defaultMenu != null ? new GsonBuilder().create().toJson(defaultMenu) : null;
 	}
 
-	private void loadDefaultMenu(Molgenis molgenis)
+	private Menu loadDefaultMenu(Molgenis molgenis)
 	{
 		Menu molgenisMenu = new Menu();
 		parseDefaultMenuRec(molgenisMenu, molgenis.getMenu());
-		saveMenu(molgenisMenu);
+		return molgenisMenu;
 	}
 
 	private void parseDefaultMenuRec(MenuItem menuItem, Object defaultMenuObj)
@@ -116,7 +105,7 @@ public class MenuManagerServiceImpl implements MenuManagerService, ApplicationLi
 			List<Object> defaultMenuItems = menuType.getMenuOrPlugin();
 			if (defaultMenuItems != null)
 			{
-				List<MenuItem> items = new ArrayList<MenuItem>(defaultMenuItems.size());
+				List<MenuItem> items = new ArrayList<>(defaultMenuItems.size());
 				for (Object defaultSubMenuObj : defaultMenuItems)
 				{
 					MenuItem subMenuItem = new MenuItem();

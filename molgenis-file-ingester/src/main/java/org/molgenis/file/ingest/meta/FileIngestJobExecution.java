@@ -1,41 +1,73 @@
 package org.molgenis.file.ingest.meta;
 
-import org.molgenis.data.DataService;
 import org.molgenis.data.Entity;
-import org.molgenis.data.EntityMetaData;
-import org.molgenis.data.jobs.JobExecution;
-import org.molgenis.file.FileMeta;
+import org.molgenis.data.jobs.model.JobExecution;
+import org.molgenis.data.meta.model.EntityType;
+import org.molgenis.file.model.FileMeta;
+
+import javax.annotation.Nullable;
+
+import static org.molgenis.file.ingest.meta.FileIngestJobExecutionMetaData.*;
 
 public class FileIngestJobExecution extends JobExecution
 {
-	private static final long serialVersionUID = 1L;
-
-	public static final EntityMetaData META_DATA = new FileIngestJobExecutionMetaData();
-
-	public FileIngestJobExecution(DataService dataService)
+	public FileIngestJobExecution(Entity entity)
 	{
-		super(dataService, META_DATA);
-		setType("FileIngesterJob");
+		super(entity);
+		setType(FILE_INGEST_JOB_TYPE);
 	}
 
+	public FileIngestJobExecution(EntityType entityType)
+	{
+		super(entityType);
+		setType(FILE_INGEST_JOB_TYPE);
+	}
+
+	public FileIngestJobExecution(String identifier, EntityType entityType)
+	{
+		super(identifier, entityType);
+		setType(FILE_INGEST_JOB_TYPE);
+	}
+
+	@Nullable
 	public FileMeta getFile()
 	{
-		return getEntity(FileIngestJobExecutionMetaData.FILE, FileMeta.class);
+		return getEntity(FILE, FileMeta.class);
 	}
 
 	public void setFile(FileMeta value)
 	{
-		set(FileIngestJobExecutionMetaData.FILE, value);
+		set(FILE, value);
 	}
 
-	public Entity getFileIngest()
+	public void setUrl(String url)
 	{
-		return getEntity(FileIngestJobExecutionMetaData.FILE_INGEST);
+		set(URL, url);
 	}
 
-	public void setFileIngest(FileIngest fileIngest)
+	public String getUrl()
 	{
-		set(FileIngestJobExecutionMetaData.FILE_INGEST, fileIngest);
+		return getString(URL);
+	}
+
+	public String getTargetEntityId()
+	{
+		return getString(TARGET_ENTITY_ID);
+	}
+
+	public void setTargetEntityId(String targetEntityId)
+	{
+		set(TARGET_ENTITY_ID, targetEntityId);
+	}
+
+	public void setLoader(String loader)
+	{
+		set(LOADER, loader);
+	}
+
+	public String getLoader()
+	{
+		return getString(LOADER);
 	}
 
 }

@@ -1,9 +1,9 @@
 package org.molgenis.security.token;
 
-import java.util.Collection;
-
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
+
+import java.util.Collection;
 
 /**
  * Holds the api token, passed by the client via a custom HTTP header
@@ -12,11 +12,6 @@ public class RestAuthenticationToken extends UsernamePasswordAuthenticationToken
 {
 	private static final long serialVersionUID = 340142428848970352L;
 	private final String token;
-
-	public String getToken()
-	{
-		return token;
-	}
 
 	public RestAuthenticationToken(Object principal, Object credentials,
 			Collection<? extends GrantedAuthority> authorities, String token)
@@ -29,6 +24,11 @@ public class RestAuthenticationToken extends UsernamePasswordAuthenticationToken
 	{
 		super("N/A", "N/A");
 		this.token = token;
+	}
+
+	public String getToken()
+	{
+		return token;
 	}
 
 }

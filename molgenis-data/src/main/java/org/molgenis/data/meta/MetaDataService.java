@@ -1,190 +1,290 @@
 package org.molgenis.data.meta;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-
-import org.molgenis.data.AttributeMetaData;
-import org.molgenis.data.EntityMetaData;
-import org.molgenis.data.ManageableRepositoryCollection;
-import org.molgenis.data.Package;
+import org.molgenis.data.Entity;
 import org.molgenis.data.Repository;
 import org.molgenis.data.RepositoryCollection;
-import org.molgenis.data.RepositoryDecoratorFactory;
-import org.springframework.context.ApplicationListener;
-import org.springframework.context.event.ContextRefreshedEvent;
-import org.springframework.core.Ordered;
+import org.molgenis.data.UnknownEntityException;
+import org.molgenis.data.meta.model.*;
+import org.molgenis.data.meta.model.Package;
 
-import com.google.common.collect.ImmutableMap;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.stream.Stream;
 
-public interface MetaDataService extends Iterable<RepositoryCollection>, ApplicationListener<ContextRefreshedEvent>,
-		Ordered
+import static org.molgenis.data.meta.model.AttributeMetadata.ATTRIBUTE_META_DATA;
+import static org.molgenis.data.meta.model.EntityTypeMetadata.ENTITY_TYPE_META_DATA;
+import static org.molgenis.data.meta.model.PackageMetadata.PACKAGE;
+import static org.molgenis.data.meta.model.TagMetadata.TAG;
+
+public interface MetaDataService extends Iterable<RepositoryCollection>
 {
 	/**
-	 * Sets the backend, in wich the meta data and the user data is saved
+	 * Returns the repository for the given entity name.
 	 *
-	 * @param ManageableRepositoryCollection
+	 * @return entity repository or null if no repository exists for the entity (e.g. the entity is abstract)
+	 * @throws UnknownEntityException if no entity with the given name exists
 	 */
-	MetaDataService setDefaultBackend(ManageableRepositoryCollection backend);
+	Repository<Entity> getRepository(String entityTypeId);
+
+	/**
+	 * Returns the typed repository for the given entity name.
+	 *
+	 * @param entityClass entity class
+	 * @param <E>         entity type
+	 * @return typed entity repository or null if no repository exists for the entity (e.g. the entity is abstract)
+	 * @throws UnknownEntityException if no entity with the given name exists
+	 */
+	<E extends Entity> Repository<E> getRepository(String entityTypeId, Class<E> entityClass);
+
+	/**
+	 * Returns the repository for the given entity type
+	 *
+	 * @param entityType entity type
+	 * @return entity repository or null if no repository exists for the entity (e.g. the entity is abstract)
+	 */
+	Repository<Entity> getRepository(EntityType entityType);
+
+	/**
+	 * Returns the typed repository for the given entity type
+	 *
+	 * @param entityType  entity type
+	 * @param entityClass entity class
+	 * @param <E>         entity type
+	 * @return typed entity repository or null if no repository exists for the entity (e.g. the entity is abstract).
+	 */
+	<E extends Entity> Repository<E> getRepository(EntityType entityType, Class<E> entityClass);
+
+	/**
+	 * Returns whether a {@link Repository} exists for the given entity name. Always returns false for abstract entities.
+	 *
+	 * @return true if non-abstract entity type exists for the given entity name
+	 */
+	boolean hasRepository(String entityTypeId); // FIXME use entity type ids instead of entity type fqns
+
+	/**
+	 * Create a repository for the given entity type.
+	 *
+	 * @param entityType entity type
+	 * @return repository
+	 * @throws org.molgenis.data.MolgenisDataException if entity type is abstract
+	 */
+	Repository<Entity> createRepository(EntityType entityType);
+
+	/**
+	 * Create a typed repository for the given entity type.
+	 *
+	 * @param entityType  entity type
+	 * @param entityClass entity class
+	 * @param <E>         entity type
+	 * @return typed repository
+	 * @throws org.molgenis.data.MolgenisDataException if entity type is abstract
+	 */
+	<E extends Entity> Repository<E> createRepository(EntityType entityType, Class<E> entityClass);
 
 	/**
 	 * Get a backend by name or null if it does not exists
-	 * 
-	 * @param name
-	 * @return
+	 *
+	 * @param backendName repository collection name
+	 * @return repository collection, null if entity type is abstract
 	 */
-	RepositoryCollection getBackend(String name);
+	RepositoryCollection getBackend(String backendName);
 
 	/**
-	 * Get the backend the EntityMetaData belongs to
-	 * 
-	 * @param emd
-	 * @return
+	 * Get the backend the EntityType belongs to
+	 *
+	 * @param entityType entity type
+	 * @return repository collection, null if entity type is abstract
 	 */
-	RepositoryCollection getBackend(EntityMetaData emd);
+	RepositoryCollection getBackend(EntityType entityType);
+
+	/**
+	 * Has backend will check if the requested backend already exists and is registered.
+	 *
+	 * @param backendName backend name
+	 * @return true if a repository collection with the given name exists
+	 */
+	boolean hasBackend(String backendName);
 
 	/**
 	 * Get the default backend
-	 * 
-	 * @return
+	 *
+	 * @return the default repository collection
 	 */
-	ManageableRepositoryCollection getDefaultBackend();
+	RepositoryCollection getDefaultBackend();
 
 	/**
 	 * Get all packages
-	 * 
+	 *
 	 * @return List of Package
 	 */
-	public List<Package> getPackages();
+	List<Package> getPackages();
 
 	/**
 	 * Lists all root packages.
-	 * 
+	 *
 	 * @return Iterable of all root Packages
 	 */
 	Iterable<Package> getRootPackages();
 
 	/**
 	 * Retrieves a package with a given name.
-	 * 
-	 * @param name
-	 *            the name of the Package to retrieve
+	 *
+	 * @param name the name of the Package to retrieve
 	 * @return the Package, or null if the package does not exist.
 	 */
-	Package getPackage(String name);
+	Package getPackage(String name); // FIXME use entity type ids instead of entity type fqns
 
 	/**
 	 * Adds a new Package
-	 * 
-	 * @param pack
+	 *
+	 * @param pack package
 	 */
 	void addPackage(Package pack);
 
 	/**
-	 * Gets the entity meta data for a given entity.
-	 * 
-	 * @param name
-	 *            the fullyQualifiedName of the entity
-	 * @return EntityMetaData of the entity, or null if the entity does not exist
+	 * Add or update packages
+	 *
+	 * @param packages packages
 	 */
-	EntityMetaData getEntityMetaData(String name);
+	void upsertPackages(Stream<Package> packages);
 
 	/**
-	 * @deprecated Rebuilds all meta data chaches
-	 * 
-	 *             TODO remove
+	 * Add or update tags
+	 *
+	 * @param tags tags
 	 */
-	@Deprecated
-	void refreshCaches();
-
-	Iterable<EntityMetaData> getEntityMetaDatas();
+	void upsertTags(Collection<Tag> tags);
 
 	/**
-	 * Adds new EntityMeta and creates a new Repository
-	 * 
-	 * @param entityMeta
-	 * @return
+	 * Gets the entity type for a given entity.
+	 *
+	 * @param name the fullyQualifiedName of the entity
+	 * @return EntityType of the entity, or null if the entity does not exist
 	 */
-	Repository addEntityMeta(EntityMetaData entityMeta);
+	EntityType getEntityType(String name); // FIXME use entity type ids instead of entity type fqns
 
 	/**
-	 * Create and add a new Repository for an EntityMetaData with repository decorators applied
+	 * Gets the entity type for a given entity.
+	 *
+	 * @param entityTypeId the id of the entity
+	 * @return EntityType of the entity, or null if the entity does not exist
 	 */
-	Repository add(EntityMetaData entityMetaData, RepositoryDecoratorFactory decoratorFactory);
+	EntityType getEntityTypeById(String entityTypeId); // FIXME remove
 
 	/**
-	 * Deletes an EntityMeta
+	 * Returns a stream of all {@link EntityType entity type}.
+	 *
+	 * @return all entity type
 	 */
-	void deleteEntityMeta(String entityName);
+	Stream<EntityType> getEntityTypes();
 
 	/**
-	 * Deletes a list of EntityMetaData
-	 * 
-	 * @param entities
+	 * Returns a stream of all {@link Repository repositories}.
+	 *
+	 * @return all repositories
 	 */
-	void delete(List<EntityMetaData> entities);
+	Stream<Repository<Entity>> getRepositories();
 
 	/**
-	 * Updates EntityMeta
-	 * 
-	 * @param entityMeta
-	 * @return added attributes
-	 * 
-	 *         FIXME remove return value or change it to ChangeSet with all changes
+	 * Add entity type and entity type attributes.
+	 *
+	 * @param entityType entity type
 	 */
-	List<AttributeMetaData> updateEntityMeta(EntityMetaData entityMeta);
+	void addEntityType(EntityType entityType);
 
 	/**
-	 * Adds an Attribute to an EntityMeta
-	 * 
-	 * @param entityName
-	 * @param attribute
+	 * Updates a single existing entity type and entity type attributes.
+	 *
+	 * @param entityType entity type
+	 * @throws UnknownEntityException if entity type does not exist
 	 */
-	void addAttribute(String entityName, AttributeMetaData attribute);
-
-	// FIXME remove this method
-	void addAttributeSync(String entityName, AttributeMetaData attribute);
+	void updateEntityType(EntityType entityType);
 
 	/**
-	 * Deletes an Attribute
-	 * 
-	 * @param entityName
-	 * @param attributeName
+	 * Add or update a collection of entity type and entity type attributes.
+	 * Resolves the dependencies between them so that the entities and their metadata get added in proper order.
+	 * <p>
+	 * Adds ONE_TO_MANY attributes in a two-pass algorithm.
+	 * <ol>
+	 * <li>Add the Author {@link EntityType} without books attribute and the Book {@link EntityType} with its author
+	 * attribute.</li>
+	 * <li>Update the Author EntityType adding the books attribute</li>
+	 * </ol>
+	 *
+	 * @param entityTypes {@link EntityType}s to add
 	 */
-	void deleteAttribute(String entityName, String attributeName);
-
-	// FIXME remove this method
-	List<AttributeMetaData> updateSync(EntityMetaData sourceEntityMetaData);
+	void upsertEntityTypes(Collection<EntityType> entityTypes);
 
 	/**
-	 * Check the integration of an entity meta data with existing entities Check only if the existing attributes are the
+	 * Deletes an EntityType
+	 */
+	void deleteEntityType(String entityTypeId); // FIXME use entity type ids instead of entity type fqns
+
+	/**
+	 * Deletes a collection of entity type.
+	 *
+	 * @param entityTypes entity type collection
+	 */
+	void deleteEntityType(Collection<EntityType> entityTypes);
+
+	/**
+	 * Adds an Attribute to an EntityType
+	 */
+	void addAttribute(Attribute attribute);
+
+	/**
+	 * Adds attributes to an EntityType
+	 *
+	 * @param attrs Stream <Attribute>
+	 */
+	void addAttributes(String entityTypeId, Stream<Attribute> attrs);
+
+	/**
+	 * Deletes an Attribute from an Entity
+	 */
+	void deleteAttributeById(Object id);
+
+	/**
+	 * Check the integration of an entity type with existing entities Check only if the existing attributes are the
 	 * same as the new attributes
-	 * 
-	 * @param repositoryCollection
-	 *            the new entities
-	 * @return
+	 *
+	 * @param repositoryCollection the new entities
 	 */
-	LinkedHashMap<String, Boolean> integrationTestMetaData(RepositoryCollection repositoryCollection);
+	LinkedHashMap<String, Boolean> determineImportableEntities(RepositoryCollection repositoryCollection);
 
 	/**
-	 * Check the integration of an entity meta data with existing entities Check only if the existing attributes are the
-	 * same as the new attributes
-	 * 
-	 * @param newEntitiesMetaDataMap
-	 *            the new entities in a map where the keys are the names
-	 * @param skipEntities
-	 *            do not check the entities, returns true.
-	 * @param defaultPackage
-	 *            the default package for the entities that does not have a package
-	 * @return
+	 * Returns whether the given {@link EntityType} defines a meta entity such as {@link EntityTypeMetadata} or
+	 * {@link Attribute}.
+	 *
+	 * @param entityType the EntityType that is checked
 	 */
-	LinkedHashMap<String, Boolean> integrationTestMetaData(ImmutableMap<String, EntityMetaData> newEntitiesMetaDataMap,
-			List<String> skipEntities, String defaultPackage);
-	
+	static boolean isMetaEntityType(EntityType entityType)
+	{
+		switch (entityType.getId())
+		{
+			case ENTITY_TYPE_META_DATA:
+			case ATTRIBUTE_META_DATA:
+			case TAG:
+			case PACKAGE:
+				return true;
+			default:
+				return false;
+		}
+	}
+
 	/**
-	 * Has backend will check if the requested backend already exists and is registered.
-	 * 
-	 * @param backendName
-	 * @return
+	 * Returns whether the given {@link EntityType} attributes are compatible with
+	 * the attributes of an existing repository with the same name
 	 */
-	boolean hasBackend(String backendName);
+	boolean isEntityTypeCompatible(EntityType entityTypeData);
+
+	/**
+	 * Returns all concrete {@link EntityType}s that directly or indirectly extend a given {@link EntityType}.
+	 * If the {@link EntityType} is concrete, will return a Stream containing only the given {@link EntityType}.
+	 *
+	 * @param entityType the {@link EntityType} whose concrete child entity types will be returned
+	 * @return Stream containing all concrete children
+	 */
+	Stream<EntityType> getConcreteChildren(EntityType entityType);
 }
