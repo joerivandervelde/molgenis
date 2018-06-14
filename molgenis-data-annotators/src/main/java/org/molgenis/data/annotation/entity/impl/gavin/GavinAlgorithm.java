@@ -23,8 +23,13 @@ public class GavinAlgorithm
 	public static final String SENS95THPERCADDTHRESHOLD = "Sens95thPerCADDThreshold";
 	private static final String CATEGORY = "Category";
 
-	//this is the MAF threshold as calculated in r0.3 of the calibration data
-	public static final double GENOMEWIDE_MAF_THRESHOLD = 0.003456145;
+	// this is the MAF threshold as calculated from calibration data
+	// see Step9_TablesAndPlots.R
+	public static final double GENOMEWIDE_MAF_THRESHOLD_r0_1 = 0.004739594;
+	public static final double GENOMEWIDE_MAF_THRESHOLD_r0_2 = 0.001543588;
+	public static final double GENOMEWIDE_MAF_THRESHOLD_r0_3 = 0.003456145;
+	public static final double GENOMEWIDE_MAF_THRESHOLD_r0_4 = 0.001427018;
+	public static final double GENOMEWIDE_MAF_THRESHOLD_r0_5 = 0.0008700237;
 	public static final int GENOMEWIDE_CADD_THRESHOLD = 15;
 
 	// sensitivity is more important than specificity, so we can adjust this parameter to globally adjust the thresholds
@@ -211,7 +216,7 @@ public class GavinAlgorithm
 
 		exacMAF = exacMAF != null ? exacMAF : 0;
 
-		if (exacMAF > GENOMEWIDE_MAF_THRESHOLD)
+		if (exacMAF > GENOMEWIDE_MAF_THRESHOLD_r0_5)
 		{
 			return new Judgment(Benign, genomewide, gene,
 					"Variant MAF of " + exacMAF + " is not rare enough to generally be considered pathogenic.");
